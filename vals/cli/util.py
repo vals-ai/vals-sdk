@@ -29,7 +29,7 @@ def prompt_user_for_suite():
     click.echo("Test Suites:")
     click.echo("\n".join([f"{i}: {s['title']}" for i, s in enumerate(suites)]))
 
-    idx = click.prompt("Enter the number of the test suite to run", type=int)
+    idx = click.prompt("Enter the number of the test suite", type=int)
     while not 0 <= idx <= len(suites):
         idx = click.prompt("Invalid choice. Retry", type=int)
     suite_id = suites[idx]["id"]

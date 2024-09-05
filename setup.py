@@ -2,7 +2,6 @@ from setuptools import find_packages, setup
 
 setup(
     name="valsai",
-    version="0.0.44",
     author="Langston Nashold, Rayan Krishnan",
     packages=find_packages(),
     include_package_data=True,
@@ -22,10 +21,15 @@ setup(
         "pypandoc",
         "pypdf2",
     ],
+    # This sorta works for Test-Pypi, but not fully.
+    # use_scm_version={"local_scheme": "no-local-version"},
+    use_scm_version=True,
+    setup_requires=["setuptools_scm"],
     entry_points={
         "console_scripts": [
             "vals = vals.cli.main:cli",
         ],
     },
-    url="https://pypi.org/project/valsai/",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
 )

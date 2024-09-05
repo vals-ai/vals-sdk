@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 import click
 from vals.cli.util import display_error_and_exit, prompt_user_for_suite
-from vals.sdk.exceptions import PrlException
+from vals.sdk.exceptions import ValsException
 from vals.sdk.suite import create_suite, list_test_suites, pull_suite, update_suite
 from vals.sdk.util import fe_host
 
@@ -56,7 +56,7 @@ def parse_suite_file(file):
     try:
         return json.load(file)
     except Exception as e:
-        raise PrlException("The input file provided is not valid JSON")
+        raise ValsException("The input file provided is not valid JSON")
 
 
 def parse_suite(interactive: bool, file: TextIOWrapper) -> Dict[str, Any]:
@@ -101,7 +101,7 @@ def create_command(interactive: bool, file: str):
 
     try:
         suite_id = create_suite(data)
-    except PrlException as e:
+    except ValsException as e:
         display_error_and_exit(f"Could not create suite. {e.message}")
 
     # Execute the query on the transport
@@ -128,7 +128,7 @@ def update_command(interactive: bool, file: str):
 
         click.secho("Successfully updated test suite.", fg="green")
         click.secho(f"{fe_host()}/view?test_suite_id={suite_id}", bold=True)
-    except PrlException as e:
+    except ValsException as e:
         click.secho(e.message, fg="red")
     except Exception as e:
         click.secho("Suite Update Failed. Error:" + str(e), fg="red")
@@ -156,7 +156,7 @@ def pull_command(file: TextIOWrapper):
         output = pull_suite(suite_id)
         file.write(json.dumps(output, indent=2))
 
-    except PrlException as e:
+    except ValsException as e:
         display_error_and_exit(e.message)
 
     click.secho("Successfully pulled test suite.", fg="green")

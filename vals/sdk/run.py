@@ -6,7 +6,7 @@ import requests
 from gql import gql
 from jsonschema import ValidationError, validate
 from vals.sdk.auth import _get_auth_token
-from vals.sdk.exceptions import PrlException
+from vals.sdk.exceptions import ValsException
 from vals.sdk.util import RUN_SCHEMA_PATH, be_host, fe_host, get_client
 
 # Rudimentary cache for pulling params
@@ -23,7 +23,7 @@ def _get_default_parameters() -> Dict[str, Any]:
         headers={"Authorization": _get_auth_token()},
     )
     if response.status_code != 200:
-        raise PrlException(response.text)
+        raise ValsException(response.text)
 
     param_info = response.json()
 
@@ -39,7 +39,11 @@ def _get_default_parameters() -> Dict[str, Any]:
 
 def start_run(suite_id: str, parameters: Dict[Any, Any] = {}, metadata_map=None) -> str:
     """
-    Method to start a run
+    Method to start a run.
+
+    suite_id: The ID of the suite to run.
+    parameters: Any run parameters. Examples include 'use_golden_output', 'use_fixed_output',
+    'threads', etc.
 
     Returns the run id.
     """
@@ -57,7 +61,7 @@ def start_run(suite_id: str, parameters: Dict[Any, Any] = {}, metadata_map=None)
             validate(instance=parameters, schema=schema)
 
     except ValidationError as e:
-        raise PrlException(
+        raise ValsException(
             f"Config file provided did not conform to JSON schema. Message: {e.message}"
         )
 
@@ -75,7 +79,7 @@ def start_run(suite_id: str, parameters: Dict[Any, Any] = {}, metadata_map=None)
         run_id = response.json()["run_id"]
         return run_id
     else:
-        raise PrlException(
+        raise ValsException(
             f"Could not start run. Received error from server: {response.text}"
         )
 
@@ -92,7 +96,7 @@ def get_csv(run_id: str) -> bytes:
     )
 
     if response.status_code != 200:
-        raise PrlException("Received Error from PRL Server: " + response.text)
+        raise ValsException("Received Error from PRL Server: " + response.text)
 
     return response.content
 
@@ -228,7 +232,6 @@ def wait_for_run_completion(run_id: str) -> str:
     """
     Block a process until a given run has finished running.
 
-
     """
     time.sleep(5)
     status = "in_progress"
@@ -241,6 +244,6 @@ def wait_for_run_completion(run_id: str) -> str:
 
 def get_run_url(run_id: str) -> str:
     """
-    Utility function to transform a run id to a viewable PlaygroundRL URL.
+    Utility function to transform a run id to a viewable Vals AI URL.
     """
     return f"{fe_host()}/results?run_id={run_id}"

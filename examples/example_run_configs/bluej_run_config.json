@@ -1,0 +1,6 @@
+{
+  "use_fixed_output": false,
+  "description": "Test using the schema",
+  "maximum_threads": 4,
+  "strategy": "v11"
+}

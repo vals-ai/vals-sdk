@@ -1,0 +1,18 @@
+{
+  "title": "[VALS]: Testing Extractor",
+  "description": "Attempting some simple extraction checks",
+  "tests": [
+    {
+      "input_under_test": "What are the relevant parties here?",
+      "fixed_output": "The parties involved in the Affiliate Agreement from the document entitled GULFSOUTHMEDICALSUPPLYINC_12_24_1997-EX-4-AFFILIATE AGREEMENT.pdf are:\n1. **Physician Sales & Service, Inc. (PSS)**:\n   - Address: 4345 Southpoint Boulevard, Jacksonville, Florida 32216.\n   - Representatives: Patrick C. Kelly and David A. Smith.\n\n2. **Gulf South Medical Supply, Inc. (GSMS)**:\n   - The undersigned shareholders of GSMS who will become shareholders of PSS as a result of the merger.\n\n3. **Individual Shareholders**:\n   - William W. McInnes\n   - Edward Shulman\n   - Donna C.E. Williamson\n   - David L. Bogetz\n   - Melvin L. Hecktman\n   - Thomas G. Hixon\n   - Steve Richardson\n   - Guy W. Edwards\n   - Stanton Keith Pritchard\n   - Louie Vaughan\n\n4. **PSS Merger Corp.**:\n   - A corporation involved in the merger with GSMS.\n\nThe agreement is executed by the individual shareholders and accepted by David A. Smith on behalf of Physician Sales & Service, Inc.",
+      "golden_output": "This is a test",
+      "checks": [
+        {
+          "operator": "includes",
+          "criteria": "Physician Sales & Service, Inc.",
+          "modifiers": {"extractor": "parties involved in the agreement"}
+        }
+      ]
+    }
+  ]
+}

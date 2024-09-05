@@ -5,13 +5,11 @@ from vals.sdk.sdk import patch, run_evaluations
 
 client = patch(OpenAI(api_key=os.environ.get("OPEN_AI_KEY")))
 
+# Before running this, create a test suite on the Vals AI platform
+
 
 def test_function(test_input: str):
-
-    prompt = (
-        f"Answer as if you are a pirate. "
-        + f"Prompt: {test_input}\n\n"
-    )
+    prompt = "You are a pirate, answer in the speaking style of a pirate.\n\n"
     temp = 0.2
 
     gpt_client = OpenAI(api_key=os.environ.get("OPEN_AI_KEY"))
@@ -24,7 +22,7 @@ def test_function(test_input: str):
 
 
 run_id = run_evaluations(
-    # Replace with your suite link
-    "https://www.platform.vals.ai/view?test_suite_id=ea00a4f2-c1d3-4d5f-89b6-be1e76fd344f",
+    # Replace with the link suite link
+    "https://platform.vals.ai/view?test_suite_id=xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx",
     test_function,
 )

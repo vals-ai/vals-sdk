@@ -1,0 +1,34 @@
+{
+  "title": "New Operators",
+  "description": "Test description",
+  "tests": [
+    {
+      "input_under_test": "test 1",
+      "checks": [
+        {
+          "operator": "valid_json",
+          "criteria": ""
+        },
+        {
+          "operator": "matches_json_schema",
+          "criteria": "{\"$schema\": \"https://json-schema.org/draft/2020-12/schema\", \"type\": \"object\", \"required\": [\"hello\"]}"
+        }
+      ],
+      "fixed_output": "{\"hello\": \"world\"}"
+    },
+    {
+      "input_under_test": "test 2",
+      "checks": [
+        {
+          "operator": "regex",
+          "criteria": "^Hello.*$"
+        },
+        {
+          "operator": "regex",
+          "criteria": "^Helli.*$"
+        }
+      ],
+      "fixed_output": "Hello world"
+    }
+  ]
+}

@@ -6,7 +6,7 @@ import requests
 from gql import gql
 from jsonschema import ValidationError, validate
 from vals.sdk.auth import _get_auth_token
-from vals.sdk.exceptions import PrlException
+from vals.sdk.exceptions import ValsException
 from vals.sdk.util import SUITE_SCHEMA_PATH, be_host, get_client
 
 OPERATORS = [
@@ -113,7 +113,11 @@ def update_suite(suite_id: str, suite_data: Dict[str, Any]) -> None:
 
 
 def list_test_suites() -> List[Dict[str, Any]]:
-    """Method to produce a list of test suites"""
+    """
+
+    Method to produce a list of test suites for a given org.
+
+    """
     query = gql(
         f"""
         query getTestSuites {{
@@ -171,8 +175,8 @@ def pull_suite(suite_id: str, include_id=False):
                 testId
                 fileIds
                 inputUnderTest
-                inputUnderTestType
                 sampleOutput
+                goldenOutput
                 sampleOutputType
                 fileUids
                 tags
@@ -208,6 +212,9 @@ def pull_suite(suite_id: str, include_id=False):
             else:
                 test["fixed_output"] = raw_test["sampleOutput"]
 
+        if raw_test["goldenOutput"] != "":
+            test["golden_output"] = raw_test["goldenOutput"]
+
         test["checks"] = json.loads(raw_test["checks"])
         context = json.loads(raw_test["context"])
         if len(context) != 0:
@@ -228,16 +235,16 @@ def _validate_checks(checks):
     for check in checks:
         operator = check["operator"]
         if operator not in OPERATORS:
-            raise PrlException(f"Unrecognized operator: {operator}")
+            raise ValsException(f"Unrecognized operator: {operator}")
         if operator not in UNARY_OPERATORS and "criteria" not in check:
-            raise PrlException(
+            raise ValsException(
                 f"'criteria' field must be specified for check with operator: '{operator}'"
             )
 
 
 def _validate_suite(parsed_json):
     if not os.path.exists(SUITE_SCHEMA_PATH):
-        raise PrlException(
+        raise ValsException(
             "Could not find schema file. The CLI tool is likely misconfigured."
         )
 
@@ -247,7 +254,7 @@ def _validate_suite(parsed_json):
             schema = json.load(schema_file)
             validate(instance=parsed_json, schema=schema)
     except ValidationError as e:
-        raise PrlException(
+        raise ValsException(
             f"The file provided did not conform to the correct format. Validation Error: {e.message}. Look at the examples or the jsonschema to see the correct format."
         )
 
@@ -258,20 +265,20 @@ def _validate_suite(parsed_json):
     tests = parsed_json["tests"]
     for test in tests:
         if "input_under_test" not in test and "file_under_test" not in test:
-            raise PrlException(
+            raise ValsException(
                 "For all tests, either 'input_under_test' or 'file_under_test' must be provided"
             )
 
         if "file_under_test" in test:
             fp = test["file_under_test"]
             if not os.path.exists(fp):
-                raise PrlException(f"File does not exist: {fp}")
+                raise ValsException(f"File does not exist: {fp}")
             if not os.path.isfile(fp):
-                raise PrlException(f"Path is a directory: {fp}")
+                raise ValsException(f"Path is a directory: {fp}")
 
         if "file_uids" in test:
             if not isinstance(test["file_uids"], list):
-                raise PrlException("file_uids must be a list")
+                raise ValsException("file_uids must be a list")
 
         _validate_checks(test["checks"])
 
@@ -392,7 +399,6 @@ def _add_tests(data, files, suite_id, create_only=False):
         # TODO: Escape chars better
 
         input_under_test = test["input_under_test"]
-        input_under_test_type = "raw"
 
         # TODO: avoid double json
         checks = json.dumps(json.dumps(test["checks"]))
@@ -455,7 +461,6 @@ def _add_tests(data, files, suite_id, create_only=False):
                   sampleOutputType: "{fixed_output_type}",
                   checks: {checks}, 
                   inputUnderTest: {json.dumps(input_under_test)}, 
-                  inputUnderTestType: "{input_under_test_type}",
                   testSuiteId: "{suite_id}",
                   fileIds: {json.dumps(file_ids)}
                   fileUids: {json.dumps(file_uids)}

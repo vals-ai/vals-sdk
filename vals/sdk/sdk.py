@@ -1,10 +1,8 @@
-import json
 from functools import wraps
-from io import BytesIO, IOBase
+from io import BytesIO
 from time import time
-from typing import Callable, List
+from typing import Callable
 
-import attrs
 import click
 import pypandoc
 import requests
@@ -40,7 +38,7 @@ def _parse_file_id(file_id: str):
     return org, filename, test_suite_id
 
 
-def read_pdf(file: IOBase):
+def read_pdf(file: BytesIO):
     """
     Convenience method to parse PDFs to strings
     """
@@ -53,7 +51,7 @@ def read_pdf(file: IOBase):
     return text
 
 
-def read_docx(file: IOBase):
+def read_docx(file: BytesIO):
     """
     Convenience method to parse docx files to strings
     """
@@ -61,7 +59,7 @@ def read_docx(file: IOBase):
     return output
 
 
-def read_text(file):
+def read_text(file: BytesIO):
     return file.read().decode("utf-8")
 
 
@@ -74,6 +72,19 @@ def run_evaluations(
     model_under_test="sdk",
     **kwargs,
 ):
+    """
+    This function is meant to be used to test arbitrary models and pipelines with the Vals platform.
+
+    It takes in a `generate_fn` and the url of a test suite.
+
+    For every test input in the test suite, it queries generate_fn(test_input) to produce the
+    output from the LLM model or application. It then updates the test suite with the results,
+    and kicks off a new run.
+
+    It returns the run_id of the run.
+
+    See examples/sdk_example.py for example usage.
+    """
     test_suite_id = _parse_test_suite_id_from_url(test_suite_url)
 
     suite_data = pull_suite(test_suite_id, include_id=True)
@@ -180,7 +191,7 @@ def run_evaluations(
     return run_id
 
 
-def wrap_chatcompletion(func: Callable):
+def _wrap_chatcompletion(func: Callable):
     @wraps(func)
     def wrapper(**kwargs):
         response = func(**kwargs)
@@ -196,5 +207,11 @@ def wrap_chatcompletion(func: Callable):
 
 # External Facing
 def patch(client: OpenAI):
-    client.chat.completions.create = wrap_chatcompletion(client.chat.completions.create)
+    """
+    Calling this function allows the Vals SDK to collect token metadata from any calls to OpenAI
+    or models that use the OpenAI API.
+    """
+    client.chat.completions.create = _wrap_chatcompletion(
+        client.chat.completions.create
+    )
     return client
