@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "Suite JSON Schema",
+  "description": "This Schema defines an accepted format using JSON files with `vals create suite`.",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "The title of the test suite being created"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of test suite being created"
+    },
+    "global_checks": {
+      "$ref": "#/$defs/checksArray"
+    },
+    "tests": {
+      "type": "array",
+      "description": "List of tests to add to the suite being created",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "input_under_test": {
+            "type": "string",
+            "description": "The input fed to the model in text format. Specify only one of input_under_test and file_under_test"
+          },
+          "file_under_test": {
+            "type": "string",
+            "description": "A filepath containing a file that should be used as input. Specify only one of input_under_test and file_under_test "
+          },
+          "files_under_test": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "A list of filepaths containing files that should be used as input. Specify only one of input_under_test, file_under_test, or files_under_test"
+          },
+          "context": {
+            "type": "object"
+          },
+          "fixed_output": {
+            "type": "string",
+            "description": "An optional way to define an output that can be used directly, instead of querying the LLM."
+          },
+          "file_fixed_output": {
+            "type": "string",
+            "description": "An optional file path to define an output that can be used directly, instead of querying the LLM"
+          },
+          "checks": { "$ref": "#/$defs/checksArray" }
+        },
+        "required": ["checks"]
+      }
+    }
+  },
+  "required": ["title", "description", "tests"],
+  "$defs": {
+    "checksArray": {
+      "type": "array",
+      "description": "A list of checks (criteria / operator pairs) to run on this test.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "operator": {
+            "type": "string",
+            "description": "e.g. includes, excludes, etc."
+          },
+          "criteria": {
+            "type": "string",
+            "description": "For binary operators, the critiera to use. For example, for the 'includes' operator, this is the test that should be included."
+          },
+          "modifiers": {
+            "type": "object",
+            "description": "An optional set of modifiers to apply to this check."
+          }
+        },
+        "required": ["operator"]
+      }
+    }
+  }
+}
