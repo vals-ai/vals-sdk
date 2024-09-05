@@ -1,0 +1,20 @@
+{
+  "title": "Test title",
+  "description": "Test description",
+  "tests": [
+    {
+      "input_under_test": "What is the meaning of life?",
+      "checks": [
+        {
+          "operator": "includes",
+          "criteria": "42"
+        },
+        {
+          "operator": "excludes",
+          "criteria": "myth of sisyphus"
+        }
+      ],
+      "fixed_output": "The meaning of life is 42"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "title": "[VALS]: Sample Test Suite",
+  "description": "Test description",
+  "tests": [
+    {
+      "input_under_test": "What is QSBS",
+      "context": {
+        "my_key": "my_value"
+      },
+      "checks": [
+        {
+          "operator": "includes",
+          "criteria": "C Corporation"
+        },
+        {
+          "operator": "excludes",
+          "criteria": "S Corporation"
+        }
+      ]
+    }
+  ]
+}

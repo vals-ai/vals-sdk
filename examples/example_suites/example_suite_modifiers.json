@@ -1,0 +1,20 @@
+{
+  "title": "Test title",
+  "description": "Test description",
+  "tests": [
+    {
+      "input_under_test": "What is QSBS",
+      "checks": [
+        {
+          "operator": "includes",
+          "criteria": "C Corporation",
+          "modifiers": [{ "name": "optional" }]
+        },
+        {
+          "operator": "excludes",
+          "criteria": "S Corporation"
+        }
+      ]
+    }
+  ]
+}
