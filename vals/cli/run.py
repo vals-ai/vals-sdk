@@ -13,7 +13,7 @@ from vals.sdk.run import (
 )
 from vals.sdk.util import fe_host
 
-from ..sdk.exceptions import PrlException
+from ..sdk.exceptions import ValsException
 from .util import display_error_and_exit, prompt_user_for_suite
 
 
@@ -45,7 +45,7 @@ def start_click_command(param_file, suite_id: str = None):
 
     try:
         run_id = start_run(suite_id, parameters)
-    except PrlException as e:
+    except ValsException as e:
         display_error_and_exit(e.message)
 
     click.secho("Successfully started run.", fg="green")
@@ -69,7 +69,7 @@ def get_csv_click_command(run_id, file: BytesIO):
         csv_bytes = get_csv(run_id)
         file.write(csv_bytes)
 
-    except PrlException as e:
+    except ValsException as e:
         display_error_and_exit(e.message)
 
     click.secho("Successfully downloaded the result CSV.", fg="green")

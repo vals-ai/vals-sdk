@@ -17,6 +17,9 @@ def configure_credentials(api_key: str, in_eu: bool = False):
     """
     Configure the Vals API Key to be used with requests.
     This will take precedence over any credentials set in environment variables, or with vals login.
+
+    API key can be generated in the Web App. If you are using the EU platform, make sure to set
+    in_eu = True, otherwise leave it as the default.
     """
     global global_api_key, global_in_eu
     global_api_key = api_key.strip()

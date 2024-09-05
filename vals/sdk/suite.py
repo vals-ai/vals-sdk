@@ -113,7 +113,11 @@ def update_suite(suite_id: str, suite_data: Dict[str, Any]) -> None:
 
 
 def list_test_suites() -> List[Dict[str, Any]]:
-    """Method to produce a list of test suites"""
+    """
+
+    Method to produce a list of test suites for a given org.
+
+    """
     query = gql(
         f"""
         query getTestSuites {{

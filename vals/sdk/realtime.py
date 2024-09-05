@@ -3,9 +3,12 @@ from vals.sdk.auth import _get_auth_token
 from vals.sdk.util import be_host
 
 
-def evaluate(output, checks):
+def evaluate(output: str, checks: list[dict[str, str]]):
     """
     Evaluate an output in realtime, against a set of checks
+
+    Each check should have this format:
+    {"operator": <operator>, "criteria": <criteria>}
     """
 
     body = {"output": output, "checks": checks}

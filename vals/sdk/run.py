@@ -39,7 +39,11 @@ def _get_default_parameters() -> Dict[str, Any]:
 
 def start_run(suite_id: str, parameters: Dict[Any, Any] = {}, metadata_map=None) -> str:
     """
-    Method to start a run
+    Method to start a run.
+
+    suite_id: The ID of the suite to run.
+    parameters: Any run parameters. Examples include 'use_golden_output', 'use_fixed_output',
+    'threads', etc.
 
     Returns the run id.
     """
@@ -228,7 +232,6 @@ def wait_for_run_completion(run_id: str) -> str:
     """
     Block a process until a given run has finished running.
 
-
     """
     time.sleep(5)
     status = "in_progress"
@@ -241,6 +244,6 @@ def wait_for_run_completion(run_id: str) -> str:
 
 def get_run_url(run_id: str) -> str:
     """
-    Utility function to transform a run id to a viewable PlaygroundRL URL.
+    Utility function to transform a run id to a viewable Vals AI URL.
     """
     return f"{fe_host()}/results?run_id={run_id}"
