@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="valsai",
-    version="0.0.44",
+    version="0.0.45",
     author="Langston Nashold, Rayan Krishnan",
     packages=find_packages(),
     include_package_data=True,
