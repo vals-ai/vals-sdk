@@ -27,7 +27,6 @@ setup(
             "vals = vals.cli.main:cli",
         ],
     },
-    url="https://pypi.org/project/valsai/",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
 )
