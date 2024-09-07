@@ -99,7 +99,7 @@ jobs:
 
     environment:
       name: pypi-test
-      url: https://test.pypi.org/p/valsai-test
+      url: https://test.pypi.org/p/valsai
 
     permissions:
       id-token: write # IMPORTANT: mandatory for trusted publishing
