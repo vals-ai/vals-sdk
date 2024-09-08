@@ -130,7 +130,7 @@ def my_model(input_under_test: str) -> str:
   return llm_output
 ```
 
-Then, create a suite in the platform and run it as follows:
+Then, create a suite in the platform and run it like the following:
 
 ```python
 run_id = run_evaluations(
