@@ -110,8 +110,6 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
-      - name: Print
-        run: echo $ACTIONS_ID_TOKEN_REQUEST_TOKEN
       - name: Publish distribution to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
