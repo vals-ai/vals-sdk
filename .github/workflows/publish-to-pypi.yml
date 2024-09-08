@@ -102,7 +102,8 @@ jobs:
       url: https://test.pypi.org/project/valsai/
 
     permissions:
-      id-token: write # IMPORTANT: mandatory for trusted publishing
+      # IMPORTANT: mandatory for trusted publishing
+      id-token: write
 
     steps:
       - name: Download all the dists
