@@ -99,7 +99,7 @@ jobs:
 
     environment:
       name: pypi-test
-      url: https://test.pypi.org/project/valsai/
+      url: https://test.pypi.org/project/ valsai/
 
     permissions:
       # IMPORTANT: mandatory for trusted publishing
