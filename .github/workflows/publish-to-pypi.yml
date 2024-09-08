@@ -102,7 +102,7 @@ jobs:
       url: https://test.pypi.org/project/valsai/
 
     permissions:
-      id-token: write
+      #  id-token: write
       pages: write
 
     steps:
