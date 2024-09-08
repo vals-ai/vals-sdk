@@ -102,8 +102,7 @@ jobs:
       url: https://test.pypi.org/project/valsai/
 
     permissions:
-      #  id-token: write
-      pages: write
+      id-token: write
 
     steps:
       - name: Download all the dists
