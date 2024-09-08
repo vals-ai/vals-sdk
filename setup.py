@@ -21,7 +21,9 @@ setup(
         "pypandoc",
         "pypdf2",
     ],
-    use_scm_version={"local_scheme": "no-local-version"},
+    # This sorta works for Test-Pypi, but not fully.
+    # use_scm_version={"local_scheme": "no-local-version"},
+    use_scm_version=True,
     setup_requires=["setuptools_scm"],
     entry_points={
         "console_scripts": [
