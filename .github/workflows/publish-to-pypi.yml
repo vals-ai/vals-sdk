@@ -98,8 +98,8 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: pypi-test
-      url: https://test.pypi.org/p/valsai
+      name: valsai
+      url: https://test.pypi.org/project/valsai/
 
     permissions:
       id-token: write # IMPORTANT: mandatory for trusted publishing
