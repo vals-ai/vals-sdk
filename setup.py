@@ -21,7 +21,7 @@ setup(
         "pypandoc",
         "pypdf2",
     ],
-    use_scm_version=True,
+    use_scm_version={"local_scheme": "no-local-version"},
     setup_requires=["setuptools_scm"],
     entry_points={
         "console_scripts": [
