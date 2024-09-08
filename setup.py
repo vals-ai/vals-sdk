@@ -1,8 +1,9 @@
 from setuptools import find_packages, setup
+from setuptools_scm import get_version
 
 setup(
     name="valsai",
-    version="0.0.46",
+    version=get_version(),
     author="Langston Nashold, Rayan Krishnan",
     packages=find_packages(),
     include_package_data=True,
@@ -21,6 +22,7 @@ setup(
         "descope",
         "pypandoc",
         "pypdf2",
+        "setuptools-scm",
     ],
     entry_points={
         "console_scripts": [
