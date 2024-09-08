@@ -3,6 +3,7 @@ name: Publish Vals AI CLI distribution to PyPI and TestPyPI
 on: push
 
 permissions:
+  pages: write
   id-token: write
   contents: write
 
@@ -41,8 +42,6 @@ jobs:
     environment:
       name: pypi-prod
       url: https://pypi.org/p/valsai
-    permissions:
-      id-token: write # IMPORTANT: mandatory for trusted publishing
 
     steps:
       - name: Download all the dists
@@ -59,10 +58,6 @@ jobs:
     needs:
       - publish-to-pypi
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write # IMPORTANT: mandatory for making GitHub Releases
-      id-token: write # IMPORTANT: mandatory for sigstore
 
     steps:
       - name: Download all the dists
@@ -104,10 +99,6 @@ jobs:
     environment:
       name: pypi-test
       url: https://test.pypi.org/project/valsai/
-
-    # permissions:
-    #   # IMPORTANT: mandatory for trusted publishing
-    #   id-token: write
 
     steps:
       - name: Download all the dists
