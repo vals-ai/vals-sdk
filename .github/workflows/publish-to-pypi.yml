@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: valsai
+      name: pypi-test
       url: https://test.pypi.org/project/valsai/
 
     permissions:
