@@ -18,7 +18,7 @@ setup(
         "pandas",
         "requests-toolbelt",
         "descope",
-        "pypandoc",
+        "pypandoc-binary",
         "pypdf2",
     ],
     # This sorta works for Test-Pypi, but not fully.
