@@ -2,9 +2,9 @@ import json
 import os
 import time
 
-from descope import AccessKeyLoginOptions, DescopeClient
+from descope import DescopeClient
 
-VALS_ENV = os.getenv("VALS_ENV")
+VALS_ENV = os.getenv("VALS_ENV", "PROD")
 
 DEFAULT_REGION = "us-east-1"
 
@@ -52,6 +52,8 @@ def get_descope_client():
         project_id = "P2ktNOjz5Tgzs9wwS3VpShnCbmik"
     elif VALS_ENV == "PROD":
         project_id = "P2lXkZaPuDqCzGxoxGHseomQi7ac"
+    else:
+        raise Exception(f"Unrecognized VALS_ENV: {VALS_ENV}")
     return DescopeClient(project_id=project_id)
 
 

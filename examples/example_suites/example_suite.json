@@ -4,9 +4,6 @@
   "tests": [
     {
       "input_under_test": "What is QSBS",
-      "context": {
-        "my_key": "my_value"
-      },
       "checks": [
         {
           "operator": "includes",
