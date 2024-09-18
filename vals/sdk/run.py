@@ -96,7 +96,7 @@ def get_csv(run_id: str) -> bytes:
     )
 
     if response.status_code != 200:
-        raise ValsException("Received Error from PRL Server: " + response.text)
+        raise ValsException("Received Error from Vals Servers: " + response.text)
 
     return response.content
 
