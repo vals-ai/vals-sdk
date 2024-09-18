@@ -18,8 +18,8 @@ setup(
         "pandas",
         "requests-toolbelt",
         "descope",
-        "pypandoc",
-        "pypdf2",
+        "pypandoc-binary",
+        "pypdf",
     ],
     # This sorta works for Test-Pypi, but not fully.
     # use_scm_version={"local_scheme": "no-local-version"},

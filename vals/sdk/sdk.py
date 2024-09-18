@@ -7,7 +7,7 @@ import click
 import pypandoc
 import requests
 from openai import OpenAI
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from tqdm import tqdm
 from vals.cli.suite import pull_suite, update_suite
 from vals.sdk.auth import _get_auth_token
