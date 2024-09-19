@@ -467,6 +467,7 @@ def _add_tests(data, files, suite_id, create_only=False):
                   context: {context}
                   goldenOutput: {json.dumps(golden_output)}
                   tags: {json.dumps(tags)}
+                  testId: "0"
             }}
             """
         )
