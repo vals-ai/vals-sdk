@@ -168,6 +168,7 @@ def run_evaluations(
         out_tokens = 0
 
     update_suite(test_suite_id, suite_data)
+
     run_id = start_run(
         test_suite_id,
         {

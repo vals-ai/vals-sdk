@@ -452,6 +452,8 @@ def _add_tests(data, files, suite_id, create_only=False):
         if "tags" in test:
             tags = test["tags"]
 
+        test_id = 0 if "id" not in test else test["id"]
+
         # We collate the tests we want to add in batches
         # When we have 100 tests in a batch, we add it to the suite.
         batch.append(
@@ -467,7 +469,7 @@ def _add_tests(data, files, suite_id, create_only=False):
                   context: {context}
                   goldenOutput: {json.dumps(golden_output)}
                   tags: {json.dumps(tags)}
-                  testId: "0"
+                  testId: "{test_id}"
             }}
             """
         )
