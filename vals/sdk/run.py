@@ -84,7 +84,6 @@ def start_run(suite_id: str, parameters: Dict[Any, Any] = {}, metadata_map=None)
             f"Config file provided did not conform to JSON schema. Message: {e.message}"
         )
 
-    print(metadata_map)
     if metadata_map is not None:
         metadata_map = [
             {
