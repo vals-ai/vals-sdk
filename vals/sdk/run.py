@@ -37,6 +37,25 @@ def _get_default_parameters() -> Dict[str, Any]:
     return _default_params
 
 
+start_run_mutation = gql(
+    """
+    mutation StartRunMutation(
+        $test_suite_id: String!
+        $parameters: GenericScalar!
+        $metadata: [RunMetadataType] = null
+    ) {
+        startRunMutation(
+            testSuiteId: $test_suite_id, 
+            parameters:$parameters,
+            metadata: $metadata
+        ) {
+            runId
+        }
+    }
+    """
+)
+
+
 def start_run(suite_id: str, parameters: Dict[Any, Any] = {}, metadata_map=None) -> str:
     """
     Method to start a run.
@@ -65,23 +84,27 @@ def start_run(suite_id: str, parameters: Dict[Any, Any] = {}, metadata_map=None)
             f"Config file provided did not conform to JSON schema. Message: {e.message}"
         )
 
-    body = {"test_suite_id": suite_id, "parameters": parameters}
+    print(metadata_map)
     if metadata_map is not None:
-        body["metadata"] = metadata_map
-
-    response = requests.post(
-        url=f"{be_host()}/start_run/",
-        headers={"Authorization": _get_auth_token()},
-        json=body,
+        metadata_map = [
+            {
+                "testId": key,
+                "inTokens": values["in_tokens"],
+                "outTokens": values["out_tokens"],
+                "durationSeconds": values["duration_seconds"],
+            }
+            for key, values in metadata_map.items()
+        ]
+    response = get_client().execute(
+        start_run_mutation,
+        variable_values={
+            "test_suite_id": suite_id,
+            "parameters": parameters,
+            "metadata": metadata_map,
+        },
     )
-
-    if response.status_code == 200:
-        run_id = response.json()["run_id"]
-        return run_id
-    else:
-        raise ValsException(
-            f"Could not start run. Received error from server: {response.text}"
-        )
+    run_id = response["startRunMutation"]["runId"]
+    return run_id
 
 
 def get_csv(run_id: str) -> bytes:
