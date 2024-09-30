@@ -44,7 +44,7 @@ start_run_mutation = gql(
         $parameters: GenericScalar!
         $metadata: [RunMetadataType] = null
     ) {
-        startRunMutation(
+        startRun(
             testSuiteId: $test_suite_id, 
             parameters:$parameters,
             metadata: $metadata
@@ -102,7 +102,7 @@ def start_run(suite_id: str, parameters: Dict[Any, Any] = {}, metadata_map=None)
             "metadata": metadata_map,
         },
     )
-    run_id = response["startRunMutation"]["runId"]
+    run_id = response["startRun"]["runId"]
     return run_id
 
 
