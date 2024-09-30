@@ -13,19 +13,22 @@ from vals.sdk.util import RUN_SCHEMA_PATH, be_host, fe_host, get_client
 _default_params = None
 
 
+run_param_info_query = gql(
+    """
+query RunParamInfo {
+  runParameterInfo
+}
+"""
+)
+
+
 def _get_default_parameters() -> Dict[str, Any]:
     global _default_params
     if _default_params is not None:
         return _default_params
 
-    response = requests.get(
-        url=f"{be_host()}/run_parameter_info/",
-        headers={"Authorization": _get_auth_token()},
-    )
-    if response.status_code != 200:
-        raise ValsException(response.text)
-
-    param_info = response.json()
+    response = get_client().execute(run_param_info_query)
+    param_info = response["runParameterInfo"]
 
     _default_params = {}
     for k, v in param_info.items():
