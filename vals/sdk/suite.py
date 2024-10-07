@@ -79,6 +79,7 @@ UNARY_OPERATORS = [
     "consistent_with_json",
     "consistent_with_context",
     "consistent_with_docs",
+    "safety_consistency",
 ]
 
 
