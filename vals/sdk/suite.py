@@ -105,7 +105,6 @@ def update_suite(suite_id: str, suite_data: Dict[str, Any]) -> None:
     """
     Method to update a test suite. data is in the same format as create_suite.
     """
-    print("SUITE DATA", suite_data)
     _validate_suite(suite_data)
 
     files = _upload_files(suite_id, suite_data)
