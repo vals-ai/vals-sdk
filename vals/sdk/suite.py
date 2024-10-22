@@ -174,6 +174,7 @@ def pull_suite(suite_id: str, include_id=False):
             tests(testSuiteId: "{suite_id}") {{
                 checks
                 testId
+                crossVersionId
                 fileIds
                 inputUnderTest
                 sampleOutput
@@ -194,6 +195,7 @@ def pull_suite(suite_id: str, include_id=False):
         test = {}
         if include_id:
             test["id"] = raw_test["testId"]
+            test["cross_version_id"] = raw_test["crossVersionId"]
 
         test["input_under_test"] = raw_test["inputUnderTest"]
 
