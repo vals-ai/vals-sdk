@@ -1,3 +1,4 @@
+import json
 from functools import wraps
 from io import BytesIO
 from time import time
@@ -159,7 +160,7 @@ def run_evaluations(
         test["fixed_output"] = fixed_output
 
         end = time()
-        metadata[test["id"]] = {
+        metadata[test["cross_version_id"]] = {
             "in_tokens": in_tokens,
             "out_tokens": out_tokens,
             "duration_seconds": end - start,
