@@ -13,6 +13,7 @@ from tqdm import tqdm
 from vals.cli.suite import pull_suite, update_suite
 from vals.sdk.auth import _get_auth_token
 from vals.sdk.run import (
+    Metadata,
     QuestionAnswerPair,
     _create_question_answer_set,
     get_run_url,
@@ -165,11 +166,11 @@ def run_evaluations(
         start = time()
         llm_output = generate_fn(test["input_under_test"], **non_param_kwargs)
         end = time()
-        metadata = {
-            "in_tokens": in_tokens,
-            "out_tokens": out_tokens,
-            "duration_seconds": end - start,
-        }
+        metadata = Metadata(
+            in_tokens=in_tokens,
+            out_tokens=out_tokens,
+            duration_seconds=end - start,
+        )
         in_tokens = 0
         out_tokens = 0
 
@@ -195,7 +196,6 @@ def run_evaluations(
             **kwargs,
         },
     )
-    print("QA SET ID", qa_set_id)
 
     run_id = start_run(
         test_suite_id,
@@ -224,7 +224,6 @@ def _wrap_chatcompletion(func: Callable):
     def wrapper(**kwargs):
         response = func(**kwargs)
         global in_tokens, out_tokens
-        print("RESPONSE", response, response.usage)
         in_tokens += response.usage.prompt_tokens
         out_tokens += response.usage.completion_tokens
 

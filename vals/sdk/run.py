@@ -270,6 +270,25 @@ def get_run_url(run_id: str) -> str:
 
 
 @attrs.define
+class Metadata:
+    """
+    Metadata for a question answer pair.
+    """
+
+    in_tokens: int
+    out_tokens: int
+    duration_seconds: float
+
+    def to_graphql_dict(self) -> Dict[str, int | float]:
+        # needs to be in camelcase for graphql
+        return {
+            "inTokens": self.in_tokens,
+            "outTokens": self.out_tokens,
+            "durationSeconds": self.duration_seconds,
+        }
+
+
+@attrs.define
 class QuestionAnswerPair:
     """
     TODO: We should read this type directly from the backend.
@@ -279,7 +298,7 @@ class QuestionAnswerPair:
     file_ids: List[str]
     context: Dict[str, Any]
     llm_output: str
-    metadata: Dict[str, Any]
+    metadata: Metadata
     test_id: str
 
 
@@ -319,7 +338,7 @@ def _create_question_answer_set(
                 "fileIds": pair.file_ids,
                 "context": pair.context,
                 "llmOutput": pair.llm_output,
-                "metadata": pair.metadata,
+                "metadata": pair.metadata.to_graphql_dict(),
                 "testId": pair.test_id,
             }
             for pair in pairs
