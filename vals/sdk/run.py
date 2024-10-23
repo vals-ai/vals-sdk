@@ -2,6 +2,7 @@ import json
 import time
 from typing import Any, Dict, List
 
+import attrs
 import requests
 from gql import gql
 from jsonschema import ValidationError, validate
@@ -45,12 +46,12 @@ start_run_mutation = gql(
     mutation StartRunMutation(
         $test_suite_id: String!
         $parameters: GenericScalar!
-        $metadata: [RunMetadataType] = null
+        $qa_set_id: String = null
     ) {
         startRun(
             testSuiteId: $test_suite_id, 
-            parameters:$parameters,
-            metadata: $metadata
+            parameters: $parameters,
+            qaSetId: $qa_set_id
         ) {
             runId
         }
@@ -59,12 +60,16 @@ start_run_mutation = gql(
 )
 
 
-def start_run(suite_id: str, parameters: Dict[Any, Any] = {}, metadata_map=None) -> str:
+def start_run(
+    suite_id: str,
+    parameters: Dict[Any, Any] = {},
+    qa_set_id: str | None = None,
+) -> str:
     """
     Method to start a run.
 
     suite_id: The ID of the suite to run.
-    parameters: Any run parameters. Examples include 'use_golden_output', 'use_fixed_output',
+    parameters: Any run parameters. Examples include 'use_golden_output'
     'threads', etc.
 
     Returns the run id.
@@ -87,22 +92,12 @@ def start_run(suite_id: str, parameters: Dict[Any, Any] = {}, metadata_map=None)
             f"Config file provided did not conform to JSON schema. Message: {e.message}"
         )
 
-    if metadata_map is not None:
-        metadata_map = [
-            {
-                "testId": key,
-                "inTokens": values["in_tokens"],
-                "outTokens": values["out_tokens"],
-                "durationSeconds": values["duration_seconds"],
-            }
-            for key, values in metadata_map.items()
-        ]
     response = get_client().execute(
         start_run_mutation,
         variable_values={
             "test_suite_id": suite_id,
             "parameters": parameters,
-            "metadata": metadata_map,
+            "qa_set_id": qa_set_id,
         },
     )
     run_id = response["startRun"]["runId"]
@@ -272,3 +267,69 @@ def get_run_url(run_id: str) -> str:
     Utility function to transform a run id to a viewable Vals AI URL.
     """
     return f"{fe_host()}/results?run_id={run_id}"
+
+
+@attrs.define
+class QuestionAnswerPair:
+    """
+    TODO: We should read this type directly from the backend.
+    """
+
+    input_under_test: str
+    file_ids: List[str]
+    context: Dict[str, Any]
+    llm_output: str
+    metadata: Dict[str, Any]
+    test_id: str
+
+
+def _create_question_answer_set(
+    test_suite_id: str,
+    pairs: List[QuestionAnswerPair],
+    parameters: Dict[str, Any] = {},
+    model_id: str = "",
+):
+    # Define the mutation
+    mutation = gql(
+        """
+    mutation CreateQuestionAnswerSet($testSuiteId: String!, $questionAnswerPairs: [QuestionAnswerPairInputType!]!, $parameters: GenericScalar!, $modelId: String!) {
+        createQuestionAnswerSet(
+            testSuiteId: $testSuiteId,
+            questionAnswerPairs: $questionAnswerPairs,
+            parameters: $parameters,
+            modelId: $modelId
+        ) {
+            questionAnswerSet {
+                id
+            }
+        }
+    }
+    """
+    )
+
+    # Get the GraphQL client
+    client = get_client()
+
+    # Prepare the variables
+    variables = {
+        "testSuiteId": test_suite_id,
+        "questionAnswerPairs": [
+            {
+                "inputUnderTest": pair.input_under_test,
+                "fileIds": pair.file_ids,
+                "context": pair.context,
+                "llmOutput": pair.llm_output,
+                "metadata": pair.metadata,
+                "testId": pair.test_id,
+            }
+            for pair in pairs
+        ],
+        "parameters": parameters,
+        "modelId": model_id,
+    }
+
+    # Execute the mutation
+    result = client.execute(mutation, variable_values=variables)
+
+    # Return the created QuestionAnswerSet ID
+    return result["createQuestionAnswerSet"]["questionAnswerSet"]["id"]

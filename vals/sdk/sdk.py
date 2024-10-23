@@ -12,7 +12,12 @@ from pypdf import PdfReader
 from tqdm import tqdm
 from vals.cli.suite import pull_suite, update_suite
 from vals.sdk.auth import _get_auth_token
-from vals.sdk.run import get_run_url, start_run
+from vals.sdk.run import (
+    QuestionAnswerPair,
+    _create_question_answer_set,
+    get_run_url,
+    start_run,
+)
 from vals.sdk.util import be_host
 
 in_tokens = 0
@@ -127,9 +132,10 @@ def run_evaluations(
     # Kwargs that we shouldn't register as extra parameters
     non_param_kwargs = {}
 
+    qa_pairs = []
     for test in iterator:
-        start = time()
-
+        file_ids = []
+        context = {}
         if uses_files:
             if "file_ids" in test and test["file_ids"] is not None:
                 file_ids = test["file_ids"]
@@ -138,8 +144,7 @@ def run_evaluations(
                 for file_id in file_ids:
                     _, file_name, _ = _parse_file_id(file_id)
                     files[file_name] = _read_file(file_id)
-            else:
-                files = {}
+
             non_param_kwargs["files"] = files
 
         if uses_file_uids:
@@ -151,16 +156,16 @@ def run_evaluations(
 
         if uses_context:
             if "context" in test and test["context"] is not None:
-                non_param_kwargs["context"] = test["context"]
+                context = test["context"]
+                non_param_kwargs["context"] = context
             else:
                 non_param_kwargs["context"] = {}
 
         non_param_kwargs.update(kwargs)
-        fixed_output = generate_fn(test["input_under_test"], **non_param_kwargs)
-        test["fixed_output"] = fixed_output
-
+        start = time()
+        llm_output = generate_fn(test["input_under_test"], **non_param_kwargs)
         end = time()
-        metadata[test["cross_version_id"]] = {
+        metadata = {
             "in_tokens": in_tokens,
             "out_tokens": out_tokens,
             "duration_seconds": end - start,
@@ -168,18 +173,39 @@ def run_evaluations(
         in_tokens = 0
         out_tokens = 0
 
-    update_suite(test_suite_id, suite_data)
+        qa_pairs.append(
+            QuestionAnswerPair(
+                input_under_test=test["input_under_test"],
+                file_ids=file_ids,
+                context=context,
+                llm_output=llm_output,
+                metadata=metadata,
+                # TODO: This may be one version behind.
+                test_id=test["id"],
+            )
+        )
+
+    qa_set_id = _create_question_answer_set(
+        test_suite_id,
+        qa_pairs,
+        model_id=model_under_test,
+        parameters={
+            "description": description,
+            "model_under_test": model_under_test,
+            **kwargs,
+        },
+    )
+    print("QA SET ID", qa_set_id)
 
     run_id = start_run(
         test_suite_id,
         {
-            "use_fixed_output": True,
             "description": description,
             "maximum_threads": maximum_threads,
             "model_under_test": model_under_test,
             **kwargs,
         },
-        metadata_map=metadata,
+        qa_set_id=qa_set_id,
     )
     run_url = get_run_url(run_id)
 
@@ -198,7 +224,7 @@ def _wrap_chatcompletion(func: Callable):
     def wrapper(**kwargs):
         response = func(**kwargs)
         global in_tokens, out_tokens
-
+        print("RESPONSE", response, response.usage)
         in_tokens += response.usage.prompt_tokens
         out_tokens += response.usage.completion_tokens
 
