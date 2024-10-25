@@ -8,7 +8,7 @@
         {
           "operator": "includes",
           "criteria": "C Corporation",
-          "modifiers": [{ "name": "optional" }]
+          "modifiers": { "optional": true }
         },
         {
           "operator": "excludes",
