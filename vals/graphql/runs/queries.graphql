@@ -1,0 +1,9 @@
+query RunParamInfo {
+  runParameterInfo
+}
+
+query RunStatus($runId: String!) {
+  run(runId: $runId) {
+    status
+  }
+}

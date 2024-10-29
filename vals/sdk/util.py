@@ -50,17 +50,6 @@ def get_client():
     return client_
 
 
-def get_ariadne_client() -> AriadneClient:
-    """
-    Use the new codegen-based client
-    """
-
-    return AriadneClient(
-        url=f"{be_host()}/graphql/",
-        headers={"Authorization": _get_auth_token()},
-    )
-
-
 def list_rag_suites():
     query = gql(
         f"""
