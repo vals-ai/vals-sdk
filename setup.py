@@ -12,6 +12,7 @@ setup(
         "attrs",
         "jsonschema",
         "tqdm",
+        # TODO: Remove boto3
         "boto3",
         "requests",
         "aiohttp",
@@ -25,6 +26,10 @@ setup(
     # use_scm_version={"local_scheme": "no-local-version"},
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
+    extras_require={
+        # Requirements only needed for development, not for users
+        "dev": ["ariadne-codegen"],
+    },
     entry_points={
         "console_scripts": [
             "vals = vals.cli.main:cli",

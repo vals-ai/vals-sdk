@@ -2,6 +2,7 @@ import os
 
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
+from vals.graphql_client.client import Client as AriadneClient
 
 from .auth import _get_auth_token, _get_region
 
@@ -38,6 +39,7 @@ def fe_host():
 def get_client():
     # We do not share clients because it kills multithreading, instead we just
     # create a new client each request.
+
     transport = RequestsHTTPTransport(
         url=f"{be_host()}/graphql/",
         headers={"Authorization": _get_auth_token()},
@@ -46,6 +48,17 @@ def get_client():
 
     client_ = Client(transport=transport, fetch_schema_from_transport=True)
     return client_
+
+
+def get_ariadne_client() -> AriadneClient:
+    """
+    Use the new codegen-based client
+    """
+
+    return AriadneClient(
+        url=f"{be_host()}/graphql/",
+        headers={"Authorization": _get_auth_token()},
+    )
 
 
 def list_rag_suites():

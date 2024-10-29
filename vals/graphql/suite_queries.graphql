@@ -1,0 +1,10 @@
+query getTestSuiteData($suiteId: String!) {
+  testSuites(testSuiteId: $suiteId) {
+    description
+    id
+    org
+    title
+    created
+    globalChecks
+  }
+}
