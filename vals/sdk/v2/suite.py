@@ -1,14 +1,10 @@
-import asyncio
 import json
-from datetime import datetime
-from typing import Any, List
 
 from pydantic import BaseModel, PrivateAttr
 from vals.graphql_client.client import Client
-from vals.graphql_client.get_test_data import GetTestDataTests
 from vals.graphql_client.get_test_suites import GetTestSuitesTestSuites
 from vals.sdk.run import _get_default_parameters
-from vals.sdk.v2.run import wait_for_run_completion
+from vals.sdk.v2.run import Run
 from vals.sdk.v2.types import Check, Test
 from vals.sdk.v2.util import get_ariadne_client
 
@@ -36,19 +32,16 @@ class Suite(BaseModel):
         client = get_ariadne_client()
         return (await client.get_test_suites()).test_suites
 
-    async def pull(self) -> None:
+    @classmethod
+    async def from_id(cls, suite_id: str) -> "Suite":
         """
         Updates the local fields to match the suite on the server.
         """
-        if self.id is None:
-            raise Exception("Suite ID is not set for this test suite, can't pull.")
 
-        # TODO: We could do this all lazily and only pull the
-        # actual title, description, etc. when they query the fields.
-
-        suites_list = await self._client.get_test_suite_data(self.id)
+        client = get_ariadne_client()
+        suites_list = await client.get_test_suite_data(suite_id)
         if len(suites_list.test_suites) == 0:
-            raise Exception("Couldn't find suite with id: " + self.id)
+            raise Exception("Couldn't find suite with id: " + suite_id)
 
         suite_data = suites_list.test_suites[0]
         title = suite_data.title
@@ -60,7 +53,7 @@ class Suite(BaseModel):
                 for check in json.loads(suite_data.global_checks)
             ]
 
-        test_data = await self._client.get_test_data(self.suite_id)
+        test_data = await client.get_test_data(suite_id)
 
         tests = []
         for graphql_test in test_data.tests:
@@ -116,10 +109,18 @@ class Suite(BaseModel):
         Deletes the test suite from the server.
         """
         # TODO: We don't want to have them pull
+        if self.id is None:
+            raise Exception(
+                "This suite has not been created yet, so there's nothing to delete"
+            )
 
         await self._client.delete_test_suite(self.id)
 
     async def update(self) -> None:
+        if self.id is None:
+            raise Exception(
+                "This suite has not been created yet, so there's nothing to update"
+            )
 
         suite = await self._client.create_or_update_test_suite(
             self.id, self.title, self.description
@@ -148,8 +149,11 @@ class Suite(BaseModel):
         model_under_test: str = "gpt-4o",
         description: str = "Ran with PRL SDK.",
         wait_for_completion: bool = False,
-    ) -> str:
-        # TODO: Return a run object instead of just the ID.
+    ) -> Run:
+        if self.id is None:
+            raise Exception(
+                "This suite has not been created yet, so there's nothing to update"
+            )
         # TODO: Include a qa set id optionally.
         _default_parameters = _get_default_parameters()
         parameters = {**_default_parameters, **parameters}
@@ -158,7 +162,13 @@ class Suite(BaseModel):
 
         response = await self._client.start_run(self.id, parameters)
 
-        if wait_for_completion:
-            await wait_for_run_completion(response.start_run.run_id)
+        run_id = response.start_run.run_id
 
-        return response.start_run.run_id
+        run = await Run.from_id(run_id)
+
+        if wait_for_completion:
+            await run.wait_for_run_completion()
+
+        await run.pull()
+
+        return run

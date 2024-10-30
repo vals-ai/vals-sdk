@@ -6,7 +6,6 @@ from typing import Any, List, Optional
 from pydantic import Field
 
 from .base_model import BaseModel
-from .enums import ExampleType
 
 
 class GetTestData(BaseModel):
@@ -15,7 +14,6 @@ class GetTestData(BaseModel):
 
 class GetTestDataTests(BaseModel):
     checks: Any
-    typed_checks: List["GetTestDataTestsTypedChecks"] = Field(alias="typedChecks")
     test_id: str = Field(alias="testId")
     cross_version_id: str = Field(alias="crossVersionId")
     file_ids: Any = Field(alias="fileIds")
@@ -25,31 +23,4 @@ class GetTestDataTests(BaseModel):
     golden_output: str = Field(alias="goldenOutput")
 
 
-class GetTestDataTestsTypedChecks(BaseModel):
-    operator: str
-    criteria: str
-    modifiers: "GetTestDataTestsTypedChecksModifiers"
-
-
-class GetTestDataTestsTypedChecksModifiers(BaseModel):
-    optional: bool
-    severity: float
-    extractor: str
-    examples: List["GetTestDataTestsTypedChecksModifiersExamples"]
-    conditional: "GetTestDataTestsTypedChecksModifiersConditional"
-
-
-class GetTestDataTestsTypedChecksModifiersExamples(BaseModel):
-    type: ExampleType
-    text: str
-
-
-class GetTestDataTestsTypedChecksModifiersConditional(BaseModel):
-    operator: str
-    criteria: str
-
-
 GetTestData.model_rebuild()
-GetTestDataTests.model_rebuild()
-GetTestDataTestsTypedChecks.model_rebuild()
-GetTestDataTestsTypedChecksModifiers.model_rebuild()

@@ -11,6 +11,7 @@ from typing import Any, Literal
 from pydantic import BaseModel
 from vals.graphql_client.get_test_data import GetTestDataTests
 from vals.graphql_client.input_types import TestMutationInfo
+from vals.graphql_client.pull_run import PullRunTestResults
 
 
 class Example(BaseModel):
@@ -117,4 +118,46 @@ class Test(BaseModel):
             context=json.dumps(self.context),
             golden_output=self.golden_output,
             file_ids=self.file_ids,
+        )
+
+
+class CheckResult(BaseModel):
+    operator: str
+    criteria: str
+    severity: float
+    modifiers: CheckModifiers
+    auto_eval: int
+    feedback: str
+    is_global: bool
+
+
+class Metadata(BaseModel):
+    in_tokens: int
+    out_tokens: int
+    duration_seconds: float
+
+
+class TestResult(BaseModel):
+    id: str
+    input_under_test: str
+    llm_output: str
+    pass_percentage: float
+    pass_percentage_with_optional: float
+    check_results: list[CheckResult]
+    metadata: Metadata
+
+    @classmethod
+    def from_graphql(cls, graphql_test_result: PullRunTestResults) -> "TestResult":
+        # TODO: Map this better
+        return cls(
+            id=graphql_test_result.id,
+            input_under_test=graphql_test_result.test.input_under_test,
+            llm_output=graphql_test_result.llm_output,
+            pass_percentage=graphql_test_result.pass_percentage,
+            pass_percentage_with_optional=graphql_test_result.pass_percentage_with_optional,
+            check_results=[
+                CheckResult(**check_result)
+                for check_result in json.loads(graphql_test_result.result_json)
+            ],
+            metadata=Metadata(**json.loads(graphql_test_result.metadata)),
         )

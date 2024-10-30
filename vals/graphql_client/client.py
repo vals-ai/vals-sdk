@@ -12,6 +12,8 @@ from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites import GetTestSuites
 from .input_types import TestMutationInfo
+from .list_runs import ListRuns
+from .pull_run import PullRun
 from .remove_old_tests import RemoveOldTests
 from .run_param_info import RunParamInfo
 from .run_status import RunStatus
@@ -86,6 +88,81 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return RunStatus.model_validate(data)
+
+    async def pull_run(self, run_id: str, **kwargs: Any) -> PullRun:
+        query = gql(
+            """
+            query PullRun($runId: String!) {
+              run(runId: $runId) {
+                runId
+                passPercentage
+                status
+                runId
+                textSummary
+                timestamp
+                completedAt
+                archived
+                parameters
+                testSuite {
+                  title
+                }
+              }
+              testResults(runId: $runId) {
+                id
+                llmOutput
+                passPercentage
+                passPercentageWithOptional
+                resultJson
+                humanEval
+                humanFeedback
+                test {
+                  testId
+                  inputUnderTest
+                }
+                metadata
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"runId": run_id}
+        response = await self.execute(
+            query=query, operation_name="PullRun", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return PullRun.model_validate(data)
+
+    async def list_runs(
+        self,
+        archived: Union[Optional[bool], UnsetType] = UNSET,
+        suite_id: Union[Optional[str], UnsetType] = UNSET,
+        **kwargs: Any
+    ) -> ListRuns:
+        query = gql(
+            """
+            query ListRuns($archived: Boolean, $suiteId: String) {
+              runs(archived: $archived, suiteId: $suiteId) {
+                runId
+                passPercentage
+                status
+                runId
+                textSummary
+                timestamp
+                completedAt
+                archived
+                parameters
+                testSuite {
+                  title
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"archived": archived, "suiteId": suite_id}
+        response = await self.execute(
+            query=query, operation_name="ListRuns", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return ListRuns.model_validate(data)
 
     async def create_or_update_test_suite(
         self, test_suite_id: str, title: str, description: str, **kwargs: Any
@@ -239,23 +316,6 @@ class Client(AsyncBaseClient):
             query getTestData($suiteId: String!) {
               tests(testSuiteId: $suiteId) {
                 checks
-                typedChecks {
-                  operator
-                  criteria
-                  modifiers {
-                    optional
-                    severity
-                    extractor
-                    examples {
-                      type
-                      text
-                    }
-                    conditional {
-                      operator
-                      criteria
-                    }
-                  }
-                }
                 testId
                 crossVersionId
                 fileIds
