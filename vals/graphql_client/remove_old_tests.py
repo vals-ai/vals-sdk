@@ -15,7 +15,7 @@ class RemoveOldTests(BaseModel):
 
 
 class RemoveOldTestsRemoveUnusedTests(BaseModel):
-    success: Optional[bool]
+    success: bool
 
 
 RemoveOldTests.model_rebuild()

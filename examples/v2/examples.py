@@ -30,6 +30,22 @@ async def create_suite():
     await suite.update()
 
 
+async def create_suite_with_files():
+    # Try creating a new suite.
+    suite = Suite(
+        title="Test Suite",
+        global_checks=[Check(operator="grammar")],
+        tests=[
+            Test(
+                input_under_test="What is the MFN clause?",
+                files_under_test=["examples/data_files/postmoney_safe.docx"],
+                checks=[Check(operator="equals", criteria="QSBS")],
+            ),
+        ],
+    )
+    await suite.create()
+
+
 async def pull_suite():
     """
     Example of pulling a suite that already exists.
@@ -84,4 +100,4 @@ async def run_examples():
 
 
 if __name__ == "__main__":
-    asyncio.run(run_examples())
+    asyncio.run(create_suite_with_files())

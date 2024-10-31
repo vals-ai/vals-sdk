@@ -15,7 +15,7 @@ class UpdateGlobalChecks(BaseModel):
 
 
 class UpdateGlobalChecksUpdateGlobalChecks(BaseModel):
-    success: Optional[bool]
+    success: bool
 
 
 UpdateGlobalChecks.model_rebuild()

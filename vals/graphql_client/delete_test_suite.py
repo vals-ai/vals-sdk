@@ -13,7 +13,7 @@ class DeleteTestSuite(BaseModel):
 
 
 class DeleteTestSuiteDeleteSuite(BaseModel):
-    success: Optional[bool]
+    success: bool
 
 
 DeleteTestSuite.model_rebuild()

@@ -10,7 +10,7 @@ from .base_model import BaseModel
 
 class PullRun(BaseModel):
     run: "PullRunRun"
-    test_results: List[Optional["PullRunTestResults"]] = Field(alias="testResults")
+    test_results: List["PullRunTestResults"] = Field(alias="testResults")
 
 
 class PullRunRun(BaseModel):

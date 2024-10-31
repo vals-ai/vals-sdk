@@ -6,7 +6,7 @@ from typing import Any, List, Optional
 from pydantic import Field
 
 from .base_model import BaseModel
-from .enums import ExampleType, SortOrder, TestSuiteSortField
+from .enums import SortOrder, TestSuiteSortField
 
 
 class FilterOptionsInput(BaseModel):
@@ -42,25 +42,7 @@ class PerCheckHumanReviewInputType(BaseModel):
 class CheckInputType(BaseModel):
     operator: str
     criteria: str
-    modifiers: "ModifiersInputType"
-
-
-class ModifiersInputType(BaseModel):
-    optional: bool
-    severity: float
-    extractor: str
-    conditional: "ConditionalCheckInputType"
-    examples: List["ExampleInputType"]
-
-
-class ConditionalCheckInputType(BaseModel):
-    operator: str
-    criteria: str
-
-
-class ExampleInputType(BaseModel):
-    type: ExampleType
-    text: str
+    modifiers: Any
 
 
 class FixedOutputInputType(BaseModel):
@@ -83,6 +65,4 @@ class MetadataType(BaseModel):
     duration_seconds: float = Field(alias="durationSeconds")
 
 
-CheckInputType.model_rebuild()
-ModifiersInputType.model_rebuild()
 QuestionAnswerPairInputType.model_rebuild()

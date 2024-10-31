@@ -9,7 +9,7 @@ from .base_model import BaseModel
 
 
 class ListRuns(BaseModel):
-    runs: List[Optional["ListRunsRuns"]]
+    runs: List["ListRunsRuns"]
 
 
 class ListRunsRuns(BaseModel):

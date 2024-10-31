@@ -8,7 +8,7 @@ from gql import gql
 from jsonschema import ValidationError, validate
 from vals.sdk.auth import _get_auth_token
 from vals.sdk.exceptions import ValsException
-from vals.sdk.util import SUITE_SCHEMA_PATH, be_host, get_ariadne_client, get_client
+from vals.sdk.util import SUITE_SCHEMA_PATH, be_host, get_client
 
 OPERATORS = [
     "includes",
@@ -145,11 +145,29 @@ def pull_suite(suite_id: str, include_id=False):
     Get the JSON representation of a given test suite.
     """
     output = {}
+    query = gql(
+        f"""
+        query getTestSuiteData {{
+            testSuites(testSuiteId: "{suite_id}") {{
+                description
+                id
+                org
+                title
+                created
+                globalChecks
+            }}
+        }}
+    """
+    )
 
-    suite_data = asyncio.run(get_ariadne_client().get_test_suite_data(suite_id))
+    response = get_client().execute(query)
 
-    output["title"] = suite_data.test_suites[0].title
-    output["description"] = suite_data.test_suites[0].description
+    if len(response["testSuites"]) == 0:
+        raise Exception(f"Unable to find test suite with id: {suite_id}")
+
+    suite = response["testSuites"][0]
+    output["title"] = suite["title"]
+    output["description"] = suite["description"]
 
     query = gql(
         f"""
@@ -269,8 +287,9 @@ def _validate_suite(parsed_json):
         _validate_checks(test["checks"])
 
 
-def _upload_file(suite_id: str, file_path: str) -> str:
+async def _upload_file(suite_id: str, file_path: str) -> str:
     with open(file_path, "rb") as f:
+        # TODO: Make this actually async
         response = requests.post(
             f"{be_host()}/upload_file/?test_suite_id={suite_id}",
             files={"file": f},

@@ -15,7 +15,7 @@ class CreateOrUpdateTestSuite(BaseModel):
 
 
 class CreateOrUpdateTestSuiteUpdateTestSuite(BaseModel):
-    test_suite: Optional["CreateOrUpdateTestSuiteUpdateTestSuiteTestSuite"] = Field(
+    test_suite: "CreateOrUpdateTestSuiteUpdateTestSuiteTestSuite" = Field(
         alias="testSuite"
     )
 

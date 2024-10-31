@@ -15,7 +15,7 @@ class AddBatchTests(BaseModel):
 
 
 class AddBatchTestsBatchUpdateTest(BaseModel):
-    tests: Optional[List[Optional["AddBatchTestsBatchUpdateTestTests"]]]
+    tests: List["AddBatchTestsBatchUpdateTestTests"]
 
 
 class AddBatchTestsBatchUpdateTestTests(BaseModel):

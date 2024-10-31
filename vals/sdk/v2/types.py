@@ -87,7 +87,9 @@ class Test(BaseModel):
     tags: list[str] = []
     context: dict[str, Any] = {}
     file_ids: list[str] = []
-    file_paths: list[str] = []
+    """This is the *internal* representation of a file, as stored on the server."""
+    files_under_test: list[str] = []
+    """This is what the user should specify on their local machine"""
 
     @classmethod
     def from_graphql_test(cls, graphql_test: GetTestDataTests) -> "Test":
@@ -107,6 +109,7 @@ class Test(BaseModel):
 
     def to_test_mutation_info(self, test_suite_id: str) -> TestMutationInfo:
         """Internal method to translate from the Test class to the TestMutationInfo class."""
+
         return TestMutationInfo(
             test_suite_id=test_suite_id,
             test_id=self.id,

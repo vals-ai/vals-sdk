@@ -16,11 +16,6 @@ class AppQuestionAnswerSetStatusChoices(str, Enum):
     SUCCESS = "SUCCESS"
 
 
-class ExampleType(str, Enum):
-    positive = "positive"
-    negative = "negative"
-
-
 class TestSuiteSortField(str, Enum):
     TITLE = "TITLE"
     CREATED = "CREATED"
