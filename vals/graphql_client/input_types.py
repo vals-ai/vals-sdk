@@ -6,7 +6,7 @@ from typing import Any, List, Optional
 from pydantic import Field
 
 from .base_model import BaseModel
-from .enums import SortOrder, TestSuiteSortField
+from .enums import RunResultSortField, RunStatus, SortOrder, TestSuiteSortField
 
 
 class FilterOptionsInput(BaseModel):
@@ -16,6 +16,17 @@ class FilterOptionsInput(BaseModel):
     folder_id: Optional[str] = Field(alias="folderId", default=None)
     test_suite_id: Optional[str] = Field(alias="testSuiteId", default=None)
     sort_by: Optional[TestSuiteSortField] = Field(alias="sortBy", default=None)
+    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+
+
+class RunResultFilterOptionsInput(BaseModel):
+    limit: Optional[int] = None
+    offset: Optional[int] = None
+    search: Optional[str] = None
+    status: Optional[RunStatus] = None
+    archived: Optional[bool] = None
+    suite_id: Optional[str] = Field(alias="suiteId", default=None)
+    sort_by: Optional[RunResultSortField] = Field(alias="sortBy", default=None)
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
 
 

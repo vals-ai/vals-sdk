@@ -27,7 +27,7 @@ def md5_hash(file) -> str:
 
 
 def parse_file_id(file_id: str) -> tuple[str, str, str, str | None]:
-    if len(file_id) >= 37 and file_id[-37] == ";" and file_id.count("/") != 3:
+    if len(file_id) >= 37 and file_id[-37] == ";":
         # This is a heuristic to check if we are in the old file id regime.
         # I checked and all previously uploaded files should match this
         # Counting the number of slashes ensures that it's not a new file id, that
@@ -37,14 +37,14 @@ def parse_file_id(file_id: str) -> tuple[str, str, str, str | None]:
         return org, test_suite_id, filename, None
 
     tokens = file_id.split("/")
-    if len(tokens) != 3:
+    if len(tokens) != 2:
         raise Exception(f"Improperly formatted file_id: {file_id}")
 
-    org, test_suite_id, filename_with_hash = tokens
+    org, filename_with_hash = tokens
 
     hash, filename = filename_with_hash.split("-", 1)
 
     if len(hash) != 32:
         raise Exception(f"Improperly formatted file_id: {file_id}")
 
-    return org, test_suite_id, filename, hash
+    return org, filename, hash

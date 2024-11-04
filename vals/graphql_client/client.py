@@ -7,11 +7,12 @@ from .add_batch_tests import AddBatchTests
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType
 from .create_or_update_test_suite import CreateOrUpdateTestSuite
+from .create_question_answer_set import CreateQuestionAnswerSet
 from .delete_test_suite import DeleteTestSuite
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites import GetTestSuites
-from .input_types import TestMutationInfo
+from .input_types import QuestionAnswerPairInputType, TestMutationInfo
 from .list_runs import ListRuns
 from .pull_run import PullRun
 from .remove_old_tests import RemoveOldTests
@@ -26,20 +27,61 @@ def gql(q: str) -> str:
 
 
 class Client(AsyncBaseClient):
+    async def create_question_answer_set(
+        self,
+        test_suite_id: str,
+        question_answer_pairs: List[QuestionAnswerPairInputType],
+        parameters: Any,
+        model_id: str,
+        **kwargs: Any
+    ) -> CreateQuestionAnswerSet:
+        query = gql(
+            """
+            mutation CreateQuestionAnswerSet($testSuiteId: String!, $questionAnswerPairs: [QuestionAnswerPairInputType!]!, $parameters: GenericScalar!, $modelId: String!) {
+              createQuestionAnswerSet(
+                testSuiteId: $testSuiteId
+                questionAnswerPairs: $questionAnswerPairs
+                parameters: $parameters
+                modelId: $modelId
+              ) {
+                questionAnswerSet {
+                  id
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {
+            "testSuiteId": test_suite_id,
+            "questionAnswerPairs": question_answer_pairs,
+            "parameters": parameters,
+            "modelId": model_id,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="CreateQuestionAnswerSet",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return CreateQuestionAnswerSet.model_validate(data)
+
     async def start_run(
         self,
         test_suite_id: str,
         parameters: Any,
         qa_set_id: Union[Optional[str], UnsetType] = UNSET,
+        run_name: Union[Optional[str], UnsetType] = UNSET,
         **kwargs: Any
     ) -> StartRun:
         query = gql(
             """
-            mutation startRun($test_suite_id: String!, $parameters: GenericScalar!, $qa_set_id: String = null) {
+            mutation startRun($test_suite_id: String!, $parameters: GenericScalar!, $qa_set_id: String = null, $run_name: String = null) {
               startRun(
                 testSuiteId: $test_suite_id
                 parameters: $parameters
                 qaSetId: $qa_set_id
+                runName: $run_name
               ) {
                 runId
               }
@@ -50,6 +92,7 @@ class Client(AsyncBaseClient):
             "test_suite_id": test_suite_id,
             "parameters": parameters,
             "qa_set_id": qa_set_id,
+            "run_name": run_name,
         }
         response = await self.execute(
             query=query, operation_name="startRun", variables=variables, **kwargs

@@ -25,3 +25,17 @@ class TestSuiteSortField(str, Enum):
 class SortOrder(str, Enum):
     ASC = "ASC"
     DESC = "DESC"
+
+
+class RunStatus(str, Enum):
+    IN_PROGRESS = "IN_PROGRESS"
+    ERROR = "ERROR"
+    SUCCESS = "SUCCESS"
+    ALL = "ALL"
+
+
+class RunResultSortField(str, Enum):
+    NAME = "NAME"
+    STARTED_AT = "STARTED_AT"
+    COMPLETED_AT = "COMPLETED_AT"
+    PASS_PERCENTAGE = "PASS_PERCENTAGE"

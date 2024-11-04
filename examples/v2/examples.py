@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from vals.sdk.v2.suite import Check, Suite, Test
 
@@ -46,6 +47,29 @@ async def create_suite_with_files():
     await suite.create()
 
 
+async def run_with_function():
+    suite = Suite(
+        title="Test Suite",
+        global_checks=[Check(operator="grammar")],
+        tests=[
+            Test(
+                input_under_test="What is QSBS?",
+                checks=[Check(operator="equals", criteria="QSBS")],
+            ),
+            Test(
+                input_under_test="What is an 83 election?",
+                checks=[Check(operator="equals", criteria="QSBS")],
+            ),
+        ],
+    )
+    await suite.create()
+
+    def function(input_under_test: str) -> str:
+        return input_under_test + "!!!"
+
+    await suite.run(model_under_test="gpt-4o-mini", model_function=function)
+
+
 async def pull_suite():
     """
     Example of pulling a suite that already exists.
@@ -58,6 +82,13 @@ async def pull_suite():
     # Can update the suite and push it back up to the server.
     suite.title = suite.title + " - UPDATED"
     await suite.update()
+
+
+async def load_from_json():
+    with open("examples/example_suites/example_suite.json") as f:
+        suite = await Suite.from_json(json.load(f))
+        await suite.create()
+        print(suite)
 
 
 async def run_examples():
@@ -100,4 +131,4 @@ async def run_examples():
 
 
 if __name__ == "__main__":
-    asyncio.run(create_suite_with_files())
+    asyncio.run(load_from_json())

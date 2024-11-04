@@ -1,14 +1,28 @@
+import inspect
 import json
 import os
+from io import BytesIO
+from time import time
+from typing import Any, Callable, Optional
 
 from pydantic import BaseModel, PrivateAttr
+from tqdm import tqdm
 from vals.graphql_client.client import Client
 from vals.graphql_client.get_test_suites import GetTestSuitesTestSuites
+from vals.graphql_client.input_types import MetadataType, QuestionAnswerPairInputType
 from vals.sdk.run import _get_default_parameters
-from vals.sdk.suite import _upload_file
+from vals.sdk.suite import _upload_file, _validate_suite
 from vals.sdk.v2.run import Run
 from vals.sdk.v2.types import Check, Test
 from vals.sdk.v2.util import get_ariadne_client, md5_hash, parse_file_id
+
+SimpleModelFunctionType = Callable[[str], str]
+ModelFunctionWithFilesAndContextType = Callable[
+    [str, list[BytesIO], dict[str, Any]], str
+]
+ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType
+
+from vals.sdk.v2 import patch
 
 
 class Suite(BaseModel):
@@ -147,24 +161,96 @@ class Suite(BaseModel):
             self.id, [test.test_id for test in updated_tests]
         )
 
+    async def _create_qa_set(
+        self,
+        model_function: ModelFunctionType,
+        parameters: dict[str, int | float | str | bool] = {},
+        model_under_test: str | None = None,
+    ) -> str | None:
+        """
+        Creates a QA set for this test suite using the provided model function.
+        """
+        if self.id is None:
+            raise Exception(
+                "This suite has not been created yet, so we can't create a QA set from it."
+            )
+        # Pull latest suite data to ensure we're up to date
+        updated_suite = await Suite.from_id(self.id)
+        # Update all fields from the updated suite
+        for field in self.__fields__:
+            setattr(self, field, getattr(updated_suite, field))
+
+        # Inspect the model function to determine if it takes 1 or 3 parameters
+        sig = inspect.signature(model_function)
+        num_params = len(sig.parameters)
+        if num_params not in [1, 3]:
+            raise ValueError("Model function must accept either 1 or 3 parameters")
+        is_simple_model_function = num_params == 1
+
+        qa_pairs: list[QuestionAnswerPairInputType] = []
+        for test in tqdm(self.tests):
+            time_start = time()
+
+            in_tokens_start = patch.in_tokens
+            out_tokens_start = patch.out_tokens
+            if is_simple_model_function:
+                llm_output = model_function(test.input_under_test)  # type: ignore
+            else:
+                llm_output = model_function(test.input, test.files_under_test, test.context)  # type: ignore
+            time_end = time()
+            in_tokens_end = patch.in_tokens
+            out_tokens_end = patch.out_tokens
+
+            qa_pairs.append(
+                QuestionAnswerPairInputType(
+                    input_under_test=test.input_under_test,
+                    file_ids=test.file_ids,
+                    context=test.context,
+                    llm_output=llm_output,
+                    metadata=MetadataType(
+                        in_tokens=in_tokens_end - in_tokens_start,
+                        out_tokens=out_tokens_end - out_tokens_start,
+                        duration_seconds=time_end - time_start,
+                    ),
+                    test_id=test.id,
+                )
+            )
+
+        response = await self._client.create_question_answer_set(
+            self.id,
+            qa_pairs,
+            parameters,
+            model_under_test or "sdk",
+        )
+
+        return response.create_question_answer_set.question_answer_set.id
+
     async def run(
         self,
         parameters: dict[str, int | float | str | bool] = {},
         model_under_test: str = "gpt-4o",
-        description: str = "Ran with PRL SDK.",
+        model_function: ModelFunctionType | None = None,
+        run_name: str | None = None,
         wait_for_completion: bool = False,
     ) -> Run:
         if self.id is None:
             raise Exception(
-                "This suite has not been created yet, so there's nothing to update"
+                "This suite has not been created yet. Do suite.create() before calling suite.run()"
             )
         # TODO: Include a qa set id optionally.
         _default_parameters = _get_default_parameters()
         parameters = {**_default_parameters, **parameters}
-        parameters["description"] = description
         parameters["model_under_test"] = model_under_test
 
-        response = await self._client.start_run(self.id, parameters)
+        qa_set_id = None
+        if model_function is not None:
+            qa_set_id = await self._create_qa_set(
+                model_function, parameters, model_under_test
+            )
+
+        response = await self._client.start_run(
+            self.id, parameters, qa_set_id, run_name
+        )
 
         run_id = response.start_run.run_id
 
@@ -188,7 +274,7 @@ class Suite(BaseModel):
         for test in self.tests:
             if len(test.file_ids) != 0:
                 for file_id in test.file_ids:
-                    _, name, _hash, _ = parse_file_id(file_id)
+                    _, name, _hash = parse_file_id(file_id)
                     file_name_and_hash_to_file_id[(name, _hash)] = file_id
 
         # Next, for files we haven't uploaded yet, we upload them
@@ -219,3 +305,32 @@ class Suite(BaseModel):
                 # Main downside of this approach is that we can only overwrite files
                 # we can't add or remove just one file.
                 test.file_ids = file_ids
+
+    @classmethod
+    async def from_json(cls, json_data: dict[str, Any]) -> "Suite":
+        _validate_suite(json_data)
+
+        title = json_data["title"]
+        description = json_data["description"]
+        global_checks = [
+            Check.from_graphql(check_dict)
+            for check_dict in json_data.get("global_checks", [])
+        ]
+        tests = [
+            Test(
+                input_under_test=test["input_under_test"],
+                checks=[
+                    Check.from_graphql(check_dict) for check_dict in test["checks"]
+                ],
+                golden_output=test.get("golden_output", ""),
+                tags=test.get("tags", []),
+                files_under_test=test.get("files_under_test", []),
+            )
+            for test in json_data["tests"]
+        ]
+        return cls(
+            title=title,
+            description=description,
+            global_checks=global_checks,
+            tests=tests,
+        )
