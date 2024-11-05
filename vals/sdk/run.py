@@ -299,7 +299,7 @@ class QuestionAnswerPair:
     context: Dict[str, Any]
     llm_output: str
     metadata: Metadata
-    test_id: str
+    test_id: str | None
 
 
 def _create_question_answer_set(
