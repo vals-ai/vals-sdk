@@ -137,7 +137,7 @@ def run_evaluations(
 
                 files = {}
                 for file_id in file_ids:
-                    _, file_name, _ = _parse_file_id(file_id)
+                    _, file_name, _ = parse_file_id(file_id)
                     files[file_name] = _read_file(file_id)
 
             non_param_kwargs["files"] = files

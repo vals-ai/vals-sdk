@@ -1,4 +1,3 @@
-import asyncio
 import json
 import os
 from typing import Any, Dict, List
@@ -287,9 +286,8 @@ def _validate_suite(parsed_json):
         _validate_checks(test["checks"])
 
 
-async def _upload_file(suite_id: str, file_path: str) -> str:
+def _upload_file(suite_id: str, file_path: str) -> str:
     with open(file_path, "rb") as f:
-        # TODO: Make this actually async
         response = requests.post(
             f"{be_host()}/upload_file/?test_suite_id={suite_id}",
             files={"file": f},

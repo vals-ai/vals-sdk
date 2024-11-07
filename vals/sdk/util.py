@@ -2,7 +2,6 @@ import os
 
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
-from vals.graphql_client.client import Client as AriadneClient
 
 from .auth import _get_auth_token, _get_region
 
