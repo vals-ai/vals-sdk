@@ -1,7 +1,20 @@
+"""
+Set of examples on how to use the Suite class.
+
+Note: The file paths assume this is run from the `examples/` directory.
+"""
+
 import asyncio
 import json
 
 from vals.sdk.v2.suite import Check, Suite, Test
+
+
+async def list_suites():
+    """List all suites."""
+    suites = await Suite.list_suites()
+    for suite in suites:
+        print(f"Suite: {suite.title}")
 
 
 async def create_suite():
@@ -74,7 +87,7 @@ async def pull_suite():
     Example of pulling a suite that already exists.
     """
     # TODO: Replace this with your own suite id.
-    suite = await Suite.from_id("79479ea0-5aed-4ff4-9545-6099bdf446f3")
+    suite = await Suite.from_id("5fbe9bea-c0ab-405c-9570-49c440eb9886")
 
     print(f"Pulling: Suite Title: {suite.title}")
     print(f"Global Checks: {suite.global_checks}")
@@ -86,13 +99,12 @@ async def pull_suite():
 
 async def load_from_json():
     """Create a suite from a json file."""
-    with open("example_suites/example_suite.json") as f:
-        suite = await Suite.from_json(json.load(f))
-        await suite.create()
+    suite = await Suite.from_json_file("example_suites/example_suite.json")
     print(f"Loaded from JSON: {suite}")
 
 
 async def all():
+    await list_suites()
     await create_suite()
     await create_suite_with_files()
     await update_suite()

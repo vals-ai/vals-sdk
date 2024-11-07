@@ -9,6 +9,7 @@ from .base_model import UNSET, UnsetType
 from .create_or_update_test_suite import CreateOrUpdateTestSuite
 from .create_question_answer_set import CreateQuestionAnswerSet
 from .delete_test_suite import DeleteTestSuite
+from .get_operators import GetOperators
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites_with_count import GetTestSuitesWithCount
@@ -250,7 +251,14 @@ class Client(AsyncBaseClient):
             mutation addBatchTests($tests: [TestMutationInfo!]!, $createOnly: Boolean!) {
               batchUpdateTest(tests: $tests, createOnly: $createOnly) {
                 tests {
+                  checks
                   testId
+                  crossVersionId
+                  fileIds
+                  inputUnderTest
+                  tags
+                  context
+                  goldenOutput
                 }
               }
             }
@@ -408,3 +416,21 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return GetTestSuitesWithCount.model_validate(data)
+
+    async def get_operators(self, **kwargs: Any) -> GetOperators:
+        query = gql(
+            """
+            query getOperators {
+              operators {
+                nameInDoc
+                isUnary
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {}
+        response = await self.execute(
+            query=query, operation_name="getOperators", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return GetOperators.model_validate(data)

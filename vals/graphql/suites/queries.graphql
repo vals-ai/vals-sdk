@@ -42,7 +42,7 @@ query getTestSuitesWithCount {
 
 query getOperators {
   operators {
-    name
+    nameInDoc
     isUnary
   }
 }

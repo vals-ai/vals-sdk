@@ -34,6 +34,7 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQLClientInvalidResponseError,
 )
+from .get_operators import GetOperators, GetOperatorsOperators
 from .get_test_data import GetTestData, GetTestDataTests
 from .get_test_suite_data import GetTestSuiteData, GetTestSuiteDataTestSuites
 from .get_test_suites_with_count import (
@@ -89,6 +90,8 @@ __all__ = [
     "DeleteTestSuiteDeleteSuite",
     "FilterOptionsInput",
     "FixedOutputInputType",
+    "GetOperators",
+    "GetOperatorsOperators",
     "GetTestData",
     "GetTestDataTests",
     "GetTestSuiteData",

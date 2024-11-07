@@ -116,7 +116,7 @@ class Suite(BaseModel):
         """
         with open(file_path, "r") as f:
             data = json.load(f)
-        return cls.from_dict(data)
+        return await cls.from_dict(data)
 
     async def create(self) -> None:
         """
@@ -166,9 +166,7 @@ class Suite(BaseModel):
         await self._upload_tests(create_only=False)
 
         # Remove any tests that are no longer used after the update.
-        await self._client.remove_old_tests(
-            self.id, [test.test_id for test in self.tests]
-        )
+        await self._client.remove_old_tests(self.id, [test.id for test in self.tests])
 
     async def run(
         self,
@@ -244,15 +242,13 @@ class Suite(BaseModel):
         # First, we populate the dictionary of files that have already been uploaded
         # for this test suite.
         for test in self.tests:
-            if len(test.file_ids) != 0:
-                for file_id in test.file_ids:
-                    _, name, _hash = parse_file_id(file_id)
-                    file_name_and_hash_to_file_id[(name, _hash)] = file_id
+            for file_id in test._file_ids:
+                _, name, _hash = parse_file_id(file_id)
+                file_name_and_hash_to_file_id[(name, _hash)] = file_id
 
         # Next, for files we haven't uploaded yet, we upload them
         # and add them to the dictionary
         for test in self.tests:
-            # If they haven't specified any local files, we don't need to do anything
             if len(test.files_under_test) != 0:
                 file_ids = []
                 for file_path in test.files_under_test:
@@ -269,14 +265,13 @@ class Suite(BaseModel):
                     if name_hash_tuple not in file_name_and_hash_to_file_id:
                         file_id = await _upload_file(self.id, file_path)
                         file_name_and_hash_to_file_id[name_hash_tuple] = file_id
-                        print("Uploaded file: ", file_id)
 
                     # Either way, we add the file id to the test.
                     file_ids.append(file_name_and_hash_to_file_id[name_hash_tuple])
 
                 # Main downside of this approach is that we can only overwrite files
                 # we can't add or remove just one file.
-                test.file_ids = file_ids
+                test._file_ids = file_ids
 
     async def _upload_tests(self, create_only: bool = True) -> None:
         """
@@ -291,22 +286,24 @@ class Suite(BaseModel):
                 tests=batch,
                 create_only=create_only,
             )
-            created_tests.extend(batch_result.batch_create_test.tests)
+            created_tests.extend(batch_result.batch_update_test.tests)
 
         # Update the local suite with the new tests to ensure everything is in sync.
-        self.tests = [
-            Test.from_graphql_test(test)
-            for test in created_tests.batch_create_test.tests
-        ]
+        self.tests = [Test.from_graphql_test(test) for test in created_tests]
 
     async def _validate_tests(self) -> None:
         """Helper method to ensure that all operator strings are correct."""
-        operators = await self._client.get_operators()
+        operators = (await self._client.get_operators()).operators
+        operators_dict = {
+            op.name_in_doc: op for op in operators
+        }  # Easy lookup by name.
+
         for test in self.tests:
             for check in test.checks:
-                if check.operator not in operators:
+                if check.operator not in operators_dict:
                     raise ValueError(f"Invalid operator: {check.operator}")
-                if check.operator.is_unary and (
+                operator = operators_dict[check.operator]
+                if operator.is_unary and (
                     check.criteria is None or check.criteria == ""
                 ):
                     raise ValueError(

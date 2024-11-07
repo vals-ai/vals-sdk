@@ -20,7 +20,14 @@ mutation createOrUpdateTestSuite(
 mutation addBatchTests($tests: [TestMutationInfo!]!, $createOnly: Boolean!) {
   batchUpdateTest(tests: $tests, createOnly: $createOnly) {
     tests {
+      checks
       testId
+      crossVersionId
+      fileIds
+      inputUnderTest
+      tags
+      context
+      goldenOutput
     }
   }
 }

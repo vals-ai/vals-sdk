@@ -37,13 +37,12 @@ class TestSuiteMetadata(BaseModel):
     id: str
     title: str
     description: str
-    folder_id: str
     created: datetime.datetime
     creator: str
     last_modified_by: str
     last_modified_at: datetime.datetime
-    folder_id: str
-    folder_name: str
+    folder_id: str | None
+    folder_name: str | None
 
     # TODO: Often, in this file, we're mapping back and forth between our custom types
     # and the auto-generated types. There is probably a better solution for this.
@@ -183,7 +182,7 @@ class Test(BaseModel):
             checks=[
                 Check.from_graphql(check) for check in json.loads(graphql_test.checks)
             ],
-            _file_ids=json.loads(graphql_test.file_ids),
+            file_ids=json.loads(graphql_test.file_ids),
         )
 
     def to_test_mutation_info(self, test_suite_id: str) -> TestMutationInfo:
@@ -198,7 +197,7 @@ class Test(BaseModel):
             tags=self.tags,
             context=json.dumps(self.context),
             golden_output=self.golden_output,
-            _file_ids=self._file_ids,
+            file_ids=self._file_ids,
         )
 
 
