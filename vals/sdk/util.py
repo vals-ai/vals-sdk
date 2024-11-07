@@ -38,6 +38,7 @@ def fe_host():
 def get_client():
     # We do not share clients because it kills multithreading, instead we just
     # create a new client each request.
+
     transport = RequestsHTTPTransport(
         url=f"{be_host()}/graphql/",
         headers={"Authorization": _get_auth_token()},

@@ -1,0 +1,50 @@
+mutation createOrUpdateTestSuite(
+  $testSuiteId: String!
+  $title: String!
+  $description: String!
+) {
+  updateTestSuite(
+    testSuiteId: $testSuiteId
+    title: $title
+    description: $description
+  ) {
+    testSuite {
+      description
+      id
+      org
+      title
+    }
+  }
+}
+
+mutation addBatchTests($tests: [TestMutationInfo!]!, $createOnly: Boolean!) {
+  batchUpdateTest(tests: $tests, createOnly: $createOnly) {
+    tests {
+      checks
+      testId
+      crossVersionId
+      fileIds
+      inputUnderTest
+      tags
+      context
+      goldenOutput
+    }
+  }
+}
+
+mutation deleteTestSuite($testSuiteId: String!) {
+  deleteSuite(suiteId: $testSuiteId) {
+    success
+  }
+}
+
+mutation updateGlobalChecks($testSuiteId: String!, $checks: String!) {
+  updateGlobalChecks(testSuiteId: $testSuiteId, checks: $checks) {
+    success
+  }
+}
+mutation removeOldTests($testSuiteId: String!, $inUseTests: [String!]!) {
+  removeUnusedTests(testSuiteId: $testSuiteId, inUseTests: $inUseTests) {
+    success
+  }
+}

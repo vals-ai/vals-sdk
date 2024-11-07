@@ -1,0 +1,48 @@
+query getTestSuiteData($suiteId: String!) {
+  testSuites(testSuiteId: $suiteId) {
+    description
+    id
+    org
+    title
+    created
+    globalChecks
+  }
+}
+
+query getTestData($suiteId: String!) {
+  tests(testSuiteId: $suiteId) {
+    checks
+    testId
+    crossVersionId
+    fileIds
+    inputUnderTest
+    tags
+    context
+    goldenOutput
+  }
+}
+
+query getTestSuitesWithCount {
+  testSuitesWithCount {
+    testSuites {
+      id
+      title
+      description
+      created
+      creator
+      lastModifiedBy
+      lastModifiedAt
+      folder {
+        id
+        name
+      }
+    }
+  }
+}
+
+query getOperators {
+  operators {
+    nameInDoc
+    isUnary
+  }
+}

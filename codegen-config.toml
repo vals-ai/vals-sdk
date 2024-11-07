@@ -1,0 +1,7 @@
+[tool.ariadne-codegen]
+remote_schema_url = "http://localhost:8000/graphql/"
+queries_path = "vals/graphql/"
+target_package_path = "vals/"
+
+[tool.ariadne-codegen.scalars.DateTime]
+type = "datetime.datetime"

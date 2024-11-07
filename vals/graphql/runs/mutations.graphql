@@ -1,0 +1,15 @@
+mutation startRun(
+  $test_suite_id: String!
+  $parameters: GenericScalar!
+  $qa_set_id: String = null
+  $run_name: String = null
+) {
+  startRun(
+    testSuiteId: $test_suite_id
+    parameters: $parameters
+    qaSetId: $qa_set_id
+    runName: $run_name
+  ) {
+    runId
+  }
+}

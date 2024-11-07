@@ -1,0 +1,17 @@
+mutation CreateQuestionAnswerSet(
+  $testSuiteId: String!
+  $questionAnswerPairs: [QuestionAnswerPairInputType!]!
+  $parameters: GenericScalar!
+  $modelId: String!
+) {
+  createQuestionAnswerSet(
+    testSuiteId: $testSuiteId
+    questionAnswerPairs: $questionAnswerPairs
+    parameters: $parameters
+    modelId: $modelId
+  ) {
+    questionAnswerSet {
+      id
+    }
+  }
+}

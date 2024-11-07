@@ -1,0 +1,58 @@
+query RunParamInfo {
+  runParameterInfo
+}
+
+query RunStatus($runId: String!) {
+  run(runId: $runId) {
+    status
+  }
+}
+
+query PullRun($runId: String!) {
+  run(runId: $runId) {
+    runId
+    passPercentage
+    status
+    runId
+    textSummary
+    timestamp
+    completedAt
+    archived
+    parameters
+    testSuite {
+      title
+    }
+  }
+
+  testResults(runId: $runId) {
+    id
+    llmOutput
+    passPercentage
+    passPercentageWithOptional
+    resultJson
+    humanEval
+    humanFeedback
+    test {
+      testId
+      inputUnderTest
+    }
+    metadata
+  }
+}
+
+query ListRuns($archived: Boolean, $suiteId: String) {
+  runs(archived: $archived, suiteId: $suiteId) {
+    runId
+    passPercentage
+    status
+    runId
+    textSummary
+    timestamp
+    completedAt
+    archived
+    parameters
+    testSuite {
+      title
+    }
+  }
+}

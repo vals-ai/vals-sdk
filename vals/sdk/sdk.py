@@ -20,6 +20,7 @@ from vals.sdk.run import (
     start_run,
 )
 from vals.sdk.util import be_host
+from vals.sdk.v2.util import parse_file_id
 
 in_tokens = 0
 out_tokens = 0
@@ -36,13 +37,6 @@ def _read_file(file_id: str):
         headers={"Authorization": _get_auth_token()},
     )
     return BytesIO(response.content)
-
-
-def _parse_file_id(file_id: str):
-    org, rest = file_id.split("/")
-    filename, test_suite_id = rest.split(";")
-
-    return org, filename, test_suite_id
 
 
 def read_pdf(file: BytesIO):
@@ -143,7 +137,7 @@ def run_evaluations(
 
                 files = {}
                 for file_id in file_ids:
-                    _, file_name, _ = _parse_file_id(file_id)
+                    _, file_name, _ = parse_file_id(file_id)
                     files[file_name] = _read_file(file_id)
 
             non_param_kwargs["files"] = files

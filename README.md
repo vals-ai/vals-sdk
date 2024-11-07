@@ -141,3 +141,23 @@ run_id = run_evaluations(
 ```
 
 There is a full, working example in `examples/examples_scripts/sdk_example.py`, and additional documentation in our docs: [https://www.platform.vals.ai/docs/index.html#/sdk](https://www.platform.vals.ai/docs/index.html#/sdk)
+
+# Development
+
+## Local installation
+
+Run the following command to install it locally. The -e flag is optional, but recommended, as it allows you to make changes to the code without reinstalling. The dev flag is required for dev-only depedencies.
+
+```bash
+pip install -e ".[dev]"
+```
+
+## Running Codegen
+
+Add additional .graphql files to `vals/graphql`, then run the following command:
+
+```
+ariadne-codegen --config codegen-config.toml
+```
+
+NOTE: This will _overwrite_ anything in the `vals/graphql_client` directory.
