@@ -7,6 +7,7 @@ These are meant to be user-facing.
 
 import datetime
 import json
+from enum import Enum
 from io import BytesIO
 from typing import Any, Callable, Literal
 
@@ -21,7 +22,7 @@ from vals.graphql_client.pull_run import PullRunTestResults
 SimpleModelFunctionType = Callable[[str], str]
 
 ModelFunctionWithFilesAndContextType = Callable[
-    [str, list[BytesIO], dict[str, Any]], str
+    [str, dict[str, BytesIO], dict[str, Any]], str
 ]
 
 ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType
@@ -172,7 +173,7 @@ class Test(BaseModel):
     @classmethod
     def from_graphql_test(cls, graphql_test: GetTestDataTests) -> "Test":
         """Internal method to translate from what we receive from GraphQL to the Test class displayed to the user."""
-        return cls(
+        test = cls(
             id=graphql_test.test_id,
             input_under_test=graphql_test.input_under_test,
             cross_version_id=graphql_test.cross_version_id,
@@ -182,8 +183,9 @@ class Test(BaseModel):
             checks=[
                 Check.from_graphql(check) for check in json.loads(graphql_test.checks)
             ],
-            file_ids=json.loads(graphql_test.file_ids),
         )
+        test._file_ids = json.loads(graphql_test.file_ids)
+        return test
 
     def to_test_mutation_info(self, test_suite_id: str) -> TestMutationInfo:
         """Internal method to translate from the Test class to the TestMutationInfo class."""
@@ -252,3 +254,11 @@ class TestResult(BaseModel):
             ],
             metadata=Metadata(**json.loads(graphql_test_result.metadata)),
         )
+
+
+class RunStatus(str, Enum):
+    """Status of a run: 'in_progress', 'completed', or 'success'."""
+
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    SUCCESS = "success"

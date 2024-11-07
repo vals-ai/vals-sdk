@@ -9,7 +9,7 @@ from vals.graphql_client import Client
 from vals.graphql_client.pull_run import PullRun
 from vals.sdk.exceptions import ValsException
 from vals.sdk.util import be_host, fe_host
-from vals.sdk.v2.types import TestResult
+from vals.sdk.v2.types import RunStatus, TestResult
 from vals.sdk.v2.util import _get_auth_token, get_ariadne_client
 
 
@@ -55,6 +55,10 @@ class Run(BaseModel):
         result = await client.pull_run(run_id=run_id)
         return cls._create_from_pull_result(run_id, result)
 
+    @property
+    def url(self) -> str:
+        return f"{fe_host()}/results?run_id={self.id}"
+
     async def pull(self) -> None:
         """Update this Run instance with latest data from vals servers."""
         result = await self._client.pull_run(run_id=self.id)
@@ -63,36 +67,43 @@ class Run(BaseModel):
         for field in updated.__fields__:
             setattr(self, field, getattr(updated, field))
 
-    # TODO: These two methods may be part of a Run Object
-    async def run_status(self) -> str:
+    # TODO: We should make this into an enum
+    async def run_status(self) -> RunStatus:
+        """Get the status of a run: 'in_progress', 'completed', or 'success'."""
+
         result = await self._client.run_status(run_id=self.id)
         self.status = result.run.status
-        return result.run.status
+        return RunStatus(result.run.status)
 
-    async def wait_for_run_completion(self) -> str:
+    async def wait_for_run_completion(
+        self,
+    ) -> RunStatus:
         """
         Block a process until a given run has finished running.
 
+        Returns the status of the run after completion.
         """
-        await asyncio.sleep(1)
+
+        await asyncio.sleep(0.5)
         status = "in_progress"
         while status == "in_progress":
             status = await self.run_status()
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.5)
 
-        return status
+        return RunStatus(status)
 
-    async def get_csv(self) -> bytes:
-        response = requests.post(
-            url=f"{be_host()}/export_results_to_file/?run_id={self.id}",
-            headers={"Authorization": _get_auth_token()},
-        )
+    async def to_csv(self, file_path: str) -> None:
+        """Get the CSV results of a run, as bytes."""
 
-        if response.status_code != 200:
-            raise ValsException("Received Error from Vals Servers: " + response.text)
+        with open(file_path, "wb") as f:
+            response = requests.post(
+                url=f"{be_host()}/export_results_to_file/?run_id={self.id}",
+                headers={"Authorization": _get_auth_token()},
+            )
 
-        return response.content
+            if response.status_code != 200:
+                raise ValsException(
+                    "Received Error from Vals Servers: " + response.text
+                )
 
-    @property
-    def url(self) -> str:
-        return f"{fe_host()}/results?run_id={self.id}"
+            f.write(response.content)

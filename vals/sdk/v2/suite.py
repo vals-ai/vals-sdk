@@ -2,7 +2,7 @@ import inspect
 import json
 import os
 from time import time
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel, PrivateAttr
 from tqdm import tqdm
@@ -12,8 +12,15 @@ from vals.sdk.run import _get_default_parameters
 from vals.sdk.suite import _upload_file, _validate_suite
 from vals.sdk.v2 import patch
 from vals.sdk.v2.run import Run
-from vals.sdk.v2.types import Check, ModelFunctionType, Test, TestSuiteMetadata
-from vals.sdk.v2.util import get_ariadne_client, md5_hash, parse_file_id
+from vals.sdk.v2.types import (
+    Check,
+    ModelFunctionType,
+    ModelFunctionWithFilesAndContextType,
+    SimpleModelFunctionType,
+    Test,
+    TestSuiteMetadata,
+)
+from vals.sdk.v2.util import get_ariadne_client, md5_hash, parse_file_id, read_file
 
 
 class Suite(BaseModel):
@@ -170,7 +177,7 @@ class Suite(BaseModel):
 
     async def run(
         self,
-        model_under_test: str = "gpt-4o",
+        model_under_test: str | None = None,
         model_function: ModelFunctionType | None = None,
         run_name: str | None = None,
         wait_for_completion: bool = False,
@@ -202,7 +209,7 @@ class Suite(BaseModel):
                 "This suite has not been created yet. Call suite.create() before calling suite.run()"
             )
 
-        if self.model_under_test is None and self.model_function is None:
+        if model_under_test is None and model_function is None:
             raise Exception(
                 "One of 'model_under_test' or 'model_function' must be provided."
             )
@@ -350,14 +357,25 @@ class Suite(BaseModel):
         # Query the LLM for each test.
         qa_pairs: list[QuestionAnswerPairInputType] = []
         for test in tqdm(self.tests):
+            files = {}
+            for file_id in test._file_ids:
+                _, file_name, _ = parse_file_id(file_id)
+                files[file_name] = read_file(file_id)
+
             time_start = time()
             in_tokens_start = patch.in_tokens
             out_tokens_start = patch.out_tokens
 
             if is_simple_model_function:
-                llm_output = model_function(test.input_under_test)  # type: ignore
+                casted_model_function = cast(SimpleModelFunctionType, model_function)
+                llm_output = casted_model_function(test.input_under_test)
             else:
-                llm_output = model_function(test.input, test.files_under_test, test.context)  # type: ignore
+                casted_model_function = cast(
+                    ModelFunctionWithFilesAndContextType, model_function
+                )
+                llm_output = casted_model_function(
+                    test.input_under_test, files, test.context
+                )
 
             time_end = time()
             in_tokens_end = patch.in_tokens
@@ -366,7 +384,7 @@ class Suite(BaseModel):
             qa_pairs.append(
                 QuestionAnswerPairInputType(
                     input_under_test=test.input_under_test,
-                    file_ids=test.file_ids,
+                    file_ids=test._file_ids,
                     context=test.context,
                     llm_output=llm_output,
                     metadata=MetadataType(

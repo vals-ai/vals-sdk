@@ -1,5 +1,7 @@
 import hashlib
+from io import BytesIO
 
+import requests
 from vals.graphql_client.client import Client as AriadneClient
 from vals.sdk.auth import _get_auth_token
 from vals.sdk.util import be_host
@@ -34,7 +36,7 @@ def parse_file_id(file_id: str) -> tuple[str, str, str, str | None]:
         # happens to have a semicolon in the wrong spot
         org, rest = file_id.split("/")
         filename, test_suite_id = rest.split(";")
-        return org, test_suite_id, filename, None
+        return org, filename, None
 
     tokens = file_id.split("/")
     if len(tokens) != 2:
@@ -48,3 +50,11 @@ def parse_file_id(file_id: str) -> tuple[str, str, str, str | None]:
         raise Exception(f"Improperly formatted file_id: {file_id}")
 
     return org, filename, hash
+
+
+def read_file(file_id: str) -> BytesIO:
+    response = requests.post(
+        url=f"{be_host()}/download_file/?file_id={file_id}",
+        headers={"Authorization": _get_auth_token()},
+    )
+    return BytesIO(response.content)
