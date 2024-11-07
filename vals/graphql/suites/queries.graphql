@@ -22,13 +22,27 @@ query getTestData($suiteId: String!) {
   }
 }
 
-query getTestSuites {
-  testSuites {
-    description
-    id
-    org
-    title
-    created
-    creator
+query getTestSuitesWithCount {
+  testSuitesWithCount {
+    testSuites {
+      id
+      title
+      description
+      created
+      creator
+      lastModifiedBy
+      lastModifiedAt
+      folder {
+        id
+        name
+      }
+    }
+  }
+}
+
+query getOperators {
+  operators {
+    name
+    isUnary
   }
 }

@@ -36,7 +36,12 @@ from .exceptions import (
 )
 from .get_test_data import GetTestData, GetTestDataTests
 from .get_test_suite_data import GetTestSuiteData, GetTestSuiteDataTestSuites
-from .get_test_suites import GetTestSuites, GetTestSuitesTestSuites
+from .get_test_suites_with_count import (
+    GetTestSuitesWithCount,
+    GetTestSuitesWithCountTestSuitesWithCount,
+    GetTestSuitesWithCountTestSuitesWithCountTestSuites,
+    GetTestSuitesWithCountTestSuitesWithCountTestSuitesFolder,
+)
 from .input_types import (
     CheckInputType,
     FilterOptionsInput,
@@ -88,8 +93,10 @@ __all__ = [
     "GetTestDataTests",
     "GetTestSuiteData",
     "GetTestSuiteDataTestSuites",
-    "GetTestSuites",
-    "GetTestSuitesTestSuites",
+    "GetTestSuitesWithCount",
+    "GetTestSuitesWithCountTestSuitesWithCount",
+    "GetTestSuitesWithCountTestSuitesWithCountTestSuites",
+    "GetTestSuitesWithCountTestSuitesWithCountTestSuitesFolder",
     "GraphQLClientError",
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",

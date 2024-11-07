@@ -11,7 +11,7 @@ from .create_question_answer_set import CreateQuestionAnswerSet
 from .delete_test_suite import DeleteTestSuite
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
-from .get_test_suites import GetTestSuites
+from .get_test_suites_with_count import GetTestSuitesWithCount
 from .input_types import QuestionAnswerPairInputType, TestMutationInfo
 from .list_runs import ListRuns
 from .pull_run import PullRun
@@ -377,24 +377,34 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return GetTestData.model_validate(data)
 
-    async def get_test_suites(self, **kwargs: Any) -> GetTestSuites:
+    async def get_test_suites_with_count(self, **kwargs: Any) -> GetTestSuitesWithCount:
         query = gql(
             """
-            query getTestSuites {
-              testSuites {
-                description
-                id
-                org
-                title
-                created
-                creator
+            query getTestSuitesWithCount {
+              testSuitesWithCount {
+                testSuites {
+                  id
+                  title
+                  description
+                  created
+                  creator
+                  lastModifiedBy
+                  lastModifiedAt
+                  folder {
+                    id
+                    name
+                  }
+                }
               }
             }
             """
         )
         variables: Dict[str, object] = {}
         response = await self.execute(
-            query=query, operation_name="getTestSuites", variables=variables, **kwargs
+            query=query,
+            operation_name="getTestSuitesWithCount",
+            variables=variables,
+            **kwargs
         )
         data = self.get_data(response)
-        return GetTestSuites.model_validate(data)
+        return GetTestSuitesWithCount.model_validate(data)

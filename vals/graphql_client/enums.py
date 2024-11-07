@@ -31,7 +31,6 @@ class RunStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"
     ERROR = "ERROR"
     SUCCESS = "SUCCESS"
-    ALL = "ALL"
 
 
 class RunResultSortField(str, Enum):

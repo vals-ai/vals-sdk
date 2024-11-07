@@ -1,28 +1,19 @@
 import inspect
 import json
 import os
-from io import BytesIO
 from time import time
-from typing import Any, Callable, Optional
+from typing import Any
 
 from pydantic import BaseModel, PrivateAttr
 from tqdm import tqdm
 from vals.graphql_client.client import Client
-from vals.graphql_client.get_test_suites import GetTestSuitesTestSuites
 from vals.graphql_client.input_types import MetadataType, QuestionAnswerPairInputType
 from vals.sdk.run import _get_default_parameters
 from vals.sdk.suite import _upload_file, _validate_suite
-from vals.sdk.v2.run import Run
-from vals.sdk.v2.types import Check, Test
-from vals.sdk.v2.util import get_ariadne_client, md5_hash, parse_file_id
-
-SimpleModelFunctionType = Callable[[str], str]
-ModelFunctionWithFilesAndContextType = Callable[
-    [str, list[BytesIO], dict[str, Any]], str
-]
-ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType
-
 from vals.sdk.v2 import patch
+from vals.sdk.v2.run import Run
+from vals.sdk.v2.types import Check, ModelFunctionType, Test, TestSuiteMetadata
+from vals.sdk.v2.util import get_ariadne_client, md5_hash, parse_file_id
 
 
 class Suite(BaseModel):
@@ -40,18 +31,19 @@ class Suite(BaseModel):
     _client: Client = PrivateAttr(default_factory=get_ariadne_client)
 
     @classmethod
-    async def list_suites(cls) -> list[GetTestSuitesTestSuites]:
+    async def list_suites(cls) -> list[TestSuiteMetadata]:
         """
-        Generate a list of all suites on the server.
+        Generate a list of all the test suites on the server.
         """
-        # TODO: What type should this be?
         client = get_ariadne_client()
-        return (await client.get_test_suites()).test_suites
+        gql_response = await client.get_test_suites_with_count()
+        gql_suites = gql_response.test_suites_with_count.test_suites
+        return [TestSuiteMetadata.from_graphql(gql_suite) for gql_suite in gql_suites]
 
     @classmethod
     async def from_id(cls, suite_id: str) -> "Suite":
         """
-        Updates the local fields to match the suite on the server.
+        Create a new local test suite based on the data from the server.
         """
 
         client = get_ariadne_client()
@@ -84,6 +76,48 @@ class Suite(BaseModel):
             tests=tests,
         )
 
+    @classmethod
+    async def from_dict(cls, data: dict[str, Any]) -> "Suite":
+        """
+        Imports the test suite from a dictionary - useful if
+        importing from the old format.
+        """
+        _validate_suite(data)
+
+        title = data["title"]
+        description = data["description"]
+        global_checks = [
+            Check.from_graphql(check_dict)
+            for check_dict in data.get("global_checks", [])
+        ]
+        tests = [
+            Test(
+                input_under_test=test["input_under_test"],
+                checks=[
+                    Check.from_graphql(check_dict) for check_dict in test["checks"]
+                ],
+                golden_output=test.get("golden_output", ""),
+                tags=test.get("tags", []),
+                files_under_test=test.get("files_under_test", []),
+            )
+            for test in data["tests"]
+        ]
+        return cls(
+            title=title,
+            description=description,
+            global_checks=global_checks,
+            tests=tests,
+        )
+
+    @classmethod
+    async def from_json_file(cls, file_path: str) -> "Suite":
+        """
+        Imports the test suite from a local JSON file.
+        """
+        with open(file_path, "r") as f:
+            data = json.load(f)
+        return cls.from_dict(data)
+
     async def create(self) -> None:
         """
         Creates the test suite on the server.
@@ -91,41 +125,22 @@ class Suite(BaseModel):
         if self.id is not None:
             raise Exception("This suite has already been created.")
 
-        # TODO: Client side validation of test suite
-        # Main / only thing we need to check is that the operators are from
-        # the valid set of operators - and this will make more sense
-        # after Antoine finishes his changes.
+        await self._validate_tests()
 
-        # TODO: Upload files
-
+        # Create suite object on the server
         suite = await self._client.create_or_update_test_suite(
             "0", self.title, self.description
         )
         self.id = suite.update_test_suite.test_suite.id
 
-        await self._client.update_global_checks(
-            self.id,
-            json.dumps([gc.model_dump(exclude_none=True) for gc in self.global_checks]),
-        )
-
+        await self._upload_global_checks()
         await self._upload_files()
-
-        # TODO: Batch in batches of 100?
-        created_tests = await self._client.add_batch_tests(
-            tests=[test.to_test_mutation_info(self.id) for test in self.tests],
-            create_only=True,
-        )
-
-        # TODO: If uploading tests fails, we should remove the suite that has
-        # already been created.
-
-        # TODO: Set test id locally - or cross version id.
+        await self._upload_tests(create_only=True)
 
     async def delete(self) -> None:
         """
         Deletes the test suite from the server.
         """
-        # TODO: We don't want to have them pull
         if self.id is None:
             raise Exception(
                 "This suite has not been created yet, so there's nothing to delete"
@@ -134,139 +149,96 @@ class Suite(BaseModel):
         await self._client.delete_test_suite(self.id)
 
     async def update(self) -> None:
+        """
+        Pushes any local changes to the the test suite object to the server.
+        """
         if self.id is None:
             raise Exception(
                 "This suite has not been created yet, so there's nothing to update"
             )
 
-        suite = await self._client.create_or_update_test_suite(
+        await self._client.create_or_update_test_suite(
             self.id, self.title, self.description
         )
 
         await self._upload_files()
-        # TODO: May want to abstract these two?
-        await self._client.update_global_checks(
-            self.id,
-            json.dumps([gc.model_dump(exclude_none=True) for gc in self.global_checks]),
-        )
-        updated_tests = (
-            await self._client.add_batch_tests(
-                tests=[test.to_test_mutation_info(self.id) for test in self.tests],
-                create_only=False,
-            )
-        ).batch_update_test.tests
+        await self._upload_global_checks()
+        await self._upload_tests(create_only=False)
 
         # Remove any tests that are no longer used after the update.
         await self._client.remove_old_tests(
-            self.id, [test.test_id for test in updated_tests]
+            self.id, [test.test_id for test in self.tests]
         )
-
-    async def _create_qa_set(
-        self,
-        model_function: ModelFunctionType,
-        parameters: dict[str, int | float | str | bool] = {},
-        model_under_test: str | None = None,
-    ) -> str | None:
-        """
-        Creates a QA set for this test suite using the provided model function.
-        """
-        if self.id is None:
-            raise Exception(
-                "This suite has not been created yet, so we can't create a QA set from it."
-            )
-        # Pull latest suite data to ensure we're up to date
-        updated_suite = await Suite.from_id(self.id)
-        # Update all fields from the updated suite
-        for field in self.__fields__:
-            setattr(self, field, getattr(updated_suite, field))
-
-        # Inspect the model function to determine if it takes 1 or 3 parameters
-        sig = inspect.signature(model_function)
-        num_params = len(sig.parameters)
-        if num_params not in [1, 3]:
-            raise ValueError("Model function must accept either 1 or 3 parameters")
-        is_simple_model_function = num_params == 1
-
-        qa_pairs: list[QuestionAnswerPairInputType] = []
-        for test in tqdm(self.tests):
-            time_start = time()
-
-            in_tokens_start = patch.in_tokens
-            out_tokens_start = patch.out_tokens
-            if is_simple_model_function:
-                llm_output = model_function(test.input_under_test)  # type: ignore
-            else:
-                llm_output = model_function(test.input, test.files_under_test, test.context)  # type: ignore
-            time_end = time()
-            in_tokens_end = patch.in_tokens
-            out_tokens_end = patch.out_tokens
-
-            qa_pairs.append(
-                QuestionAnswerPairInputType(
-                    input_under_test=test.input_under_test,
-                    file_ids=test.file_ids,
-                    context=test.context,
-                    llm_output=llm_output,
-                    metadata=MetadataType(
-                        in_tokens=in_tokens_end - in_tokens_start,
-                        out_tokens=out_tokens_end - out_tokens_start,
-                        duration_seconds=time_end - time_start,
-                    ),
-                    test_id=test.id,
-                )
-            )
-
-        response = await self._client.create_question_answer_set(
-            self.id,
-            qa_pairs,
-            parameters,
-            model_under_test or "sdk",
-        )
-
-        return response.create_question_answer_set.question_answer_set.id
 
     async def run(
         self,
-        parameters: dict[str, int | float | str | bool] = {},
         model_under_test: str = "gpt-4o",
         model_function: ModelFunctionType | None = None,
         run_name: str | None = None,
         wait_for_completion: bool = False,
+        # TODO: Type parameters properly.
+        parameters: dict[str, int | float | str | bool] = {},
     ) -> Run:
+        """
+        Runs the test suite. This can be used in one of two ways.
+
+        First, if "model_under_test" is provided, and "model_function" is not, then we will run that stock model. The supported models
+        are the same ones in the "Model Under Test" dropdown in the Web App - e.g., "gpt-4o", "claude-3-5-sonnet", etc.
+
+        Second, if "model_function" is provided, then we will use that function to generate responses from the LLM locally.
+        For example, your model function may look like this:
+
+        def my_model_function(input: str) -> str:
+            # Replace with your custom logic / prompt chains, etc.
+            output = OpenAi.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": input}],
+            )
+            return output.choices[0].message.content
+
+        When using the model_function mode, the model_under_test parameter is just used for bookkeeping purposes -
+        it's what shows up as the model in the frontend.
+        """
         if self.id is None:
             raise Exception(
-                "This suite has not been created yet. Do suite.create() before calling suite.run()"
+                "This suite has not been created yet. Call suite.create() before calling suite.run()"
             )
-        # TODO: Include a qa set id optionally.
+
+        if self.model_under_test is None and self.model_function is None:
+            raise Exception(
+                "One of 'model_under_test' or 'model_function' must be provided."
+            )
+
+        # Use the default parameters, and then override with any user-provided parameters.
         _default_parameters = _get_default_parameters()
         parameters = {**_default_parameters, **parameters}
-        parameters["model_under_test"] = model_under_test
+        if model_under_test is not None:
+            parameters["model_under_test"] = model_under_test
 
+        # Collate the local output pairs if we're using a model function.
         qa_set_id = None
         if model_function is not None:
             qa_set_id = await self._create_qa_set(
                 model_function, parameters, model_under_test
             )
 
+        # Start and pull the run.
         response = await self._client.start_run(
             self.id, parameters, qa_set_id, run_name
         )
-
         run_id = response.start_run.run_id
-
         run = await Run.from_id(run_id)
-
         if wait_for_completion:
             await run.wait_for_run_completion()
-
         await run.pull()
 
         return run
 
     async def _upload_files(self):
-        # Map from file path to file id
-        # Dictionary so we don't upload the same file multiple times.
-
+        """
+        Helper method to upload the files to the server.
+        Uploads any tests.files_under_test that haven't been uploaded yet.
+        """
         file_name_and_hash_to_file_id = {}
 
         # First, we populate the dictionary of files that have already been uploaded
@@ -306,31 +278,114 @@ class Suite(BaseModel):
                 # we can't add or remove just one file.
                 test.file_ids = file_ids
 
-    @classmethod
-    async def from_json(cls, json_data: dict[str, Any]) -> "Suite":
-        _validate_suite(json_data)
-
-        title = json_data["title"]
-        description = json_data["description"]
-        global_checks = [
-            Check.from_graphql(check_dict)
-            for check_dict in json_data.get("global_checks", [])
-        ]
-        tests = [
-            Test(
-                input_under_test=test["input_under_test"],
-                checks=[
-                    Check.from_graphql(check_dict) for check_dict in test["checks"]
-                ],
-                golden_output=test.get("golden_output", ""),
-                tags=test.get("tags", []),
-                files_under_test=test.get("files_under_test", []),
+    async def _upload_tests(self, create_only: bool = True) -> None:
+        """
+        Helper method to upload the tests to the server in batches of 100.
+        """
+        # Upload tests in batches of 100
+        created_tests = []
+        test_mutations = [test.to_test_mutation_info(self.id) for test in self.tests]
+        for i in range(0, len(test_mutations), 100):
+            batch = test_mutations[i : i + 100]
+            batch_result = await self._client.add_batch_tests(
+                tests=batch,
+                create_only=create_only,
             )
-            for test in json_data["tests"]
+            created_tests.extend(batch_result.batch_create_test.tests)
+
+        # Update the local suite with the new tests to ensure everything is in sync.
+        self.tests = [
+            Test.from_graphql_test(test)
+            for test in created_tests.batch_create_test.tests
         ]
-        return cls(
-            title=title,
-            description=description,
-            global_checks=global_checks,
-            tests=tests,
+
+    async def _validate_tests(self) -> None:
+        """Helper method to ensure that all operator strings are correct."""
+        operators = await self._client.get_operators()
+        for test in self.tests:
+            for check in test.checks:
+                if check.operator not in operators:
+                    raise ValueError(f"Invalid operator: {check.operator}")
+                if check.operator.is_unary and (
+                    check.criteria is None or check.criteria == ""
+                ):
+                    raise ValueError(
+                        "Operator {operator} is unary, but no criteria was provided."
+                    )
+
+    async def _upload_global_checks(self) -> None:
+        """
+        Helper method to upload the global checks to the server.
+        """
+        await self._client.update_global_checks(
+            self.id,
+            json.dumps([gc.model_dump(exclude_none=True) for gc in self.global_checks]),
         )
+
+    async def _create_qa_set(
+        self,
+        model_function: ModelFunctionType,
+        parameters: dict[str, int | float | str | bool] = {},
+        model_under_test: str | None = None,
+    ) -> str | None:
+        """
+        Helper function to create a question-answer set from a model function.
+        A question-answer set is just a set of inputs to the LLM, and the LLM's responses.
+        """
+        if self.id is None:
+            raise Exception(
+                "This suite has not been created yet, so we can't create a QA set from it."
+            )
+
+        # Pull latest suite data to ensure we're up to date
+        updated_suite = await Suite.from_id(self.id)
+        for field in self.__fields__:
+            setattr(self, field, getattr(updated_suite, field))
+
+        # Inspect the model function to determine if it takes 1 or 3 parameters
+        # We dynamically change our call signature based on what the user passes in.
+        sig = inspect.signature(model_function)
+        num_params = len(sig.parameters)
+        if num_params not in [1, 3]:
+            raise ValueError("Model function must accept either 1 or 3 parameters")
+        is_simple_model_function = num_params == 1
+
+        # Query the LLM for each test.
+        qa_pairs: list[QuestionAnswerPairInputType] = []
+        for test in tqdm(self.tests):
+            time_start = time()
+            in_tokens_start = patch.in_tokens
+            out_tokens_start = patch.out_tokens
+
+            if is_simple_model_function:
+                llm_output = model_function(test.input_under_test)  # type: ignore
+            else:
+                llm_output = model_function(test.input, test.files_under_test, test.context)  # type: ignore
+
+            time_end = time()
+            in_tokens_end = patch.in_tokens
+            out_tokens_end = patch.out_tokens
+
+            qa_pairs.append(
+                QuestionAnswerPairInputType(
+                    input_under_test=test.input_under_test,
+                    file_ids=test.file_ids,
+                    context=test.context,
+                    llm_output=llm_output,
+                    metadata=MetadataType(
+                        in_tokens=in_tokens_end - in_tokens_start,
+                        out_tokens=out_tokens_end - out_tokens_start,
+                        duration_seconds=time_end - time_start,
+                    ),
+                    test_id=test.id,
+                )
+            )
+
+        response = await self._client.create_question_answer_set(
+            self.id,
+            qa_pairs,
+            parameters,
+            model_under_test or "sdk",
+        )
+
+        return response.create_question_answer_set.question_answer_set.id

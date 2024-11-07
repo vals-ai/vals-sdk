@@ -23,8 +23,12 @@ class RunResultFilterOptionsInput(BaseModel):
     limit: Optional[int] = None
     offset: Optional[int] = None
     search: Optional[str] = None
-    status: Optional[RunStatus] = None
+    status: Optional[List[Optional[RunStatus]]] = None
     archived: Optional[bool] = None
+    run_by: Optional[List[str]] = Field(alias="runBy", default=None)
+    models_under_test: Optional[List[str]] = Field(
+        alias="modelsUnderTest", default=None
+    )
     suite_id: Optional[str] = Field(alias="suiteId", default=None)
     sort_by: Optional[RunResultSortField] = Field(alias="sortBy", default=None)
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
