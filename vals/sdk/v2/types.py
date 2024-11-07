@@ -83,7 +83,7 @@ class ConditionalCheck(BaseModel):
 
 
 class CheckModifiers(BaseModel):
-    optional: bool = None
+    optional: bool | None = None
     """Do not include this check towards the final pass percentage"""
 
     severity: float | None = None
@@ -104,6 +104,7 @@ class CheckModifiers(BaseModel):
         if not modifiers_dict:
             return cls()
 
+        examples = None
         if modifiers_dict.get("examples", None):
             examples = [Example(**example) for example in modifiers_dict["examples"]]
 
@@ -235,6 +236,8 @@ class TestResult(BaseModel):
     llm_output: str
     """Output produced by the LLM"""
 
+    metadata: Metadata | None
+
     pass_percentage: float
     """Percent of passing checks for the test"""
 
@@ -252,7 +255,11 @@ class TestResult(BaseModel):
                 CheckResult(**check_result)
                 for check_result in json.loads(graphql_test_result.result_json)
             ],
-            metadata=Metadata(**json.loads(graphql_test_result.metadata)),
+            metadata=(
+                Metadata(**json.loads(graphql_test_result.metadata))
+                if graphql_test_result.metadata
+                else None
+            ),
         )
 
 

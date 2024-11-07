@@ -62,6 +62,7 @@ class Suite(BaseModel):
         title = suite_data.title
         description = suite_data.description
 
+        global_checks = []
         if suite_data.global_checks is not None:
             global_checks = [
                 Check.from_graphql(check)
@@ -138,6 +139,8 @@ class Suite(BaseModel):
         suite = await self._client.create_or_update_test_suite(
             "0", self.title, self.description
         )
+        if suite.update_test_suite is None:
+            raise Exception("Unable to update the test suite.")
         self.id = suite.update_test_suite.test_suite.id
 
         await self._upload_global_checks()
@@ -231,6 +234,9 @@ class Suite(BaseModel):
         response = await self._client.start_run(
             self.id, parameters, qa_set_id, run_name
         )
+        if response.start_run is None:
+            raise Exception("Unable to start the run.")
+
         run_id = response.start_run.run_id
         run = await Run.from_id(run_id)
         if wait_for_completion:
@@ -244,6 +250,9 @@ class Suite(BaseModel):
         Helper method to upload the files to the server.
         Uploads any tests.files_under_test that haven't been uploaded yet.
         """
+        if self.id is None:
+            raise Exception("This suite has not been created yet.")
+
         file_name_and_hash_to_file_id = {}
 
         # First, we populate the dictionary of files that have already been uploaded
@@ -270,7 +279,7 @@ class Suite(BaseModel):
 
                     # If the file hasn't been uploaded yet, we upload it
                     if name_hash_tuple not in file_name_and_hash_to_file_id:
-                        file_id = await _upload_file(self.id, file_path)
+                        file_id = _upload_file(self.id, file_path)
                         file_name_and_hash_to_file_id[name_hash_tuple] = file_id
 
                     # Either way, we add the file id to the test.
@@ -284,6 +293,9 @@ class Suite(BaseModel):
         """
         Helper method to upload the tests to the server in batches of 100.
         """
+        if self.id is None:
+            raise Exception("This suite has not been created yet.")
+
         # Upload tests in batches of 100
         created_tests = []
         test_mutations = [test.to_test_mutation_info(self.id) for test in self.tests]
@@ -293,6 +305,8 @@ class Suite(BaseModel):
                 tests=batch,
                 create_only=create_only,
             )
+            if batch_result.batch_update_test is None:
+                raise Exception("Unable to add tests to the test suite.")
             created_tests.extend(batch_result.batch_update_test.tests)
 
         # Update the local suite with the new tests to ensure everything is in sync.
@@ -321,6 +335,9 @@ class Suite(BaseModel):
         """
         Helper method to upload the global checks to the server.
         """
+        if self.id is None:
+            raise Exception("This suite has not been created yet.")
+
         await self._client.update_global_checks(
             self.id,
             json.dumps([gc.model_dump(exclude_none=True) for gc in self.global_checks]),
@@ -402,5 +419,7 @@ class Suite(BaseModel):
             parameters,
             model_under_test or "sdk",
         )
+        if response.create_question_answer_set is None:
+            raise Exception("Unable to create the question-answer set.")
 
         return response.create_question_answer_set.question_answer_set.id

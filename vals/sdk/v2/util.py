@@ -28,7 +28,7 @@ def md5_hash(file) -> str:
     return hash
 
 
-def parse_file_id(file_id: str) -> tuple[str, str, str, str | None]:
+def parse_file_id(file_id: str) -> tuple[str, str, str | None]:
     if len(file_id) >= 37 and file_id[-37] == ";":
         # This is a heuristic to check if we are in the old file id regime.
         # I checked and all previously uploaded files should match this

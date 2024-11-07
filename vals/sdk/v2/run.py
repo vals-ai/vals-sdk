@@ -67,9 +67,8 @@ class Run(BaseModel):
         for field in updated.__fields__:
             setattr(self, field, getattr(updated, field))
 
-    # TODO: We should make this into an enum
     async def run_status(self) -> RunStatus:
-        """Get the status of a run: 'in_progress', 'completed', or 'success'."""
+        """Get the status of a run"""
 
         result = await self._client.run_status(run_id=self.id)
         self.status = result.run.status
