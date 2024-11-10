@@ -18,6 +18,7 @@ from vals.graphql_client.get_test_suites_with_count import (
 )
 from vals.graphql_client.input_types import TestMutationInfo
 from vals.graphql_client.pull_run import PullRunTestResults
+from vals.sdk.v2.operator_type import OperatorType
 
 SimpleModelFunctionType = Callable[[str], str]
 
@@ -78,7 +79,7 @@ class ConditionalCheck(BaseModel):
     Predicate / conditional check modifier.
     """
 
-    operator: str
+    operator: OperatorType
     criteria: str
 
 
@@ -122,7 +123,7 @@ class CheckModifiers(BaseModel):
 
 
 class Check(BaseModel):
-    operator: str
+    operator: OperatorType
     """Operator - see documentation for the full list."""
 
     criteria: str = ""
