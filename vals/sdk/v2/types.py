@@ -215,7 +215,7 @@ class CheckResult(BaseModel):
     """Result of evaluation for a single check."""
 
     # Same as the input fields.
-    operator: str
+    operator: OperatorType
     criteria: str
     severity: float
     modifiers: CheckModifiers
