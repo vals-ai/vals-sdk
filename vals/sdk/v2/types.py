@@ -16,7 +16,10 @@ from vals.graphql_client.get_test_data import GetTestDataTests
 from vals.graphql_client.get_test_suites_with_count import (
     GetTestSuitesWithCountTestSuitesWithCountTestSuites,
 )
-from vals.graphql_client.input_types import TestMutationInfo
+from vals.graphql_client.input_types import (
+    QuestionAnswerPairInputType,
+    TestMutationInfo,
+)
 from vals.graphql_client.pull_run import PullRunTestResults
 from vals.sdk.v2.operator_type import OperatorType
 
@@ -145,10 +148,10 @@ class Check(BaseModel):
 
 
 class Test(BaseModel):
-    id: str = "0"
-    """Internal id of the test"""
+    _id: str = "0"
+    """Internal id of the test. 0 signifies it hasn't been created yet."""
 
-    cross_version_id: str = ""
+    _cross_version_id: str = ""
     """Internal id that stays constant across versions."""
 
     input_under_test: str
@@ -176,9 +179,7 @@ class Test(BaseModel):
     def from_graphql_test(cls, graphql_test: GetTestDataTests) -> "Test":
         """Internal method to translate from what we receive from GraphQL to the Test class displayed to the user."""
         test = cls(
-            id=graphql_test.test_id,
             input_under_test=graphql_test.input_under_test,
-            cross_version_id=graphql_test.cross_version_id,
             tags=json.loads(graphql_test.tags),
             context=json.loads(graphql_test.context),
             golden_output=graphql_test.golden_output,
@@ -187,13 +188,15 @@ class Test(BaseModel):
             ],
         )
         test._file_ids = json.loads(graphql_test.file_ids)
+        test._id = graphql_test.test_id
+        test._cross_version_id = graphql_test.cross_version_id
         return test
 
     def to_test_mutation_info(self, test_suite_id: str) -> TestMutationInfo:
         """Internal method to translate from the Test class to the TestMutationInfo class."""
         return TestMutationInfo(
             test_suite_id=test_suite_id,
-            test_id=self.id,
+            test_id=self._id,
             input_under_test=self.input_under_test,
             checks=json.dumps(
                 [check.model_dump(exclude_none=True) for check in self.checks]
@@ -231,7 +234,7 @@ class CheckResult(BaseModel):
 class TestResult(BaseModel):
     """Result of evaluation for a single test."""
 
-    id: str
+    _id: str
     input_under_test: str
 
     llm_output: str
@@ -247,8 +250,8 @@ class TestResult(BaseModel):
 
     @classmethod
     def from_graphql(cls, graphql_test_result: PullRunTestResults) -> "TestResult":
-        return cls(
-            id=graphql_test_result.id,
+        obj = cls(
+            _id=graphql_test_result.id,
             input_under_test=graphql_test_result.test.input_under_test,
             llm_output=graphql_test_result.llm_output,
             pass_percentage=graphql_test_result.pass_percentage,
@@ -262,6 +265,8 @@ class TestResult(BaseModel):
                 else None
             ),
         )
+        obj._id = graphql_test_result.id
+        return obj
 
 
 class RunStatus(str, Enum):
@@ -270,3 +275,21 @@ class RunStatus(str, Enum):
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     SUCCESS = "success"
+
+
+class QuestionAnswerPair(BaseModel):
+    input_under_test: str
+    llm_output: str
+    file_ids: list[str] | None = None
+    context: dict[str, Any] | None = None
+    metadata: Metadata | None = None
+
+    def to_graphql(self) -> QuestionAnswerPairInputType:
+        return QuestionAnswerPairInputType(
+            input_under_test=self.input_under_test,
+            file_ids=self.file_ids,
+            context=self.context,
+            llm_output=self.llm_output,
+            metadata=self.metadata,
+            test_id=None,
+        )

@@ -2,7 +2,7 @@ import inspect
 import json
 import os
 from time import time
-from typing import Any, cast
+from typing import Any, Callable, cast, overload
 
 from pydantic import BaseModel, PrivateAttr
 from tqdm import tqdm
@@ -16,6 +16,7 @@ from vals.sdk.v2.types import (
     Check,
     ModelFunctionType,
     ModelFunctionWithFilesAndContextType,
+    QuestionAnswerPair,
     SimpleModelFunctionType,
     Test,
     TestSuiteMetadata,
@@ -24,7 +25,7 @@ from vals.sdk.v2.util import get_ariadne_client, md5_hash, parse_file_id, read_f
 
 
 class Suite(BaseModel):
-    id: str | None = None
+    _id: str | None = None
 
     title: str
     description: str = ""
@@ -77,7 +78,7 @@ class Suite(BaseModel):
             tests.append(test)
 
         return cls(
-            id=suite_id,
+            _id=suite_id,
             title=title,
             description=description,
             global_checks=global_checks,
@@ -130,7 +131,7 @@ class Suite(BaseModel):
         """
         Creates the test suite on the server.
         """
-        if self.id is not None:
+        if self._id is not None:
             raise Exception("This suite has already been created.")
 
         await self._validate_tests()
@@ -141,7 +142,7 @@ class Suite(BaseModel):
         )
         if suite.update_test_suite is None:
             raise Exception("Unable to update the test suite.")
-        self.id = suite.update_test_suite.test_suite.id
+        self._id = suite.update_test_suite.test_suite.id
 
         await self._upload_global_checks()
         await self._upload_files()
@@ -151,24 +152,24 @@ class Suite(BaseModel):
         """
         Deletes the test suite from the server.
         """
-        if self.id is None:
+        if self._id is None:
             raise Exception(
                 "This suite has not been created yet, so there's nothing to delete"
             )
 
-        await self._client.delete_test_suite(self.id)
+        await self._client.delete_test_suite(self._id)
 
     async def update(self) -> None:
         """
         Pushes any local changes to the the test suite object to the server.
         """
-        if self.id is None:
+        if self._id is None:
             raise Exception(
                 "This suite has not been created yet, so there's nothing to update"
             )
 
         await self._client.create_or_update_test_suite(
-            self.id, self.title, self.description
+            self._id, self.title, self.description
         )
 
         await self._upload_files()
@@ -176,71 +177,95 @@ class Suite(BaseModel):
         await self._upload_tests(create_only=False)
 
         # Remove any tests that are no longer used after the update.
-        await self._client.remove_old_tests(self.id, [test.id for test in self.tests])
+        await self._client.remove_old_tests(self._id, [test._id for test in self.tests])
 
+    @overload
     async def run(
         self,
-        model_under_test: str | None = None,
-        model_function: ModelFunctionType | None = None,
+        model: str,
+        model_name: str = "sdk",
         run_name: str | None = None,
         wait_for_completion: bool = False,
-        # TODO: Type parameters properly.
+        parameters: dict[str, int | float | str | bool] = {},
+    ):
+        pass
+
+    @overload
+    async def run(
+        self,
+        model: ModelFunctionType,
+        model_name: str = "sdk",
+        run_name: str | None = None,
+        wait_for_completion: bool = False,
+        parameters: dict[str, int | float | str | bool] = {},
+    ):
+        pass
+
+    @overload
+    async def run(
+        self,
+        model: list[QuestionAnswerPair],
+        model_name: str = "sdk",
+        run_name: str | None = None,
+        wait_for_completion: bool = False,
         parameters: dict[str, int | float | str | bool] = {},
     ) -> Run:
         """
-        Runs the test suite. This can be used in one of two ways.
-
-        First, if "model_under_test" is provided, and "model_function" is not, then we will run that stock model. The supported models
-        are the same ones in the "Model Under Test" dropdown in the Web App - e.g., "gpt-4o", "claude-3-5-sonnet", etc.
-
-        Second, if "model_function" is provided, then we will use that function to generate responses from the LLM locally.
-        For example, your model function may look like this:
-
-        def my_model_function(input: str) -> str:
-            # Replace with your custom logic / prompt chains, etc.
-            output = OpenAi.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role": "user", "content": input}],
-            )
-            return output.choices[0].message.content
-
-        When using the model_function mode, the model_under_test parameter is just used for bookkeeping purposes -
-        it's what shows up as the model in the frontend.
+        Runs based on
         """
-        if self.id is None:
+        pass
+
+    async def run(
+        self,
+        model: str | ModelFunctionType | list[QuestionAnswerPair],
+        model_name: str = "sdk",
+        run_name: str | None = None,
+        wait_for_completion: bool = False,
+        parameters: dict[str, int | float | str | bool] = {},
+    ) -> Run:
+        """
+        Base method for running the test suite. See overloads for documentation.
+        """
+        if self._id is None:
             raise Exception(
                 "This suite has not been created yet. Call suite.create() before calling suite.run()"
-            )
-
-        if model_under_test is None and model_function is None:
-            raise Exception(
-                "One of 'model_under_test' or 'model_function' must be provided."
             )
 
         # Use the default parameters, and then override with any user-provided parameters.
         _default_parameters = _get_default_parameters()
         parameters = {**_default_parameters, **parameters}
-        if model_under_test is not None:
-            parameters["model_under_test"] = model_under_test
 
         # Collate the local output pairs if we're using a model function.
         qa_set_id = None
-        if model_function is not None:
+        if isinstance(model, Callable):
+            # Generate the QA pairs from the model function
+            qa_pairs = await self._generate_qa_pairs_from_function(model)
+            qa_set_id = await self._create_qa_set(qa_pairs, parameters, model_name)
+            parameters["model_under_test"] = model_name
+        elif isinstance(model, list):
+            # Use the QA pairs we are already provided
             qa_set_id = await self._create_qa_set(
-                model_function, parameters, model_under_test
+                [qa_pair.to_graphql() for qa_pair in model], parameters, model_name
             )
+            parameters["model_under_test"] = model_name
+        elif isinstance(model, str):
+            # Just use a model string (e.g. "gpt-4o")
+            parameters["model_under_test"] = model
+            qa_set_id = None
 
         # Start and pull the run.
         response = await self._client.start_run(
-            self.id, parameters, qa_set_id, run_name
+            self._id, parameters, qa_set_id, run_name
         )
         if response.start_run is None:
             raise Exception("Unable to start the run.")
 
         run_id = response.start_run.run_id
         run = await Run.from_id(run_id)
+
         if wait_for_completion:
             await run.wait_for_run_completion()
+
         await run.pull()
 
         return run
@@ -250,7 +275,7 @@ class Suite(BaseModel):
         Helper method to upload the files to the server.
         Uploads any tests.files_under_test that haven't been uploaded yet.
         """
-        if self.id is None:
+        if self._id is None:
             raise Exception("This suite has not been created yet.")
 
         file_name_and_hash_to_file_id = {}
@@ -279,7 +304,7 @@ class Suite(BaseModel):
 
                     # If the file hasn't been uploaded yet, we upload it
                     if name_hash_tuple not in file_name_and_hash_to_file_id:
-                        file_id = _upload_file(self.id, file_path)
+                        file_id = _upload_file(self._id, file_path)
                         file_name_and_hash_to_file_id[name_hash_tuple] = file_id
 
                     # Either way, we add the file id to the test.
@@ -293,12 +318,12 @@ class Suite(BaseModel):
         """
         Helper method to upload the tests to the server in batches of 100.
         """
-        if self.id is None:
+        if self._id is None:
             raise Exception("This suite has not been created yet.")
 
         # Upload tests in batches of 100
         created_tests = []
-        test_mutations = [test.to_test_mutation_info(self.id) for test in self.tests]
+        test_mutations = [test.to_test_mutation_info(self._id) for test in self.tests]
         for i in range(0, len(test_mutations), 100):
             batch = test_mutations[i : i + 100]
             batch_result = await self._client.add_batch_tests(
@@ -335,34 +360,26 @@ class Suite(BaseModel):
         """
         Helper method to upload the global checks to the server.
         """
-        if self.id is None:
+        if self._id is None:
             raise Exception("This suite has not been created yet.")
 
         await self._client.update_global_checks(
-            self.id,
+            self._id,
             json.dumps([gc.model_dump(exclude_none=True) for gc in self.global_checks]),
         )
 
-    async def _create_qa_set(
+    async def _generate_qa_pairs_from_function(
         self,
         model_function: ModelFunctionType,
-        parameters: dict[str, int | float | str | bool] = {},
-        model_under_test: str | None = None,
-    ) -> str | None:
-        """
-        Helper function to create a question-answer set from a model function.
-        A question-answer set is just a set of inputs to the LLM, and the LLM's responses.
-        """
-        if self.id is None:
+    ) -> list[QuestionAnswerPairInputType]:
+        if self._id is None:
             raise Exception(
                 "This suite has not been created yet, so we can't create a QA set from it."
             )
-
         # Pull latest suite data to ensure we're up to date
-        updated_suite = await Suite.from_id(self.id)
+        updated_suite = await Suite.from_id(self._id)
         for field in self.__fields__:
             setattr(self, field, getattr(updated_suite, field))
-
         # Inspect the model function to determine if it takes 1 or 3 parameters
         # We dynamically change our call signature based on what the user passes in.
         sig = inspect.signature(model_function)
@@ -371,7 +388,6 @@ class Suite(BaseModel):
             raise ValueError("Model function must accept either 1 or 3 parameters")
         is_simple_model_function = num_params == 1
 
-        # Query the LLM for each test.
         qa_pairs: list[QuestionAnswerPairInputType] = []
         for test in tqdm(self.tests):
             files = {}
@@ -409,12 +425,28 @@ class Suite(BaseModel):
                         out_tokens=out_tokens_end - out_tokens_start,
                         duration_seconds=time_end - time_start,
                     ),
-                    test_id=test.id,
+                    test_id=test._id,
                 )
+            )
+        return qa_pairs
+
+    async def _create_qa_set(
+        self,
+        qa_pairs: list[QuestionAnswerPairInputType],
+        parameters: dict[str, int | float | str | bool] = {},
+        model_under_test: str | None = None,
+    ) -> str | None:
+        """
+        Helper function to create a question-answer set from a model function.
+        A question-answer set is just a set of inputs to the LLM, and the LLM's responses.
+        """
+        if self._id is None:
+            raise Exception(
+                "This suite has not been created yet, so we can't create a QA set from it."
             )
 
         response = await self._client.create_question_answer_set(
-            self.id,
+            self._id,
             qa_pairs,
             parameters,
             model_under_test or "sdk",

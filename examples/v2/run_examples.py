@@ -5,6 +5,7 @@ from typing import Any
 
 from vals.sdk.sdk import read_docx
 from vals.sdk.v2.suite import Check, Suite, Test
+from vals.sdk.v2.types import QuestionAnswerPair
 
 
 async def run_with_model_under_test():
@@ -20,7 +21,7 @@ async def run_with_model_under_test():
         ],
     )
     await suite.create()
-    run = await suite.run(model_under_test="gpt-4o-mini", wait_for_completion=True)
+    run = await suite.run(model="gpt-4o-mini", wait_for_completion=True)
 
     print(f"Run URL: {run.url}")
     print(f"Pass percentage: {run.pass_percentage}")
@@ -46,7 +47,7 @@ async def run_with_function():
         # This would be replaced with your custom model.
         return input_under_test + "!!!"
 
-    run = await suite.run(model_function=function)
+    run = await suite.run(model=function, wait_for_completion=True)
 
     print(f"Run URL: {run.url}")
     print(f"Pass percentage: {run.pass_percentage}")
@@ -79,16 +80,42 @@ async def run_with_function_context_and_files():
         # to return a response.
         return input_under_test
 
-    run = await suite.run(model_function=function, wait_for_completion=True)
+    run = await suite.run(model=function, wait_for_completion=True)
+
+    print(f"Run URL: {run.url}")
+    print(f"Pass percentage: {run.pass_percentage}")
+
+
+async def run_with_qa_pairs():
+    """Run the suite with QA pairs."""
+    suite = Suite(
+        title="Test Suite",
+        global_checks=[Check(operator="grammar")],
+        tests=[
+            Test(
+                input_under_test="What is QSBS?",
+                checks=[Check(operator="equals", criteria="QSBS")],
+            ),
+        ],
+    )
+
+    await suite.create()
+
+    qa_pairs = [QuestionAnswerPair(input_under_test="What is QSBS?", llm_output="QSBS")]
+
+    run = await suite.run(
+        model=qa_pairs, model_name="test-model", wait_for_completion=True
+    )
 
     print(f"Run URL: {run.url}")
     print(f"Pass percentage: {run.pass_percentage}")
 
 
 async def all():
-    await run_with_model_under_test()
-    await run_with_function()
-    await run_with_function_context_and_files()
+    # await run_with_model_under_test()
+    # await run_with_function()
+    # await run_with_function_context_and_files()
+    await run_with_qa_pairs()
 
 
 if __name__ == "__main__":
