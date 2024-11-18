@@ -107,6 +107,7 @@ class Suite(BaseModel):
                 golden_output=test.get("golden_output", ""),
                 tags=test.get("tags", []),
                 files_under_test=test.get("files_under_test", []),
+                context=test.get("context", {}),
             )
             for test in data["tests"]
         ]
