@@ -9,7 +9,6 @@ from tqdm import tqdm
 from vals.graphql_client.client import Client
 from vals.graphql_client.input_types import MetadataType, QuestionAnswerPairInputType
 from vals.sdk.run import _get_default_parameters
-from vals.sdk.suite import _upload_file, _validate_suite
 from vals.sdk.v2 import patch
 from vals.sdk.v2.run import Run
 from vals.sdk.v2.types import (
@@ -128,6 +127,12 @@ class Suite(BaseModel):
             data = json.load(f)
         return await cls.from_dict(data)
 
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Converts the test suite to a dictionary.
+        """
+        return self.model_dump(exclude_none=True, exclude_defaults=True)
+
     async def create(self) -> None:
         """
         Creates the test suite on the server.
@@ -135,7 +140,7 @@ class Suite(BaseModel):
         if self._id is not None:
             raise Exception("This suite has already been created.")
 
-        await self._validate_tests()
+        await self._validate_suite()
 
         # Create suite object on the server
         suite = await self._client.create_or_update_test_suite(
@@ -315,7 +320,7 @@ class Suite(BaseModel):
 
                     # If the file hasn't been uploaded yet, we upload it
                     if name_hash_tuple not in file_name_and_hash_to_file_id:
-                        file_id = _upload_file(self._id, file_path)
+                        file_id = self._upload_file(self._id, file_path)
                         file_name_and_hash_to_file_id[name_hash_tuple] = file_id
 
                     # Either way, we add the file id to the test.
@@ -348,24 +353,36 @@ class Suite(BaseModel):
         # Update the local suite with the new tests to ensure everything is in sync.
         self.tests = [Test.from_graphql_test(test) for test in created_tests]
 
-    async def _validate_tests(self) -> None:
-        """Helper method to ensure that all operator strings are correct."""
+    async def _validate_checks(
+        self, check: Check, operators_dict: dict[str, Operator]
+    ) -> None:
+        """Helper method to ensure that operator is correct"""
+        if check.operator not in operators_dict:
+            raise ValueError(f"Invalid operator: {check.operator}")
+        operator = operators_dict[check.operator]
+        if operator.is_unary and (check.criteria is None or check.criteria == ""):
+            raise ValueError(
+                "Operator {operator} is unary, but no criteria was provided."
+            )
+
+    async def _validate_suite(self) -> None:
+        """Helper method to ensure that all operator strings are correct. Most of the validation is done by Pydantic
+        but this handles things Pydantic can't check for, like whether a file exists."""
         operators = (await self._client.get_operators()).operators
-        operators_dict = {
-            op.name_in_doc: op for op in operators
-        }  # Easy lookup by name.
+        operators_dict = {op.name_in_doc: op for op in operators}
 
         for test in self.tests:
             for check in test.checks:
-                if check.operator not in operators_dict:
-                    raise ValueError(f"Invalid operator: {check.operator}")
-                operator = operators_dict[check.operator]
-                if operator.is_unary and (
-                    check.criteria is None or check.criteria == ""
-                ):
-                    raise ValueError(
-                        "Operator {operator} is unary, but no criteria was provided."
-                    )
+                await self._validate_checks(check, operators_dict)
+
+            for file_path in test.files_under_test:
+                if not os.path.exists(file_path):
+                    raise ValueError(f"File does not exist: {file_path}")
+                if not os.path.isfile(file_path):
+                    raise ValueError(f"Path is a directory: {file_path}")
+
+        for check in self.global_checks:
+            await self._validate_checks(check, operators_dict)
 
     async def _upload_global_checks(self) -> None:
         """
@@ -466,3 +483,14 @@ class Suite(BaseModel):
             raise Exception("Unable to create the question-answer set.")
 
         return response.create_question_answer_set.question_answer_set.id
+
+    def _upload_file(self, suite_id: str, file_path: str) -> str:
+        with open(file_path, "rb") as f:
+            response = requests.post(
+                f"{be_host()}/upload_file/?test_suite_id={suite_id}",
+                files={"file": f},
+                headers={"Authorization": _get_auth_token()},
+            )
+            if response.status_code != 200:
+                raise Exception(f"Failed to upload file {file_path}")
+            return response.json()["file_id"]
