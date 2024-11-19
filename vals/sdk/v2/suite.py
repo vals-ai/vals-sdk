@@ -189,6 +189,9 @@ class Suite(BaseModel):
         wait_for_completion: bool = False,
         parameters: dict[str, int | float | str | bool] = {},
     ):
+        """
+        Runs based on a model string (e.g. "gpt-4o").
+        """
         pass
 
     @overload
@@ -200,6 +203,10 @@ class Suite(BaseModel):
         wait_for_completion: bool = False,
         parameters: dict[str, int | float | str | bool] = {},
     ):
+        """
+        Runs based on a model function. This can either be a simple model function, which just takes
+        an input as a string and produces an output string, or a model function that takes in the input string, a dictionary of filename to file contents, and a context dictionary.
+        """
         pass
 
     @overload
@@ -212,7 +219,10 @@ class Suite(BaseModel):
         parameters: dict[str, int | float | str | bool] = {},
     ) -> Run:
         """
-        Runs based on
+        Runs based on on a list of question-answer pairs, which contain inputs and outputs.
+
+        IMPORTANT NOTE: The combined "inputs" of the question-answer pairs (the input under test, the context, and the files) need
+        to match exactly the inputs of the tests in the suite, otherwise, Vals will not know how to match to the auto-eval correctly.
         """
         pass
 
