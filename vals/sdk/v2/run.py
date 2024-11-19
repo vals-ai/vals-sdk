@@ -63,6 +63,11 @@ class Run(BaseModel):
         """Converts the run to a dictionary."""
         return self.model_dump(exclude_none=True, exclude_defaults=True, mode="json")
 
+    def to_json_file(self, file_path: str) -> None:
+        """Converts the run to a JSON file."""
+        with open(file_path, "w") as f:
+            json.dump(self.to_dict(), f, indent=2)
+
     async def pull(self) -> None:
         """Update this Run instance with latest data from vals servers."""
         result = await self._client.pull_run(run_id=self.id)

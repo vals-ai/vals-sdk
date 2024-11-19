@@ -134,6 +134,13 @@ class Suite(BaseModel):
         """
         return self.model_dump(exclude_none=True, exclude_defaults=True)
 
+    def to_json_file(self, file_path: str) -> None:
+        """
+        Converts the test suite to a JSON file.
+        """
+        with open(file_path, "w") as f:
+            json.dump(self.to_dict(), f, indent=2)
+
     async def create(self) -> None:
         """
         Creates the test suite on the server.
