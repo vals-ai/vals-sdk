@@ -111,11 +111,48 @@ async def run_with_qa_pairs():
     print(f"Pass percentage: {run.pass_percentage}")
 
 
+async def run_with_qa_pairs_and_context():
+    """Run the suite with QA pairs and context."""
+    context = {
+        "message_history": [
+            {"role": "user", "content": "What is QSBS?"},
+            {"role": "assistant", "content": "QSBS is a company."},
+        ]
+    }
+    suite = Suite(
+        title="Test Suite",
+        global_checks=[Check(operator="grammar")],
+        tests=[
+            Test(
+                input_under_test="What is QSBS?",
+                checks=[Check(operator="equals", criteria="QSBS")],
+                context=context,
+            ),
+        ],
+    )
+
+    await suite.create()
+
+    qa_pairs = [
+        QuestionAnswerPair(
+            input_under_test="What is QSBS?", llm_output="QSBS", context=context
+        )
+    ]
+
+    run = await suite.run(
+        model=qa_pairs, model_name="test-model", wait_for_completion=True
+    )
+
+    print(f"Run URL: {run.url}")
+    print(f"Pass percentage: {run.pass_percentage}")
+
+
 async def all():
-    # await run_with_model_under_test()
-    # await run_with_function()
-    # await run_with_function_context_and_files()
+    await run_with_model_under_test()
+    await run_with_function()
+    await run_with_function_context_and_files()
     await run_with_qa_pairs()
+    await run_with_qa_pairs_and_context()
 
 
 if __name__ == "__main__":
