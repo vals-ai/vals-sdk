@@ -87,14 +87,14 @@ async def pull_suite():
     Example of pulling a suite that already exists.
     """
     # TODO: Replace this with your own suite id.
-    suite = await Suite.from_id("5fbe9bea-c0ab-405c-9570-49c440eb9886")
+    suite = await Suite.from_id("de9860f4-bf22-43ee-85a6-279a282e7cb4")
 
     print(f"Pulling: Suite Title: {suite.title}")
     print(f"Global Checks: {suite.global_checks}")
-
     # Can update the suite and push it back up to the server.
     suite.title = suite.title + " - UPDATED TITLE"
     await suite.update()
+    print(json.dumps(suite.to_dict(), indent=2))
 
 
 async def load_from_json():

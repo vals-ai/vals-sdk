@@ -139,10 +139,9 @@ class Check(BaseModel):
     def from_graphql(cls, check_dict: dict) -> "Check":
         """Internal method to translate from what we receive from GraphQL to the Check class displayed to the user."""
         modifiers = CheckModifiers.from_graphql(check_dict.get("modifiers", {}))
-
         return cls(
             operator=check_dict["operator"],
-            criteria=check_dict["criteria"],
+            criteria=check_dict.get("criteria", ""),
             modifiers=modifiers,
         )
 

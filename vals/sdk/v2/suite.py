@@ -4,12 +4,14 @@ import os
 from time import time
 from typing import Any, Callable, cast, overload
 
+import requests
 from pydantic import BaseModel, PrivateAttr
 from tqdm import tqdm
 from vals.graphql_client.client import Client
 from vals.graphql_client.get_operators import GetOperatorsOperators
 from vals.graphql_client.input_types import MetadataType, QuestionAnswerPairInputType
 from vals.sdk.run import _get_default_parameters
+from vals.sdk.util import _get_auth_token, be_host
 from vals.sdk.v2 import patch
 from vals.sdk.v2.run import Run
 from vals.sdk.v2.types import (
@@ -77,13 +79,14 @@ class Suite(BaseModel):
             test = Test.from_graphql_test(graphql_test)
             tests.append(test)
 
-        return cls(
-            _id=suite_id,
+        suite = cls(
             title=title,
             description=description,
             global_checks=global_checks,
             tests=tests,
         )
+        suite._id = suite_id
+        return suite
 
     @classmethod
     async def from_dict(cls, data: dict[str, Any]) -> "Suite":
@@ -91,7 +94,6 @@ class Suite(BaseModel):
         Imports the test suite from a dictionary - useful if
         importing from the old format.
         """
-        _validate_suite(data)
 
         title = data["title"]
         description = data["description"]
@@ -112,12 +114,14 @@ class Suite(BaseModel):
             )
             for test in data["tests"]
         ]
-        return cls(
+        suite = cls(
             title=title,
             description=description,
             global_checks=global_checks,
             tests=tests,
         )
+        await suite._validate_suite()
+        return suite
 
     @classmethod
     async def from_json_file(cls, file_path: str) -> "Suite":
