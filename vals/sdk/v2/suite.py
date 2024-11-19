@@ -7,6 +7,7 @@ from typing import Any, Callable, cast, overload
 from pydantic import BaseModel, PrivateAttr
 from tqdm import tqdm
 from vals.graphql_client.client import Client
+from vals.graphql_client.get_operators import GetOperatorsOperators
 from vals.graphql_client.input_types import MetadataType, QuestionAnswerPairInputType
 from vals.sdk.run import _get_default_parameters
 from vals.sdk.v2 import patch
@@ -354,15 +355,15 @@ class Suite(BaseModel):
         self.tests = [Test.from_graphql_test(test) for test in created_tests]
 
     async def _validate_checks(
-        self, check: Check, operators_dict: dict[str, Operator]
+        self, check: Check, operators_dict: dict[str, GetOperatorsOperators]
     ) -> None:
         """Helper method to ensure that operator is correct"""
         if check.operator not in operators_dict:
             raise ValueError(f"Invalid operator: {check.operator}")
         operator = operators_dict[check.operator]
-        if operator.is_unary and (check.criteria is None or check.criteria == ""):
+        if not operator.is_unary and (check.criteria is None or check.criteria == ""):
             raise ValueError(
-                "Operator {operator} is unary, but no criteria was provided."
+                f"Operator {operator.name_in_doc} is unary, but no criteria was provided."
             )
 
     async def _validate_suite(self) -> None:

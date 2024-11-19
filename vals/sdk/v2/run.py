@@ -61,7 +61,7 @@ class Run(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Converts the run to a dictionary."""
-        return self.model_dump(exclude_none=True, exclude_defaults=True)
+        return self.model_dump(exclude_none=True, exclude_defaults=True, mode="json")
 
     async def pull(self) -> None:
         """Update this Run instance with latest data from vals servers."""
