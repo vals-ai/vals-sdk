@@ -3,7 +3,6 @@ import json
 from io import BytesIO
 from typing import Any
 
-from vals.sdk.run import pull_run_results_json
 from vals.sdk.sdk import read_docx
 from vals.sdk.v2.suite import Check, Suite, Test
 from vals.sdk.v2.types import QuestionAnswerPair
@@ -29,11 +28,6 @@ async def run_with_model_under_test():
 
     # Can save the results to a CSV file.
     run.to_csv("out.csv")
-
-    with open("new_run_json.json", "w") as f:
-        json.dump(run.to_dict(), f, indent=2)
-    with open("old_run_json.json", "w") as f:
-        json.dump(pull_run_results_json(run.id), f, indent=2)
 
 
 async def run_with_function():
@@ -118,10 +112,10 @@ async def run_with_qa_pairs():
 
 
 async def all():
-    await run_with_model_under_test()
+    # await run_with_model_under_test()
     # await run_with_function()
     # await run_with_function_context_and_files()
-    # await run_with_qa_pairs()
+    await run_with_qa_pairs()
 
 
 if __name__ == "__main__":

@@ -7,8 +7,7 @@ Note: The file paths assume this is run from the `examples/` directory.
 import asyncio
 import json
 
-from vals.sdk.v2.suite import Suite
-from vals.sdk.v2.types import Check, CheckModifiers, ConditionalCheck, Test
+from vals.sdk.v2.suite import Check, Suite, Test
 
 
 async def list_suites():
@@ -26,34 +25,15 @@ async def create_suite():
         tests=[
             Test(
                 input_under_test="What is QSBS?",
-                files_under_test=["data_files/postmoney_safe.docx"],
                 checks=[Check(operator="equals", criteria="QSBS")],
             ),
             Test(
                 input_under_test="What is an 83 election?",
-                checks=[
-                    Check(
-                        operator="equals",
-                        criteria="QSBS",
-                        modifiers=CheckModifiers(
-                            optional=True,
-                            severity=-1,
-                            conditional=ConditionalCheck(
-                                operator="equals", criteria="Q Corp"
-                            ),
-                        ),
-                    )
-                ],
-            ),
-            Test(
-                input_under_test="What is the MFN clause?",
-                checks=[],
-                golden_output="MFN clause",
+                checks=[Check(operator="equals", criteria="QSBS")],
             ),
         ],
     )
     await suite.create()
-    print(suite.to_dict())
 
 
 async def create_suite_with_files():
@@ -124,12 +104,12 @@ async def load_from_json():
 
 
 async def all():
-    # await list_suites()
+    await list_suites()
     await create_suite()
-    # await create_suite_with_files()
-    # await update_suite()
-    # await pull_suite()
-    # await load_from_json()
+    await create_suite_with_files()
+    await update_suite()
+    await pull_suite()
+    await load_from_json()
 
 
 if __name__ == "__main__":
