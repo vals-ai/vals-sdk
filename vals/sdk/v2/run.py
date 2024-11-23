@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 from datetime import datetime
 from typing import Any
 
@@ -57,7 +58,7 @@ class Run(BaseModel):
 
     @property
     def url(self) -> str:
-        return f"{fe_host()}/results?run_id={self.id}"
+        return f"{fe_host()}/results/{self.id}"
 
     def to_dict(self) -> dict[str, Any]:
         """Converts the run to a dictionary."""
@@ -92,11 +93,21 @@ class Run(BaseModel):
         Returns the status of the run after completion.
         """
 
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1)
         status = "in_progress"
+        start_time = time.time()
         while status == "in_progress":
             status = await self.run_status()
-            await asyncio.sleep(0.5)
+
+            # Sleep longer between polls, the longer the run goes.
+            if time.time() - start_time < 60:
+                sleep_time = 1
+            elif time.time() - start_time < 60 * 10:
+                sleep_time = 5
+            else:
+                sleep_time = 10
+
+            await asyncio.sleep(sleep_time)
 
         return RunStatus(status)
 
