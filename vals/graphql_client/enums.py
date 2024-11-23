@@ -38,3 +38,9 @@ class RunResultSortField(str, Enum):
     STARTED_AT = "STARTED_AT"
     COMPLETED_AT = "COMPLETED_AT"
     PASS_PERCENTAGE = "PASS_PERCENTAGE"
+
+
+class TierEnum(str, Enum):
+    FREE = "FREE"
+    STARTUP = "STARTUP"
+    ENTERPRISE = "ENTERPRISE"
