@@ -55,7 +55,6 @@ class Suite(BaseModel):
         """
         Create a new local test suite based on the data from the server.
         """
-        print("PULLING SUITE FROM ID")
         client = get_ariadne_client()
         suites_list = await client.get_test_suite_data(suite_id)
         if len(suites_list.test_suites) == 0:
@@ -151,7 +150,6 @@ class Suite(BaseModel):
         """
         if self._id is not None:
             raise Exception("This suite has already been created.")
-        print("CREATING SUITE")
         await self._validate_suite()
 
         # Create suite object on the server
@@ -185,7 +183,6 @@ class Suite(BaseModel):
             raise Exception(
                 "This suite has not been created yet, so there's nothing to update"
             )
-        print("UPDATING SUITE")
 
         await self._client.create_or_update_test_suite(
             self._id, self.title, self.description
@@ -259,7 +256,6 @@ class Suite(BaseModel):
             raise Exception(
                 "This suite has not been created yet. Call suite.create() before calling suite.run()"
             )
-        print("RUNNING SUITE")
         # Use the default parameters, and then override with any user-provided parameters.
         _default_parameters = _get_default_parameters()
         parameters = {**_default_parameters, **parameters}
@@ -273,7 +269,6 @@ class Suite(BaseModel):
             parameters["model_under_test"] = model_name
         elif isinstance(model, list):
             # Use the QA pairs we are already provided
-            print("CREATING QA SET")
             qa_set_id = await self._create_qa_set(
                 [qa_pair.to_graphql() for qa_pair in model], parameters, model_name
             )
@@ -351,7 +346,6 @@ class Suite(BaseModel):
         if self._id is None:
             raise Exception("This suite has not been created yet.")
 
-        print("UPLOADING TESTS")
         # Upload tests in batches of 100
         created_tests = []
         test_mutations = [test.to_test_mutation_info(self._id) for test in self.tests]
