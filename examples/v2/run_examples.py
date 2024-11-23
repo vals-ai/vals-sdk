@@ -10,24 +10,28 @@ from vals.sdk.v2.types import QuestionAnswerPair
 
 async def run_with_model_under_test():
     """Run the suite on a stock model, gpt-4o-mini"""
-    suite = Suite(
-        title="Test Suite",
-        global_checks=[Check(operator="grammar")],
-        tests=[
-            Test(
-                input_under_test="What is QSBS?",
-                checks=[Check(operator="equals", criteria="QSBS")],
-            ),
-        ],
-    )
-    await suite.create()
+    # suite = Suite(
+    #     title="Test Suite",
+    #     global_checks=[Check(operator="grammar")],
+    #     tests=[
+    #         Test(
+    #             input_under_test="What is QSBS?",
+    #             checks=[Check(operator="equals", criteria="QSBS")],
+    #         ),
+    #     ],
+    # )
+    suite = await Suite.from_id("f5a89e9f-23aa-4b3a-b9aa-b7e0b5fd1795")
+    # await suite.create()
     run = await suite.run(model="gpt-4o-mini", wait_for_completion=True)
 
     print(f"Run URL: {run.url}")
     print(f"Pass percentage: {run.pass_percentage}")
 
-    # Can save the results to a CSV file.
-    run.to_csv("out.csv")
+    run = await suite.run(model="gpt-4o-mini", wait_for_completion=True)
+
+    run = await suite.run(model="gpt-4o-mini", wait_for_completion=True)
+
+    run = await suite.run(model="gpt-4o-mini", wait_for_completion=True)
 
 
 async def run_with_function():
@@ -149,10 +153,10 @@ async def run_with_qa_pairs_and_context():
 
 async def all():
     await run_with_model_under_test()
-    await run_with_function()
-    await run_with_function_context_and_files()
-    await run_with_qa_pairs()
-    await run_with_qa_pairs_and_context()
+    # await run_with_function()
+    # await run_with_function_context_and_files()
+    # await run_with_qa_pairs()
+    # await run_with_qa_pairs_and_context()
 
 
 if __name__ == "__main__":

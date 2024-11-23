@@ -10,24 +10,25 @@ from vals.sdk.suite import create_suite
 
 client = patch(OpenAI(api_key=os.environ.get("OPEN_AI_KEY")))
 
-# This is the definition of our test suite, the same way
-# one would define it in the platform
-suite_data = {
-    "title": "Example Suite [SDK]",
-    "description": "An example suite created from the Vals SDK.",
-    "tests": [
-        {
-            "input_under_test": "Who was the third president?",
-            "checks": [
-                {"operator": "grammar"},
-                {"operator": "includes", "criteria": "Thomas Jefferson"},
-            ],
-        }
-    ],
-}
+# # This is the definition of our test suite, the same way
+# # one would define it in the platform
+# suite_data = {
+#     "title": "Example Suite [SDK]",
+#     "description": "An example suite created from the Vals SDK.",
+#     "tests": [
+#         {
+#             "input_under_test": "Who was the third president?",
+#             "checks": [
+#                 {"operator": "grammar"},
+#                 {"operator": "includes", "criteria": "Thomas Jefferson"},
+#             ],
+#         }
+#     ],
+# }
 
-# This function creates a suite on the platform
-suite_id = create_suite(suite_data=suite_data)
+# # This function creates a suite on the platform
+# suite_id = create_suite(suite_data=suite_data)
+suite_id = "82e952b0-84aa-45b7-89a7-6b745e7e9bc6"
 
 
 def test_function(test_input: str):

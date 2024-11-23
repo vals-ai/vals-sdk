@@ -99,7 +99,6 @@ def run_evaluations(
     metadata = {}
 
     uses_files = False
-    uses_file_uids = False
     uses_context = False
 
     for test in suite_data["tests"]:
@@ -109,13 +108,6 @@ def run_evaluations(
             and len(test["file_ids"])
         ):
             uses_files = True
-
-        if (
-            "file_uids" in test
-            and test["file_uids"] is not None
-            and len(test["file_uids"]) > 0
-        ):
-            uses_file_uids = True
 
         if (
             "context" in test
@@ -141,13 +133,6 @@ def run_evaluations(
                     files[file_name] = _read_file(file_id)
 
             non_param_kwargs["files"] = files
-
-        if uses_file_uids:
-            if "file_uids" in test and test["file_uids"] is not None:
-                file_uids = test["file_uids"]
-                non_param_kwargs["file_uids"] = file_uids
-            else:
-                non_param_kwargs["file_uids"] = []
 
         if uses_context:
             if "context" in test and test["context"] is not None:
