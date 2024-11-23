@@ -26,6 +26,7 @@ from .enums import (
     RunStatus,
     SortOrder,
     TestSuiteSortField,
+    TierEnum,
 )
 from .exceptions import (
     GraphQLClientError,
@@ -48,6 +49,7 @@ from .input_types import (
     FilterOptionsInput,
     FixedOutputInputType,
     MetadataType,
+    ParameterInputType,
     PerCheckHumanReviewInputType,
     QuestionAnswerPairInputType,
     RunResultFilterOptionsInput,
@@ -109,6 +111,7 @@ __all__ = [
     "ListRunsRuns",
     "ListRunsRunsTestSuite",
     "MetadataType",
+    "ParameterInputType",
     "PerCheckHumanReviewInputType",
     "PullRun",
     "PullRunRun",
@@ -129,6 +132,7 @@ __all__ = [
     "StartRunStartRun",
     "TestMutationInfo",
     "TestSuiteSortField",
+    "TierEnum",
     "UpdateGlobalChecks",
     "UpdateGlobalChecksUpdateGlobalChecks",
     "Upload",

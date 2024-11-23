@@ -17,7 +17,6 @@ class ListRunsRuns(BaseModel):
     run_id: str = Field(alias="runId")
     pass_percentage: Optional[float] = Field(alias="passPercentage")
     status: str
-    run_id: str = Field(alias="runId")
     text_summary: str = Field(alias="textSummary")
     timestamp: datetime
     completed_at: Optional[datetime] = Field(alias="completedAt")

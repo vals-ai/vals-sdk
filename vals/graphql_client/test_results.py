@@ -18,8 +18,6 @@ class TestResultsTestResults(BaseModel):
     pass_percentage: float = Field(alias="passPercentage")
     pass_percentage_with_optional: float = Field(alias="passPercentageWithOptional")
     result_json: Any = Field(alias="resultJson")
-    human_eval: Optional[float] = Field(alias="humanEval")
-    human_feedback: str = Field(alias="humanFeedback")
     test: "TestResultsTestResultsTest"
     metadata: Optional[Any]
 
