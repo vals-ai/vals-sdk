@@ -82,6 +82,16 @@ async def update_suite():
     await suite.update()
 
 
+async def create_and_delete_suite():
+    """Create a suite, then delete it."""
+    suite = Suite(
+        title="Test Suite to Delete", global_checks=[Check(operator="grammar")]
+    )
+    await suite.create()
+    print(f"Created suite: {suite._id}")
+    await suite.delete()
+
+
 async def pull_suite():
     """
     Example of pulling a suite that already exists.
@@ -106,6 +116,7 @@ async def load_from_json():
 async def all():
     await list_suites()
     await create_suite()
+    await create_and_delete_suite()
     await create_suite_with_files()
     await update_suite()
     await pull_suite()

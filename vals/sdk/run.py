@@ -266,7 +266,7 @@ def get_run_url(run_id: str) -> str:
     """
     Utility function to transform a run id to a viewable Vals AI URL.
     """
-    return f"{fe_host()}/results?run_id={run_id}"
+    return f"{fe_host()}/results/{run_id}"
 
 
 @attrs.define
