@@ -177,9 +177,7 @@ def pull_suite(suite_id: str, include_id=False):
                 crossVersionId
                 fileIds
                 inputUnderTest
-                sampleOutput
                 goldenOutput
-                sampleOutputType
                 fileUids
                 tags
                 context
