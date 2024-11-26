@@ -7,6 +7,11 @@ from .add_batch_tests import (
 )
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel, Upload
+from .batch_add_question_answer_pairs import (
+    BatchAddQuestionAnswerPairs,
+    BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairs,
+    BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairs,
+)
 from .client import Client
 from .create_or_update_test_suite import (
     CreateOrUpdateTestSuite,
@@ -26,6 +31,7 @@ from .enums import (
     RunStatus,
     SortOrder,
     TestSuiteSortField,
+    TierEnum,
 )
 from .exceptions import (
     GraphQLClientError,
@@ -48,6 +54,7 @@ from .input_types import (
     FilterOptionsInput,
     FixedOutputInputType,
     MetadataType,
+    ParameterInputType,
     PerCheckHumanReviewInputType,
     QuestionAnswerPairInputType,
     RunResultFilterOptionsInput,
@@ -78,6 +85,9 @@ __all__ = [
     "AppQuestionAnswerSetStatusChoices",
     "AsyncBaseClient",
     "BaseModel",
+    "BatchAddQuestionAnswerPairs",
+    "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairs",
+    "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairs",
     "CheckInputType",
     "Client",
     "CreateOrUpdateTestSuite",
@@ -109,6 +119,7 @@ __all__ = [
     "ListRunsRuns",
     "ListRunsRunsTestSuite",
     "MetadataType",
+    "ParameterInputType",
     "PerCheckHumanReviewInputType",
     "PullRun",
     "PullRunRun",
@@ -129,6 +140,7 @@ __all__ = [
     "StartRunStartRun",
     "TestMutationInfo",
     "TestSuiteSortField",
+    "TierEnum",
     "UpdateGlobalChecks",
     "UpdateGlobalChecksUpdateGlobalChecks",
     "Upload",

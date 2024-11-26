@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from .add_batch_tests import AddBatchTests
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType
+from .batch_add_question_answer_pairs import BatchAddQuestionAnswerPairs
 from .create_or_update_test_suite import CreateOrUpdateTestSuite
 from .create_question_answer_set import CreateQuestionAnswerSet
 from .delete_test_suite import DeleteTestSuite
@@ -66,6 +67,39 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return CreateQuestionAnswerSet.model_validate(data)
+
+    async def batch_add_question_answer_pairs(
+        self,
+        question_answer_set_id: str,
+        question_answer_pairs: List[QuestionAnswerPairInputType],
+        **kwargs: Any
+    ) -> BatchAddQuestionAnswerPairs:
+        query = gql(
+            """
+            mutation BatchAddQuestionAnswerPairs($questionAnswerSetId: String!, $questionAnswerPairs: [QuestionAnswerPairInputType!]!) {
+              batchAddQuestionAnswerPairs(
+                questionAnswerSetId: $questionAnswerSetId
+                questionAnswerPairs: $questionAnswerPairs
+              ) {
+                questionAnswerPairs {
+                  id
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {
+            "questionAnswerSetId": question_answer_set_id,
+            "questionAnswerPairs": question_answer_pairs,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="BatchAddQuestionAnswerPairs",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return BatchAddQuestionAnswerPairs.model_validate(data)
 
     async def start_run(
         self,
