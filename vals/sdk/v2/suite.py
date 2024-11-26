@@ -475,6 +475,7 @@ class Suite(BaseModel):
         qa_pairs: list[QuestionAnswerPairInputType],
         parameters: dict[str, int | float | str | bool] = {},
         model_under_test: str | None = None,
+        batch_size: int = 50,
     ) -> str | None:
         """
         Helper function to create a question-answer set from a model function.
@@ -487,16 +488,16 @@ class Suite(BaseModel):
 
         response = await self._client.create_question_answer_set(
             self._id,
-            list(qa_pairs[:50]),
+            list(qa_pairs[:batch_size]),
             parameters,
             model_under_test or "sdk",
         )
         set_id = response.create_question_answer_set.question_answer_set.id
 
-        if len(qa_pairs) > 50:
+        if len(qa_pairs) > batch_size:
             # Process remaining QA pairs in batches of 50
-            for i in range(50, len(qa_pairs), 50):
-                batch = qa_pairs[i : i + 50]
+            for i in range(batch_size, len(qa_pairs), batch_size):
+                batch = qa_pairs[i : i + batch_size]
                 await self._client.batch_add_question_answer_pairs(set_id, batch)
 
         if response.create_question_answer_set is None:
