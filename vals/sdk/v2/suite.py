@@ -488,18 +488,15 @@ class Suite(BaseModel):
 
         response = await self._client.create_question_answer_set(
             self._id,
-            list(qa_pairs[:batch_size]),
+            [],
             parameters,
             model_under_test or "sdk",
         )
         set_id = response.create_question_answer_set.question_answer_set.id
 
-        if len(qa_pairs) > batch_size:
-            # Process remaining QA pairs in batches of 50
-            for i in range(batch_size, len(qa_pairs), batch_size):
-                batch = qa_pairs[i : i + batch_size]
-                await self._client.batch_add_question_answer_pairs(set_id, batch)
-
+        for i in range(0, len(qa_pairs), batch_size):
+            batch = qa_pairs[i : i + batch_size]
+            await self._client.batch_add_question_answer_pairs(set_id, batch)
         if response.create_question_answer_set is None:
             raise Exception("Unable to create the question-answer set.")
 
