@@ -7,7 +7,9 @@ Note: The file paths assume this is run from the `examples/` directory.
 import asyncio
 import json
 
+from vals.graphql_client.input_types import MetadataType, QuestionAnswerPairInputType
 from vals.sdk.v2.suite import Check, Suite, Test
+from vals.sdk.v2.types import Metadata, QuestionAnswerPair
 
 
 async def list_suites():
@@ -34,6 +36,56 @@ async def create_suite():
         ],
     )
     await suite.create()
+
+    # Generate 1000 QA pairs with realistic inputs and outputs
+    qa_pairs = []
+    for i in range(1000):
+        input_text = f"Please analyze the following complex tax scenario and provide detailed guidance. A client has a startup that was founded in 2019 and has received multiple rounds of funding. They're considering a stock sale that could qualify for QSBS treatment under Section 1202. The company has maintained C-corporation status since inception and has assets under $50 million. The client acquired their shares through a combination of founder's stock and subsequent purchases. They're approaching the 5-year holding period for some shares but not others. Key considerations include: 1) The impact of previous funding rounds on the company's asset test compliance 2) Whether any disqualifying redemptions occurred 3) How to calculate the excluded gain given mixed acquisition dates 4) Implications of recent changes to state tax treatment of QSBS gains 5) Strategic timing of sales to maximize tax benefits. Case #{i}"
+
+        llm_output = f"""Based on the complex tax scenario provided, here is my detailed analysis and guidance:
+
+1. QSBS Qualification Analysis:
+- The company appears to meet the basic C-corporation requirement since inception
+- The $50M gross asset test is currently satisfied
+- The active business requirement likely met as a startup
+
+2. Holding Period Considerations:
+- Shares acquired in 2019 are approaching but not yet at 5-year mark
+- Recommend tracking each share lot separately
+- Consider structured sales to optimize timing
+
+3. Funding Round Impact:
+- Need to verify asset test at time of each funding round
+- Previous rounds may have affected qualification
+- Important to maintain detailed records
+
+4. Redemption Analysis:
+- No disqualifying redemptions mentioned but should verify
+- Look back period rules apply
+- Document all stock transactions
+
+5. Gain Exclusion Calculation:
+- Will vary by share lot acquisition date
+- Maximum exclusion is greater of $10M or 10x basis
+- State treatment requires separate analysis
+
+Recommendations:
+1. Maintain detailed share lot tracking
+2. Consider phased sale approach
+3. Document asset test compliance
+4. Consult state-specific guidance
+5. Engage qualified tax counsel
+
+Case #{i} analysis complete. Let me know if you need any clarification on specific points."""
+
+        qa_pairs.append(
+            QuestionAnswerPairInputType(
+                input_under_test=input_text,
+                llm_output=llm_output,
+                file_ids=[],
+            )
+        )
+    await suite._create_qa_set(qa_pairs, {}, "")
 
 
 async def create_suite_with_files():
@@ -114,13 +166,13 @@ async def load_from_json():
 
 
 async def all():
-    await list_suites()
+    # await list_suites()
     await create_suite()
-    await create_and_delete_suite()
-    await create_suite_with_files()
-    await update_suite()
-    await pull_suite()
-    await load_from_json()
+    # await create_and_delete_suite()
+    # await create_suite_with_files()
+    # await update_suite()
+    # await pull_suite()
+    # await load_from_json()
 
 
 if __name__ == "__main__":
