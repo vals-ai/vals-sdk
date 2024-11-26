@@ -487,14 +487,22 @@ class Suite(BaseModel):
 
         response = await self._client.create_question_answer_set(
             self._id,
-            qa_pairs,
+            list(qa_pairs[:50]),
             parameters,
             model_under_test or "sdk",
         )
+        set_id = response.create_question_answer_set.question_answer_set.id
+
+        if len(qa_pairs) > 50:
+            # Process remaining QA pairs in batches of 50
+            for i in range(50, len(qa_pairs), 50):
+                batch = qa_pairs[i : i + 50]
+                await self._client.batch_add_question_answer_pairs(set_id, batch)
+
         if response.create_question_answer_set is None:
             raise Exception("Unable to create the question-answer set.")
 
-        return response.create_question_answer_set.question_answer_set.id
+        return set_id
 
     def _upload_file(self, suite_id: str, file_path: str) -> str:
         with open(file_path, "rb") as f:
