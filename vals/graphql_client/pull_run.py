@@ -18,7 +18,6 @@ class PullRunRun(BaseModel):
     run_id: str = Field(alias="runId")
     pass_percentage: Optional[float] = Field(alias="passPercentage")
     status: str
-    run_id: str = Field(alias="runId")
     text_summary: str = Field(alias="textSummary")
     timestamp: datetime
     completed_at: Optional[datetime] = Field(alias="completedAt")
@@ -37,8 +36,6 @@ class PullRunTestResults(BaseModel):
     pass_percentage: float = Field(alias="passPercentage")
     pass_percentage_with_optional: float = Field(alias="passPercentageWithOptional")
     result_json: Any = Field(alias="resultJson")
-    human_eval: Optional[float] = Field(alias="humanEval")
-    human_feedback: str = Field(alias="humanFeedback")
     test: "PullRunTestResultsTest"
     metadata: Optional[Any]
 

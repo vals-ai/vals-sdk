@@ -190,12 +190,6 @@ def run_summary(run_id: str) -> Dict[str, Any]:
                 archived
                 passPercentage
                 passPercentageWithOptional
-                humanEvalAccuracy
-                humanEvalF1
-                humanEvalPhi
-                humanEvalMean
-                humanEvalCoverage
-                checkResultSummary
             }}
         }}
         """
@@ -205,7 +199,6 @@ def run_summary(run_id: str) -> Dict[str, Any]:
     # TODO: Make a non-json, pretty version if useful
     dict_result = results["run"]
     dict_result["parameters"] = json.loads(dict_result["parameters"])
-    dict_result["checkResultSummary"] = json.loads(dict_result["checkResultSummary"])
 
     return dict_result
 
@@ -220,8 +213,6 @@ def _pull_test_results(run_id: str) -> Dict[str, Any]:
                   passPercentage
                   passPercentageWithOptional
                   resultJson
-                  humanEval
-                  humanFeedback
                   test {{
                     testId
                     inputUnderTest

@@ -13,7 +13,6 @@ query PullRun($runId: String!) {
     runId
     passPercentage
     status
-    runId
     textSummary
     timestamp
     completedAt
@@ -30,8 +29,6 @@ query PullRun($runId: String!) {
     passPercentage
     passPercentageWithOptional
     resultJson
-    humanEval
-    humanFeedback
     test {
       testId
       inputUnderTest
@@ -45,7 +42,6 @@ query ListRuns($archived: Boolean, $suiteId: String) {
     runId
     passPercentage
     status
-    runId
     textSummary
     timestamp
     completedAt

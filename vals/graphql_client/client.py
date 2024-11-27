@@ -175,7 +175,6 @@ class Client(AsyncBaseClient):
                 runId
                 passPercentage
                 status
-                runId
                 textSummary
                 timestamp
                 completedAt
@@ -191,8 +190,6 @@ class Client(AsyncBaseClient):
                 passPercentage
                 passPercentageWithOptional
                 resultJson
-                humanEval
-                humanFeedback
                 test {
                   testId
                   inputUnderTest
@@ -222,7 +219,6 @@ class Client(AsyncBaseClient):
                 runId
                 passPercentage
                 status
-                runId
                 textSummary
                 timestamp
                 completedAt
