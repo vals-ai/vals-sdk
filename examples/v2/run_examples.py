@@ -49,9 +49,6 @@ async def run_with_function():
 
     run = await suite.run(model=function, wait_for_completion=True)
 
-    for result in run.test_results:
-        print(result)
-
     print(f"Run URL: {run.url}")
     print(f"Pass percentage: {run.pass_percentage}")
 
@@ -152,10 +149,10 @@ async def run_with_qa_pairs_and_context():
 
 async def all():
     await run_with_model_under_test()
-    # await run_with_function()
-    # await run_with_function_context_and_files()
-    # await run_with_qa_pairs()
-    # await run_with_qa_pairs_and_context()
+    await run_with_function()
+    await run_with_function_context_and_files()
+    await run_with_qa_pairs()
+    await run_with_qa_pairs_and_context()
 
 
 if __name__ == "__main__":
