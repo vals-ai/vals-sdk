@@ -55,7 +55,6 @@ class Suite(BaseModel):
         """
         Create a new local test suite based on the data from the server.
         """
-
         client = get_ariadne_client()
         suites_list = await client.get_test_suite_data(suite_id)
         if len(suites_list.test_suites) == 0:
@@ -151,7 +150,6 @@ class Suite(BaseModel):
         """
         if self._id is not None:
             raise Exception("This suite has already been created.")
-
         await self._validate_suite()
 
         # Create suite object on the server
@@ -258,7 +256,6 @@ class Suite(BaseModel):
             raise Exception(
                 "This suite has not been created yet. Call suite.create() before calling suite.run()"
             )
-
         # Use the default parameters, and then override with any user-provided parameters.
         _default_parameters = _get_default_parameters()
         parameters = {**_default_parameters, **parameters}
@@ -475,6 +472,7 @@ class Suite(BaseModel):
         qa_pairs: list[QuestionAnswerPairInputType],
         parameters: dict[str, int | float | str | bool] = {},
         model_under_test: str | None = None,
+        batch_size: int = 50,
     ) -> str | None:
         """
         Helper function to create a question-answer set from a model function.
@@ -487,14 +485,19 @@ class Suite(BaseModel):
 
         response = await self._client.create_question_answer_set(
             self._id,
-            qa_pairs,
+            [],
             parameters,
             model_under_test or "sdk",
         )
+        set_id = response.create_question_answer_set.question_answer_set.id
+
+        for i in range(0, len(qa_pairs), batch_size):
+            batch = qa_pairs[i : i + batch_size]
+            await self._client.batch_add_question_answer_pairs(set_id, batch)
         if response.create_question_answer_set is None:
             raise Exception("Unable to create the question-answer set.")
 
-        return response.create_question_answer_set.question_answer_set.id
+        return set_id
 
     def _upload_file(self, suite_id: str, file_path: str) -> str:
         with open(file_path, "rb") as f:

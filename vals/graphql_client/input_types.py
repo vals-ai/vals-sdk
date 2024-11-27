@@ -39,13 +39,10 @@ class TestMutationInfo(BaseModel):
     test_id: str = Field(alias="testId")
     input_under_test: str = Field(alias="inputUnderTest")
     checks: str
-    sample_output: Optional[str] = Field(alias="sampleOutput", default=None)
-    sample_output_type: Optional[str] = Field(alias="sampleOutputType", default=None)
     golden_output: Optional[str] = Field(alias="goldenOutput", default=None)
     file_ids: Optional[List[Optional[str]]] = Field(alias="fileIds", default=None)
     context: Optional[str] = None
     tags: Optional[List[Optional[str]]] = None
-    file_uids: Optional[List[Optional[str]]] = Field(alias="fileUids", default=None)
 
 
 class ParameterInputType(BaseModel):

@@ -177,9 +177,7 @@ def pull_suite(suite_id: str, include_id=False):
                 crossVersionId
                 fileIds
                 inputUnderTest
-                sampleOutput
                 goldenOutput
-                sampleOutputType
                 fileUids
                 tags
                 context
@@ -203,17 +201,6 @@ def pull_suite(suite_id: str, include_id=False):
             file_ids = json.loads(raw_test["fileIds"])
             if len(file_ids) != 0:
                 test["file_ids"] = file_ids
-
-        if raw_test["fileUids"] is not None:
-            file_uids = json.loads(raw_test["fileUids"])
-            if len(file_uids) != 0:
-                test["file_uids"] = file_uids
-
-        if raw_test["sampleOutput"] != "":
-            if raw_test["sampleOutputType"] == "file":
-                test["file_fixed_output"] = raw_test["sampleOutput"]
-            else:
-                test["fixed_output"] = raw_test["sampleOutput"]
 
         if raw_test["goldenOutput"] != "":
             test["golden_output"] = raw_test["goldenOutput"]
@@ -278,10 +265,6 @@ def _validate_suite(parsed_json):
                 raise ValsException(f"File does not exist: {fp}")
             if not os.path.isfile(fp):
                 raise ValsException(f"Path is a directory: {fp}")
-
-        if "file_uids" in test:
-            if not isinstance(test["file_uids"], list):
-                raise ValsException("file_uids must be a list")
 
         _validate_checks(test["checks"])
 
@@ -435,12 +418,6 @@ def _add_tests(data, files, suite_id, create_only=False):
         elif "file_ids" in test:
             file_ids = test["file_ids"]
 
-        if "file_uids" in test:
-            file_uids = test["file_uids"]
-
-        else:
-            file_uids = []
-
         if "context" in test:
             context = json.dumps(json.dumps(test["context"]))
         else:
@@ -462,13 +439,10 @@ def _add_tests(data, files, suite_id, create_only=False):
         batch.append(
             f"""
             {{
-                  sampleOutput: {json.dumps(fixed_output)},
-                  sampleOutputType: "{fixed_output_type}",
                   checks: {checks}, 
                   inputUnderTest: {json.dumps(input_under_test)}, 
                   testSuiteId: "{suite_id}",
                   fileIds: {json.dumps(file_ids)}
-                  fileUids: {json.dumps(file_uids)}
                   context: {context}
                   goldenOutput: {json.dumps(golden_output)}
                   tags: {json.dumps(tags)}

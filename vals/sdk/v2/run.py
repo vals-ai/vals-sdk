@@ -92,7 +92,6 @@ class Run(BaseModel):
 
         Returns the status of the run after completion.
         """
-
         await asyncio.sleep(1)
         status = "in_progress"
         start_time = time.time()

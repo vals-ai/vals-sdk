@@ -102,6 +102,9 @@ class CheckModifiers(BaseModel):
     conditional: ConditionalCheck | None = None
     """Only run this check if another check evaluates to true."""
 
+    category: str | None = None
+    """Override the default category of the check (correctness, formatting, etc.)"""
+
     @classmethod
     def from_graphql(cls, modifiers_dict: dict) -> "CheckModifiers":
         """Internal method to translate from what we receive from GraphQL to the CheckModifiers class."""
@@ -122,6 +125,7 @@ class CheckModifiers(BaseModel):
             examples=examples,
             extractor=modifiers_dict.get("extractor"),
             conditional=conditional,
+            category=modifiers_dict.get("category"),
         )
 
 
