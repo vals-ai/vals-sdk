@@ -1,6 +1,7 @@
 import hashlib
 from io import BytesIO
 
+import httpx
 import requests
 from vals.graphql_client.client import Client as AriadneClient
 from vals.sdk.auth import _get_auth_token
@@ -11,10 +12,10 @@ def get_ariadne_client() -> AriadneClient:
     """
     Use the new codegen-based client
     """
-
+    headers = {"Authorization": _get_auth_token()}
     return AriadneClient(
         url=f"{be_host()}/graphql/",
-        headers={"Authorization": _get_auth_token()},
+        http_client=httpx.AsyncClient(headers=headers, timeout=60),
     )
 
 

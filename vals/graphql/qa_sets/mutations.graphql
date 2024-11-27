@@ -15,3 +15,17 @@ mutation CreateQuestionAnswerSet(
     }
   }
 }
+
+mutation BatchAddQuestionAnswerPairs(
+  $questionAnswerSetId: String!
+  $questionAnswerPairs: [QuestionAnswerPairInputType!]!
+) {
+  batchAddQuestionAnswerPairs(
+    questionAnswerSetId: $questionAnswerSetId
+    questionAnswerPairs: $questionAnswerPairs
+  ) {
+    questionAnswerPairs {
+      id
+    }
+  }
+}
