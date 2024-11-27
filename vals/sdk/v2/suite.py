@@ -55,7 +55,6 @@ class Suite(BaseModel):
         """
         Create a new local test suite based on the data from the server.
         """
-
         client = get_ariadne_client()
         suites_list = await client.get_test_suite_data(suite_id)
         if len(suites_list.test_suites) == 0:
@@ -151,7 +150,6 @@ class Suite(BaseModel):
         """
         if self._id is not None:
             raise Exception("This suite has already been created.")
-
         await self._validate_suite()
 
         # Create suite object on the server
@@ -258,7 +256,6 @@ class Suite(BaseModel):
             raise Exception(
                 "This suite has not been created yet. Call suite.create() before calling suite.run()"
             )
-
         # Use the default parameters, and then override with any user-provided parameters.
         _default_parameters = _get_default_parameters()
         parameters = {**_default_parameters, **parameters}

@@ -39,13 +39,24 @@ class TestMutationInfo(BaseModel):
     test_id: str = Field(alias="testId")
     input_under_test: str = Field(alias="inputUnderTest")
     checks: str
-    sample_output: Optional[str] = Field(alias="sampleOutput", default=None)
-    sample_output_type: Optional[str] = Field(alias="sampleOutputType", default=None)
     golden_output: Optional[str] = Field(alias="goldenOutput", default=None)
     file_ids: Optional[List[Optional[str]]] = Field(alias="fileIds", default=None)
     context: Optional[str] = None
     tags: Optional[List[Optional[str]]] = None
-    file_uids: Optional[List[Optional[str]]] = Field(alias="fileUids", default=None)
+
+
+class ParameterInputType(BaseModel):
+    eval_model: str = Field(alias="evalModel")
+    maximum_threads: int = Field(alias="maximumThreads")
+    run_golden_eval: bool = Field(alias="runGoldenEval")
+    run_confidence_evaluation: bool = Field(alias="runConfidenceEvaluation")
+    heavyweight_factor: int = Field(alias="heavyweightFactor")
+    create_text_summary: bool = Field(alias="createTextSummary")
+    model_under_test: str = Field(alias="modelUnderTest")
+    temperature: float
+    max_output_tokens: int = Field(alias="maxOutputTokens")
+    system_prompt: str = Field(alias="systemPrompt")
+    new_line_stop_option: bool = Field(alias="newLineStopOption")
 
 
 class ParameterInputType(BaseModel):
