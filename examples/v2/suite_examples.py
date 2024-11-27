@@ -96,10 +96,8 @@ async def pull_suite():
     """
     Example of pulling a suite that already exists.
     """
-
-    suites = await Suite.list_suites()
-    suite_id = suites[0].id
-    suite = await Suite.from_id(suite_id)
+    # TODO: Replace this with your own suite id.
+    suite = await Suite.from_id("de9860f4-bf22-43ee-85a6-279a282e7cb4")
 
     print(f"Pulling: Suite Title: {suite.title}")
     print(f"Global Checks: {suite.global_checks}")
