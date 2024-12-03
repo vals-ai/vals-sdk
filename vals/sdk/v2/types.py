@@ -223,7 +223,6 @@ class CheckResult(BaseModel):
     # Same as the input fields.
     operator: OperatorType
     criteria: str
-    severity: float
     modifiers: CheckModifiers
     is_global: bool
 
@@ -259,7 +258,16 @@ class TestResult(BaseModel):
             llm_output=graphql_test_result.llm_output,
             pass_percentage=graphql_test_result.pass_percentage,
             check_results=[
-                CheckResult(**check_result)
+                CheckResult(
+                    operator=check_result["operator"],
+                    criteria=check_result.get("criteria", ""),
+                    modifiers=CheckModifiers.from_graphql(
+                        check_result.get("modifiers", {})
+                    ),
+                    is_global=check_result.get("is_global", False),
+                    auto_eval=check_result.get("auto_eval", 0),
+                    feedback=check_result.get("feedback", ""),
+                )
                 for check_result in json.loads(graphql_test_result.result_json)
             ],
             metadata=(

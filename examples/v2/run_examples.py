@@ -4,7 +4,7 @@ from io import BytesIO
 from typing import Any
 
 from vals.sdk.sdk import read_docx
-from vals.sdk.v2.suite import Check, Suite, Test
+from vals.sdk.v2.suite import Check, Run, Suite, Test
 from vals.sdk.v2.types import QuestionAnswerPair
 
 
@@ -147,12 +147,18 @@ async def run_with_qa_pairs_and_context():
     print(f"Pass percentage: {run.pass_percentage}")
 
 
+async def pull_run(run_id: str):
+    run = await Run.from_id(run_id)
+    print(run.to_dict())
+
+
 async def all():
     await run_with_model_under_test()
     await run_with_function()
     await run_with_function_context_and_files()
     await run_with_qa_pairs()
     await run_with_qa_pairs_and_context()
+    await pull_run("19dc86c6-774e-4946-99f4-01ad1bcf4ccf")
 
 
 if __name__ == "__main__":
