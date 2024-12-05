@@ -88,7 +88,7 @@ async def create_and_delete_suite():
         title="Test Suite to Delete", global_checks=[Check(operator="grammar")]
     )
     await suite.create()
-    print(f"Created suite: {suite._id}")
+    print(f"Created suite: {suite.id}")
     await suite.delete()
 
 
