@@ -1,3 +1,4 @@
+import asyncio
 import json
 import sys
 from io import TextIOWrapper
@@ -8,6 +9,7 @@ from vals.cli.util import display_error_and_exit, prompt_user_for_suite
 from vals.sdk.exceptions import ValsException
 from vals.sdk.suite import create_suite, list_test_suites, pull_suite, update_suite
 from vals.sdk.util import fe_host
+from vals.sdk.v2.suite import Suite
 
 
 @click.group(name="suite")
@@ -18,151 +20,134 @@ def suite_group():
     pass
 
 
-def parse_suite_interactive():
-    title = click.prompt("Test Suite Title")
-    while title == "":
-        title = click.prompt("Title cannot be empty. Reenter")
-
-    description = click.prompt("Test Suite Description")
-
-    i = 1
-    keep_generating_prompts = True
-    tests = []
-    while keep_generating_prompts:
-        click.secho(f"---Test {i}---", bold=True)
-        input_under_test = click.prompt("Input under test (e.g. the prompt)")
-
-        keep_generating_criteria = True
-        j = 1
-        checks = []
-        while keep_generating_criteria:
-            operator = click.prompt(f"Operator {j}")
-            criteria = click.prompt(f"Criteria {j}")
-            checks.append({"criteria": criteria, "operator": operator})
-            j += 1
-
-            keep_generating_criteria = click.confirm("Keep Generating Checks?")
-
-        i += 1
-
-        tests.append({"input_under_test": input_under_test, "checks": checks})
-        keep_generating_prompts = click.confirm("Keep generating tests?")
-
-    return {"title": title, "description": description, "tests": tests}
-
-
-def parse_suite_file(file):
-    # TODO: Validate file format
+async def create_commmand_async(file: TextIOWrapper):
     try:
-        return json.load(file)
-    except Exception as e:
-        raise ValsException("The input file provided is not valid JSON")
+        suite = await Suite.from_dict(json.loads(file.read()))
+        await suite.create()
+        click.secho("Successfully created test suite.", fg="green")
+        click.secho(f"ID: {suite.id}")
+        click.secho(suite.url, bold=True)
 
-
-def parse_suite(interactive: bool, file: TextIOWrapper) -> Dict[str, Any]:
-    if not interactive and file is None:
-        click.echo(
-            "Either --interactive must be passed, or an input file should be specified"
-        )
-        sys.exit(1)
-
-    if interactive:
-        data = parse_suite_interactive()
-    else:
-        data = parse_suite_file(file)
-
-    return data
+    except ValsException as e:
+        display_error_and_exit(e.message)
 
 
 @click.command(name="create")
-@click.option(
-    "--interactive",
-    "-i",
-    is_flag=True,
-    help="Enable interactive mode instead of reading from file",
-)
-@click.argument("file", type=click.File("r"), required=False)
-def create_command(interactive: bool, file: str):
+@click.argument("file", type=click.File("r"))
+def create_command(file: TextIOWrapper):
     """
-    Creates a new test suite.
+    Creates a new test suite based on the json file provided.
 
-    There are two modes. In normal operation, inputs are read from a JSON file:
-
-    \tprl suite create <filename>
-
-    In interactive mode, the user is prompted for values:
-
-    \tprl suite create --interactive
-
-        Requires authentication to use.
+    See the documentation for information on the format.
     """
-    # try:
-    data = parse_suite(interactive, file)
+    asyncio.run(create_commmand_async(file))
 
+
+async def update_command_async(file: TextIOWrapper, suite_id: str):
     try:
-        suite_id = create_suite(data)
-    except ValsException as e:
-        display_error_and_exit(f"Could not create suite. {e.message}")
-
-    # Execute the query on the transport
-    click.secho("Successfully created test suite.", fg="green")
-    click.secho(f"{fe_host()}/view?test_suite_id={suite_id}", bold=True)
-
-
-@click.command(name="update")
-@click.option(
-    "--interactive",
-    "-i",
-    is_flag=True,
-    help="Enable interactive mode instead of reading from file",
-)
-@click.argument("file", type=click.File("r"), required=False)
-def update_command(interactive: bool, file: str):
-    """
-    Update the test and checks of an already existing suite
-    """
-    suite_id = prompt_user_for_suite()
-    try:
-        data = parse_suite(interactive, file)
-        update_suite(suite_id, data)
+        suite = await Suite.from_dict(json.loads(file.read()))
+        suite.id = suite_id
+        await suite.update()
 
         click.secho("Successfully updated test suite.", fg="green")
-        click.secho(f"{fe_host()}/view?test_suite_id={suite_id}", bold=True)
+        click.secho(suite.url, bold=True)
+
     except ValsException as e:
         click.secho(e.message, fg="red")
     except Exception as e:
         click.secho("Suite Update Failed. Error:" + str(e), fg="red")
 
 
+@click.command(name="update")
+@click.argument("file", type=click.File("r"))
+@click.argument("suite_id", type=click.File("r"))
+async def update_command(file: TextIOWrapper, suite_id: str):
+    """
+    Update the test and checks of an already existing suite
+    """
+    asyncio.run(update_command_async(file, suite_id))
+
+
+async def list_command_async(number: int, offset: int):
+    suites = await Suite.list_suites(limit=number, offset=offset)
+
+    number_width = 3
+    title_width = 40
+    id_width = 36
+    last_modified_width = 20
+
+    header = f"| {'#':{number_width}} | {'Title':{title_width}} | {'Suite ID':{id_width}} | {'Last Modified':{last_modified_width}} |"
+    click.echo(header)
+    line = (
+        "+"
+        + "+".join(
+            [
+                "-" * (width + 2)
+                for width in [number_width, title_width, id_width, last_modified_width]
+            ]
+        )
+        + "+"
+    )
+    click.echo(line)
+
+    for i, suite in enumerate(suites):
+        truncated_title = (
+            suite.title[: title_width - 3] + "..."
+            if len(suite.title) > title_width
+            else suite.title
+        )
+        date_str = suite.last_modified_at.strftime("%Y/%m/%d %H:%M")
+        row = f"| {i + 1:{number_width}} | {truncated_title:{title_width}} | {suite.id:{id_width}} | {date_str:{last_modified_width}} |"
+        click.echo(row)
+
+
 @click.command(name="list")
-def list_command():
+@click.option("-n", "--number", type=int, default=25, help="Number of rows to return")
+@click.option("-o", "--offset", type=int, default=0, help="Start table at this row")
+def list_command(
+    number: int,
+    offset: int,
+):
     """
     List test suites associated with this organization
     """
-    suites = list_test_suites()
-
-    suite_text = "\n".join([f"{i}: {s['title']}" for i, s in enumerate(suites)])
-    click.echo(suite_text)
+    asyncio.run(list_command_async(number, offset))
 
 
-@click.command(name="pull")
-@click.argument("file", type=click.File("w"), required=True)
-def pull_command(file: TextIOWrapper):
-    """
-    Read a suite from the PRL server to a local JSON file.
-    """
-    suite_id = prompt_user_for_suite()
-    try:
-        output = pull_suite(suite_id)
-        file.write(json.dumps(output, indent=2))
+async def pull_command_async(
+    file: TextIOWrapper, suite_id: str, to_csv: bool, to_json: bool
+):
+    if to_csv and to_json:
+        display_error_and_exit(
+            "Cannot specify both --csv and --json - they are mutually exclusive."
+        )
 
-    except ValsException as e:
-        display_error_and_exit(e.message)
+    suite = await Suite.from_id(suite_id)
+    if to_json:
+        file.write(json.dumps(suite.to_dict(), indent=2))
+    elif to_csv:
+        file.write(suite.to_csv_string())
 
     click.secho("Successfully pulled test suite.", fg="green")
 
 
+@click.command(name="pull")
+@click.argument(
+    "file",
+    type=click.File("w"),
+    required=True,
+)
+@click.argument("suite_id", type=str, required=True)
+@click.option("--csv", is_flag=True, help="Output in CSV format")
+@click.option("--json", is_flag=True, help="Output in JSON format")
+def pull_command(file: TextIOWrapper, suite_id: str, csv: bool, json: bool):
+    """
+    Read a suite from the PRL server to a local JSON file.
+    """
+    asyncio.run(pull_command_async(file, suite_id, csv, json))
+
+
 suite_group.add_command(create_command)
-suite_group.add_command(list_command)
 suite_group.add_command(update_command)
+suite_group.add_command(list_command)
 suite_group.add_command(pull_command)

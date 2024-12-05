@@ -11,7 +11,7 @@ from vals.graphql_client.client import Client
 from vals.graphql_client.get_operators import GetOperatorsOperators
 from vals.graphql_client.input_types import MetadataType, QuestionAnswerPairInputType
 from vals.sdk.run import _get_default_parameters
-from vals.sdk.util import _get_auth_token, be_host
+from vals.sdk.util import _get_auth_token, be_host, fe_host
 from vals.sdk.v2 import patch
 from vals.sdk.v2.run import Run
 from vals.sdk.v2.types import (
@@ -41,12 +41,18 @@ class Suite(BaseModel):
     _client: Client = PrivateAttr(default_factory=get_ariadne_client)
 
     @classmethod
-    async def list_suites(cls) -> list[TestSuiteMetadata]:
+    async def list_suites(cls, limit=50, offset=0) -> list[TestSuiteMetadata]:
         """
         Generate a list of all the test suites on the server.
+
+        limit: Total number to return
+        offset: Start list at this index.
         """
         client = get_ariadne_client()
-        gql_response = await client.get_test_suites_with_count()
+        gql_response = await client.get_test_suites_with_count(
+            limit=limit,
+            offset=offset,
+        )
         gql_suites = gql_response.test_suites_with_count.test_suites
         return [TestSuiteMetadata.from_graphql(gql_suite) for gql_suite in gql_suites]
 
@@ -133,6 +139,10 @@ class Suite(BaseModel):
             data = json.load(f)
         return await cls.from_dict(data)
 
+    @property
+    def url(self):
+        return f"{fe_host()}/view?test_suite_id={self.id}"
+
     def to_dict(self) -> dict[str, Any]:
         """
         Converts the test suite to a dictionary.
@@ -145,6 +155,30 @@ class Suite(BaseModel):
         """
         with open(file_path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
+
+    def to_csv_string(self) -> str:
+        """
+        Like to_csv_file, but returns the file as a string instead of writing it to a file.
+        """
+        if not self.id:
+            raise Exception("Suite has not been created yet.")
+
+        url = f"{be_host()}/export_tests_to_file/?suite_id={self.id}"
+        response = requests.post(
+            url,
+            headers={"Authorization": _get_auth_token()},
+        )
+        if response.status_code != 200:
+            raise Exception(f"Failed to export tests: {response.text}")
+
+        return response.text
+
+    def to_csv_file(self, file_path: str) -> None:
+        """
+        Converts the test suite to a CSV file.
+        """
+        with open(file_path, "w") as f:
+            f.write(self.to_csv_string())
 
     async def create(self) -> None:
         """
