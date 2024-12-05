@@ -415,11 +415,16 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return GetTestData.model_validate(data)
 
-    async def get_test_suites_with_count(self, **kwargs: Any) -> GetTestSuitesWithCount:
+    async def get_test_suites_with_count(
+        self,
+        offset: Union[Optional[int], UnsetType] = UNSET,
+        limit: Union[Optional[int], UnsetType] = UNSET,
+        **kwargs: Any
+    ) -> GetTestSuitesWithCount:
         query = gql(
             """
-            query getTestSuitesWithCount {
-              testSuitesWithCount {
+            query getTestSuitesWithCount($offset: Int, $limit: Int) {
+              testSuitesWithCount(filterOptions: {offset: $offset, limit: $limit}) {
                 testSuites {
                   id
                   title
@@ -437,7 +442,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: Dict[str, object] = {"offset": offset, "limit": limit}
         response = await self.execute(
             query=query,
             operation_name="getTestSuitesWithCount",
