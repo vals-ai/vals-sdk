@@ -27,7 +27,7 @@ from vals.sdk.v2.util import get_ariadne_client, md5_hash, parse_file_id, read_f
 
 
 class Suite(BaseModel):
-    _id: str | None = None
+    id: str | None = None
 
     title: str
     description: str = ""
@@ -79,12 +79,12 @@ class Suite(BaseModel):
             tests.append(test)
 
         suite = cls(
+            id=suite_id,
             title=title,
             description=description,
             global_checks=global_checks,
             tests=tests,
         )
-        suite._id = suite_id
         return suite
 
     @classmethod
@@ -92,6 +92,8 @@ class Suite(BaseModel):
         """
         Imports the test suite from a dictionary - useful if
         importing from the old format.
+
+        Does not create the suite - you must call suite.create() after construction.
         """
 
         title = data["title"]
@@ -148,8 +150,9 @@ class Suite(BaseModel):
         """
         Creates the test suite on the server.
         """
-        if self._id is not None:
+        if self.id is not None:
             raise Exception("This suite has already been created.")
+
         await self._validate_suite()
 
         # Create suite object on the server
@@ -158,7 +161,7 @@ class Suite(BaseModel):
         )
         if suite.update_test_suite is None:
             raise Exception("Unable to update the test suite.")
-        self._id = suite.update_test_suite.test_suite.id
+        self.id = suite.update_test_suite.test_suite.id
 
         await self._upload_global_checks()
         await self._upload_files()
@@ -168,24 +171,24 @@ class Suite(BaseModel):
         """
         Deletes the test suite from the server.
         """
-        if self._id is None:
+        if self.id is None:
             raise Exception(
                 "This suite has not been created yet, so there's nothing to delete"
             )
 
-        await self._client.delete_test_suite(self._id)
+        await self._client.delete_test_suite(self.id)
 
     async def update(self) -> None:
         """
         Pushes any local changes to the the test suite object to the server.
         """
-        if self._id is None:
+        if self.id is None:
             raise Exception(
                 "This suite has not been created yet, so there's nothing to update"
             )
 
         await self._client.create_or_update_test_suite(
-            self._id, self.title, self.description
+            self.id, self.title, self.description
         )
 
         await self._upload_files()
@@ -193,7 +196,7 @@ class Suite(BaseModel):
         await self._upload_tests(create_only=False)
 
         # Remove any tests that are no longer used after the update.
-        await self._client.remove_old_tests(self._id, [test._id for test in self.tests])
+        await self._client.remove_old_tests(self.id, [test._id for test in self.tests])
 
     @overload
     async def run(
@@ -252,7 +255,7 @@ class Suite(BaseModel):
         """
         Base method for running the test suite. See overloads for documentation.
         """
-        if self._id is None:
+        if self.id is None:
             raise Exception(
                 "This suite has not been created yet. Call suite.create() before calling suite.run()"
             )
@@ -280,7 +283,7 @@ class Suite(BaseModel):
 
         # Start and pull the run.
         response = await self._client.start_run(
-            self._id, parameters, qa_set_id, run_name
+            self.id, parameters, qa_set_id, run_name
         )
         if response.start_run is None:
             raise Exception("Unable to start the run.")
@@ -300,7 +303,7 @@ class Suite(BaseModel):
         Helper method to upload the files to the server.
         Uploads any tests.files_under_test that haven't been uploaded yet.
         """
-        if self._id is None:
+        if self.id is None:
             raise Exception("This suite has not been created yet.")
 
         file_name_and_hash_to_file_id = {}
@@ -329,7 +332,7 @@ class Suite(BaseModel):
 
                     # If the file hasn't been uploaded yet, we upload it
                     if name_hash_tuple not in file_name_and_hash_to_file_id:
-                        file_id = self._upload_file(self._id, file_path)
+                        file_id = self._upload_file(self.id, file_path)
                         file_name_and_hash_to_file_id[name_hash_tuple] = file_id
 
                     # Either way, we add the file id to the test.
@@ -343,12 +346,12 @@ class Suite(BaseModel):
         """
         Helper method to upload the tests to the server in batches of 100.
         """
-        if self._id is None:
+        if self.id is None:
             raise Exception("This suite has not been created yet.")
 
         # Upload tests in batches of 100
         created_tests = []
-        test_mutations = [test.to_test_mutation_info(self._id) for test in self.tests]
+        test_mutations = [test.to_test_mutation_info(self.id) for test in self.tests]
         for i in range(0, len(test_mutations), 100):
             batch = test_mutations[i : i + 100]
             batch_result = await self._client.add_batch_tests(
@@ -397,11 +400,11 @@ class Suite(BaseModel):
         """
         Helper method to upload the global checks to the server.
         """
-        if self._id is None:
+        if self.id is None:
             raise Exception("This suite has not been created yet.")
 
         await self._client.update_global_checks(
-            self._id,
+            self.id,
             json.dumps([gc.model_dump(exclude_none=True) for gc in self.global_checks]),
         )
 
@@ -409,12 +412,12 @@ class Suite(BaseModel):
         self,
         model_function: ModelFunctionType,
     ) -> list[QuestionAnswerPairInputType]:
-        if self._id is None:
+        if self.id is None:
             raise Exception(
                 "This suite has not been created yet, so we can't create a QA set from it."
             )
         # Pull latest suite data to ensure we're up to date
-        updated_suite = await Suite.from_id(self._id)
+        updated_suite = await Suite.from_id(self.id)
         for field in self.__fields__:
             setattr(self, field, getattr(updated_suite, field))
         # Inspect the model function to determine if it takes 1 or 3 parameters
@@ -478,13 +481,13 @@ class Suite(BaseModel):
         Helper function to create a question-answer set from a model function.
         A question-answer set is just a set of inputs to the LLM, and the LLM's responses.
         """
-        if self._id is None:
+        if self.id is None:
             raise Exception(
                 "This suite has not been created yet, so we can't create a QA set from it."
             )
 
         response = await self._client.create_question_answer_set(
-            self._id,
+            self.id,
             [],
             parameters,
             model_under_test or "sdk",
