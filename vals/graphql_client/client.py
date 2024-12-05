@@ -14,7 +14,11 @@ from .get_operators import GetOperators
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites_with_count import GetTestSuitesWithCount
-from .input_types import QuestionAnswerPairInputType, TestMutationInfo
+from .input_types import (
+    ParameterInputType,
+    QuestionAnswerPairInputType,
+    TestMutationInfo,
+)
 from .list_runs import ListRuns
 from .pull_run import PullRun
 from .remove_old_tests import RemoveOldTests
@@ -104,17 +108,17 @@ class Client(AsyncBaseClient):
     async def start_run(
         self,
         test_suite_id: str,
-        parameters: Any,
+        typed_parameters: ParameterInputType,
         qa_set_id: Union[Optional[str], UnsetType] = UNSET,
         run_name: Union[Optional[str], UnsetType] = UNSET,
         **kwargs: Any
     ) -> StartRun:
         query = gql(
             """
-            mutation startRun($test_suite_id: String!, $parameters: GenericScalar!, $qa_set_id: String = null, $run_name: String = null) {
+            mutation startRun($test_suite_id: String!, $typed_parameters: ParameterInputType!, $qa_set_id: String = null, $run_name: String = null) {
               startRun(
                 testSuiteId: $test_suite_id
-                parameters: $parameters
+                typedParameters: $typed_parameters
                 qaSetId: $qa_set_id
                 runName: $run_name
               ) {
@@ -125,7 +129,7 @@ class Client(AsyncBaseClient):
         )
         variables: Dict[str, object] = {
             "test_suite_id": test_suite_id,
-            "parameters": parameters,
+            "typed_parameters": typed_parameters,
             "qa_set_id": qa_set_id,
             "run_name": run_name,
         }
@@ -210,14 +214,17 @@ class Client(AsyncBaseClient):
         self,
         archived: Union[Optional[bool], UnsetType] = UNSET,
         suite_id: Union[Optional[str], UnsetType] = UNSET,
+        limit: Union[Optional[int], UnsetType] = UNSET,
+        offset: Union[Optional[int], UnsetType] = UNSET,
         **kwargs: Any
     ) -> ListRuns:
         query = gql(
             """
-            query ListRuns($archived: Boolean, $suiteId: String) {
-              runs(archived: $archived, suiteId: $suiteId) {
+            query ListRuns($archived: Boolean, $suiteId: String, $limit: Int, $offset: Int) {
+              runs(archived: $archived, suiteId: $suiteId, limit: $limit, offset: $offset) {
                 runId
                 passPercentage
+                name
                 status
                 textSummary
                 timestamp
@@ -231,7 +238,12 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"archived": archived, "suiteId": suite_id}
+        variables: Dict[str, object] = {
+            "archived": archived,
+            "suiteId": suite_id,
+            "limit": limit,
+            "offset": offset,
+        }
         response = await self.execute(
             query=query, operation_name="ListRuns", variables=variables, **kwargs
         )

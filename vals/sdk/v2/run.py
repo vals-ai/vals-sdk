@@ -10,7 +10,7 @@ from vals.graphql_client import Client
 from vals.graphql_client.pull_run import PullRun
 from vals.sdk.exceptions import ValsException
 from vals.sdk.util import be_host, fe_host
-from vals.sdk.v2.types import RunStatus, TestResult
+from vals.sdk.v2.types import RunMetadata, RunStatus, TestResult
 from vals.sdk.v2.util import _get_auth_token, get_ariadne_client
 
 
@@ -48,6 +48,21 @@ class Run(BaseModel):
             timestamp=result.run.timestamp,
             completed_at=result.run.completed_at,
         )
+
+    @classmethod
+    async def list_runs(
+        cls,
+        limit: int = 25,
+        offset: int = 0,
+        suite_id: str | None = None,
+        show_archived: bool = False,
+    ) -> list["RunMetadata"]:
+        """List runs associated with this organization"""
+        client = get_ariadne_client()
+        result = await client.list_runs(
+            limit=limit, offset=offset, suite_id=suite_id, archived=show_archived
+        )
+        return [RunMetadata.from_graphql(run) for run in result.runs]
 
     @classmethod
     async def from_id(cls, run_id: str) -> "Run":
@@ -110,18 +125,19 @@ class Run(BaseModel):
 
         return RunStatus(status)
 
+    async def to_csv_string(self) -> str:
+        """Same as to_csv, but returns a string instead of writing to a file."""
+        response = requests.post(
+            url=f"{be_host()}/export_results_to_file/?run_id={self.id}",
+            headers={"Authorization": _get_auth_token()},
+        )
+
+        if response.status_code != 200:
+            raise ValsException("Received Error from Vals Servers: " + response.text)
+
+        return response.text
+
     async def to_csv(self, file_path: str) -> None:
         """Get the CSV results of a run, as bytes."""
-
-        with open(file_path, "wb") as f:
-            response = requests.post(
-                url=f"{be_host()}/export_results_to_file/?run_id={self.id}",
-                headers={"Authorization": _get_auth_token()},
-            )
-
-            if response.status_code != 200:
-                raise ValsException(
-                    "Received Error from Vals Servers: " + response.text
-                )
-
-            f.write(response.content)
+        with open(file_path, "w") as f:
+            f.write(await self.to_csv_string())

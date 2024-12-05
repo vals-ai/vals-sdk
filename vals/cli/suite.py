@@ -1,15 +1,13 @@
 import asyncio
 import json
-import sys
 from io import TextIOWrapper
-from typing import Any, Dict
+from typing import Any
 
 import click
-from vals.cli.util import display_error_and_exit, prompt_user_for_suite
+from vals.cli.util import display_error_and_exit, display_table
 from vals.sdk.exceptions import ValsException
-from vals.sdk.suite import create_suite, list_test_suites, pull_suite, update_suite
-from vals.sdk.util import fe_host
 from vals.sdk.v2.suite import Suite
+from vals.sdk.v2.types import RunParameters
 
 
 @click.group(name="suite")
@@ -68,28 +66,10 @@ async def update_command(file: TextIOWrapper, suite_id: str):
     asyncio.run(update_command_async(file, suite_id))
 
 
-async def list_command_async(number: int, offset: int):
-    suites = await Suite.list_suites(limit=number, offset=offset)
-
-    number_width = 3
+async def list_command_async(limit: int, offset: int):
+    suites = await Suite.list_suites(limit=limit, offset=offset)
     title_width = 40
-    id_width = 36
-    last_modified_width = 20
-
-    header = f"| {'#':{number_width}} | {'Title':{title_width}} | {'Suite ID':{id_width}} | {'Last Modified':{last_modified_width}} |"
-    click.echo(header)
-    line = (
-        "+"
-        + "+".join(
-            [
-                "-" * (width + 2)
-                for width in [number_width, title_width, id_width, last_modified_width]
-            ]
-        )
-        + "+"
-    )
-    click.echo(line)
-
+    rows = []
     for i, suite in enumerate(suites):
         truncated_title = (
             suite.title[: title_width - 3] + "..."
@@ -97,21 +77,26 @@ async def list_command_async(number: int, offset: int):
             else suite.title
         )
         date_str = suite.last_modified_at.strftime("%Y/%m/%d %H:%M")
-        row = f"| {i + 1:{number_width}} | {truncated_title:{title_width}} | {suite.id:{id_width}} | {date_str:{last_modified_width}} |"
-        click.echo(row)
+        rows.append([i + 1, truncated_title, suite.id, date_str])
+
+    display_table(
+        column_headers=["#", "Title", "Suite ID", "Last Modified"],
+        column_widths=[3, title_width, 36, 20],
+        rows=rows,
+    )
 
 
 @click.command(name="list")
-@click.option("-n", "--number", type=int, default=25, help="Number of rows to return")
+@click.option("-l", "--limit", type=int, default=25, help="Number of rows to return")
 @click.option("-o", "--offset", type=int, default=0, help="Start table at this row")
 def list_command(
-    number: int,
+    limit: int,
     offset: int,
 ):
     """
     List test suites associated with this organization
     """
-    asyncio.run(list_command_async(number, offset))
+    asyncio.run(list_command_async(limit, offset))
 
 
 async def pull_command_async(
@@ -147,7 +132,102 @@ def pull_command(file: TextIOWrapper, suite_id: str, csv: bool, json: bool):
     asyncio.run(pull_command_async(file, suite_id, csv, json))
 
 
+async def run_command_async(
+    suite_id: str,
+    model: str,
+    run_name: str | None,
+    wait_for_completion: bool,
+    params: dict[str, Any],
+):
+    # Remove None values from parameters dictionary
+    params = {k: v for k, v in params.items() if v is not None}
+    parameters = RunParameters(**params)
+    suite = await Suite.from_id(suite_id)
+    if wait_for_completion:
+        click.echo("Starting run and waiting for it to finish...")
+    run = await suite.run(
+        model=model,
+        run_name=run_name,
+        wait_for_completion=wait_for_completion,
+        parameters=parameters,
+    )
+
+    click.secho(f"Run has completed with status: {run.status}", fg="green")
+    click.secho(f"Run ID: {run.id}")
+    click.secho(run.url, bold=True)
+
+
+@click.command(name="run")
+@click.argument("suite_id", type=str, required=True)
+@click.option("--model", type=str, required=True, help="Model to run the tests with")
+@click.option(
+    "--run-name",
+    type=str,
+    default=None,
+    help="Name of the run",
+)
+@click.option(
+    "--wait-for-completion",
+    is_flag=True,
+    default=False,
+    help="Wait for the run to complete before returning",
+)
+@click.option(
+    "--eval-model", type=str, default=None, help="Model to use for evaluation"
+)
+@click.option(
+    "--parallelism",
+    type=int,
+    default=None,
+    help="Maximum number of concurrent threads",
+)
+@click.option(
+    "--run-golden-eval",
+    is_flag=True,
+    default=None,
+    help="Run evaluation against golden output",
+)
+@click.option(
+    "--run-confidence-evaluation",
+    is_flag=True,
+    default=None,
+    help="Run confidence evaluation",
+)
+@click.option(
+    "--heavyweight-factor",
+    type=int,
+    default=None,
+    help="Heavyweight factor for evaluation",
+)
+@click.option(
+    "--create-text-summary",
+    is_flag=True,
+    default=None,
+    help="Create text summary of results",
+)
+@click.option(
+    "--temperature", type=float, default=None, help="Temperature parameter for model"
+)
+@click.option(
+    "--max-output-tokens", type=int, default=None, help="Maximum tokens in model output"
+)
+@click.option("--system-prompt", type=str, default=None, help="System prompt for model")
+@click.option(
+    "--new-line-stop-option", is_flag=True, default=None, help="Stop on new line"
+)
+def run_command(
+    suite_id: str, model: str, run_name: str, wait_for_completion: bool, **params
+):
+    """
+    Run a test suite
+    """
+    asyncio.run(
+        run_command_async(suite_id, model, run_name, wait_for_completion, params)
+    )
+
+
 suite_group.add_command(create_command)
 suite_group.add_command(update_command)
 suite_group.add_command(list_command)
 suite_group.add_command(pull_command)
+suite_group.add_command(run_command)

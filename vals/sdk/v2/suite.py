@@ -9,8 +9,11 @@ from pydantic import BaseModel, PrivateAttr
 from tqdm import tqdm
 from vals.graphql_client.client import Client
 from vals.graphql_client.get_operators import GetOperatorsOperators
-from vals.graphql_client.input_types import MetadataType, QuestionAnswerPairInputType
-from vals.sdk.run import _get_default_parameters
+from vals.graphql_client.input_types import (
+    MetadataType,
+    ParameterInputType,
+    QuestionAnswerPairInputType,
+)
 from vals.sdk.util import _get_auth_token, be_host, fe_host
 from vals.sdk.v2 import patch
 from vals.sdk.v2.run import Run
@@ -19,6 +22,7 @@ from vals.sdk.v2.types import (
     ModelFunctionType,
     ModelFunctionWithFilesAndContextType,
     QuestionAnswerPair,
+    RunParameters,
     SimpleModelFunctionType,
     Test,
     TestSuiteMetadata,
@@ -239,7 +243,7 @@ class Suite(BaseModel):
         model_name: str = "sdk",
         run_name: str | None = None,
         wait_for_completion: bool = False,
-        parameters: dict[str, int | float | str | bool] = {},
+        parameters: RunParameters | None = None,
     ):
         """
         Runs based on a model string (e.g. "gpt-4o").
@@ -253,7 +257,7 @@ class Suite(BaseModel):
         model_name: str = "sdk",
         run_name: str | None = None,
         wait_for_completion: bool = False,
-        parameters: dict[str, int | float | str | bool] = {},
+        parameters: RunParameters | None = None,
     ):
         """
         Runs based on a model function. This can either be a simple model function, which just takes
@@ -268,7 +272,7 @@ class Suite(BaseModel):
         model_name: str = "sdk",
         run_name: str | None = None,
         wait_for_completion: bool = False,
-        parameters: dict[str, int | float | str | bool] = {},
+        parameters: RunParameters | None = None,
     ) -> Run:
         """
         Runs based on on a list of question-answer pairs, which contain inputs and outputs.
@@ -284,7 +288,7 @@ class Suite(BaseModel):
         model_name: str = "sdk",
         run_name: str | None = None,
         wait_for_completion: bool = False,
-        parameters: dict[str, int | float | str | bool] = {},
+        parameters: RunParameters | None = None,
     ) -> Run:
         """
         Base method for running the test suite. See overloads for documentation.
@@ -293,31 +297,45 @@ class Suite(BaseModel):
             raise Exception(
                 "This suite has not been created yet. Call suite.create() before calling suite.run()"
             )
-        # Use the default parameters, and then override with any user-provided parameters.
-        _default_parameters = _get_default_parameters()
-        parameters = {**_default_parameters, **parameters}
+        if parameters is None:
+            parameters = RunParameters()
+
+        parameter_json = parameters.model_dump()
+        del parameter_json[
+            "parallelism"
+        ]  # Need to explicitly map parallelism to maximum_threads
+        parameter_input = ParameterInputType(
+            **parameter_json,
+            model_under_test="",
+            maximum_threads=parameters.parallelism,
+        )
 
         # Collate the local output pairs if we're using a model function.
         qa_set_id = None
         if isinstance(model, Callable):
             # Generate the QA pairs from the model function
+            parameter_input.model_under_test = model_name
             qa_pairs = await self._generate_qa_pairs_from_function(model)
-            qa_set_id = await self._create_qa_set(qa_pairs, parameters, model_name)
-            parameters["model_under_test"] = model_name
+            qa_set_id = await self._create_qa_set(
+                qa_pairs, parameter_input.model_dump(), model_name
+            )
         elif isinstance(model, list):
             # Use the QA pairs we are already provided
             qa_set_id = await self._create_qa_set(
-                [qa_pair.to_graphql() for qa_pair in model], parameters, model_name
+                [qa_pair.to_graphql() for qa_pair in model],
+                parameter_input.model_dump(),
+                model_name,
             )
-            parameters["model_under_test"] = model_name
         elif isinstance(model, str):
             # Just use a model string (e.g. "gpt-4o")
-            parameters["model_under_test"] = model
+            parameter_input.model_under_test = model
             qa_set_id = None
+        else:
+            raise Exception(f"Got unexpected type for model: {type(model)}")
 
         # Start and pull the run.
         response = await self._client.start_run(
-            self.id, parameters, qa_set_id, run_name
+            self.id, parameter_input, qa_set_id, run_name
         )
         if response.start_run is None:
             raise Exception("Unable to start the run.")

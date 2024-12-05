@@ -1,20 +1,11 @@
+import asyncio
 import json
 from datetime import datetime
-from io import BytesIO
+from io import TextIOWrapper
 
 import click
-from vals.sdk.run import (
-    get_csv,
-    get_run_results,
-    get_run_url,
-    run_status,
-    run_summary,
-    start_run,
-)
-from vals.sdk.util import fe_host
-
-from ..sdk.exceptions import ValsException
-from .util import display_error_and_exit, prompt_user_for_suite
+from vals.cli.util import display_table
+from vals.sdk.v2.run import Run
 
 
 @click.group(name="run")
@@ -25,54 +16,86 @@ def run_group():
     pass
 
 
-@click.command(name="start")
-@click.argument("param-file", type=click.File("r"), required=False, default=None)
-@click.option("-s", "--suite-id", required=False)
-def start_click_command(param_file, suite_id: str = None):
-    """
-    Start a new run of a test suite.
-    """
-    if param_file is not None:
-        try:
-            parameters = json.load(param_file)
-        except Exception:
-            display_error_and_exit("Config file was not valid JSON")
-    else:
-        parameters = {}
+async def pull_async(run_id: str, file: TextIOWrapper, csv: bool, _json: bool):
+    run = await Run.from_id(run_id)
 
-    if suite_id is None:
-        suite_id = prompt_user_for_suite()
+    if csv:
+        file.write(await run.to_csv_string())
+    elif _json:
+        file.write(json.dumps(run.to_dict()))
 
-    try:
-        run_id = start_run(suite_id, parameters)
-    except ValsException as e:
-        display_error_and_exit(e.message)
-
-    click.secho("Successfully started run.", fg="green")
-    click.secho(get_run_url(run_id), bold=True)
+    click.secho("Successfully pulled run results.", fg="green")
 
 
-@click.command(name="get-csv")
+@click.command
 @click.argument("run-id", type=click.STRING, required=True)
-@click.argument("file", type=click.File("wb"), required=True)
-def get_csv_click_command(run_id, file: BytesIO):
+@click.argument("file", type=click.File("w"), required=True)
+@click.option("--csv", is_flag=True, default=False, help="Save as a CSV")
+@click.option("--json", is_flag=True, default=False, help="Save as a JSON")
+def pull(run_id: str, file: TextIOWrapper, csv: bool, json: bool):
     """
-    Get the CSV file with run results for a given run.
-
-    This is equivalent to clicking 'Export to CSV' on the Run Results
-    page within the website.
-
-    Pass the path to a file where the CSV file should be downloaded.
+    Pull results of a run and save it to a file.
     """
+    asyncio.run(pull_async(run_id, file, csv, json))
 
-    try:
-        csv_bytes = get_csv(run_id)
-        file.write(csv_bytes)
 
-    except ValsException as e:
-        display_error_and_exit(e.message)
+async def list_async(
+    limit: int, offset: int, suite_id: str | None, show_archived: bool
+):
+    run_results = await Run.list_runs(
+        limit=limit, offset=offset, show_archived=show_archived
+    )
 
-    click.secho("Successfully downloaded the result CSV.", fg="green")
+    # f"{'Title':40} {'Timestamp':24} {'Status':13} {'Pass %':8} {'Archived':9}",
+    column_names = ["Run Name", "Test Suite", "Status", "Pass %", "Timestamp"]
+    test_suite_width = 40
+    run_name_width = 40
+    column_widths = [test_suite_width, run_name_width, 13, 8, 20]
+
+    rows = []
+    for run in run_results:
+        date_str = run.timestamp.strftime("%Y/%m/%d %H:%M")
+        # TODO: Change this to pass rate
+        pass_percentage_str = (
+            f"{run.pass_percentage * 100:.2f}" if run.pass_percentage else "N/A"
+        )
+        if len(run.test_suite_title) > test_suite_width:
+            run.test_suite_title = run.test_suite_title[: test_suite_width - 3] + "..."
+        if len(run.name) > run_name_width:
+            run.name = run.name[: run_name_width - 3] + "..."
+        rows.append(
+            [
+                run.test_suite_title[:38],
+                run.name,
+                run.status.value,
+                pass_percentage_str,
+                date_str,
+            ]
+        )
+
+    display_table(column_names, column_widths, rows)
+
+
+@click.command()
+@click.option(
+    "-l",
+    "--limit",
+    type=click.INT,
+    default=25,
+    help="Limit the number of runs to display",
+)
+@click.option("-o", "--offset", required=False, help="Filter runs by suite id")
+@click.option("--suite-id", required=False, help="Filter runs by suite id")
+@click.option(
+    "--show-archived",
+    is_flag=True,
+    help="When enabled, archived runs are displayed in the output",
+)
+def list(limit: int, offset: int, suite_id: str | None, show_archived: bool):
+    """
+    List runs associated with this organization
+    """
+    asyncio.run(list_async(limit, offset, suite_id, show_archived))
 
 
 @click.command(name="list-results")
@@ -122,24 +145,6 @@ def list_results_click_command(show_archived: bool, ids_only: bool, suite_id: st
             )
 
 
-@click.command(name="status")
-@click.argument("run-id", type=click.STRING, required=True)
-def status_click_command(run_id):
-    "CLI command to get the current status of a single run (error, in_progress, success)"
-    status = run_status(run_id)
-    click.echo(status)
-
-
-@click.command(name="summary")
-@click.argument("run-id", type=click.STRING, required=True)
-def summary_click_command(run_id: str):
-    """CLI command to get the current top-line result of a run"""
-    dict_result = run_summary(run_id)
-    click.echo(json.dumps(dict_result))
-
-
-run_group.add_command(start_click_command)
+run_group.add_command(pull)
 run_group.add_command(list_results_click_command)
-run_group.add_command(get_csv_click_command)
-run_group.add_command(status_click_command)
-run_group.add_command(summary_click_command)
+run_group.add_command(list)
