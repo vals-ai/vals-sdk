@@ -160,7 +160,6 @@ class Suite(BaseModel):
         """
         Like to_csv_file, but returns the file as a string instead of writing it to a file.
         """
-        # TODO: Implement
         if not self.id:
             raise Exception("Suite has not been created yet.")
 
