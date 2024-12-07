@@ -16,6 +16,8 @@ class ListRuns(BaseModel):
 class ListRunsRuns(BaseModel):
     run_id: str = Field(alias="runId")
     pass_percentage: Optional[float] = Field(alias="passPercentage")
+    pass_rate: Optional["ListRunsRunsPassRate"] = Field(alias="passRate")
+    success_rate: Optional["ListRunsRunsSuccessRate"] = Field(alias="successRate")
     name: str
     status: str
     text_summary: str = Field(alias="textSummary")
@@ -24,6 +26,16 @@ class ListRunsRuns(BaseModel):
     archived: bool
     parameters: Any
     test_suite: "ListRunsRunsTestSuite" = Field(alias="testSuite")
+
+
+class ListRunsRunsPassRate(BaseModel):
+    value: float
+    error: float
+
+
+class ListRunsRunsSuccessRate(BaseModel):
+    value: float
+    error: float
 
 
 class ListRunsRunsTestSuite(BaseModel):

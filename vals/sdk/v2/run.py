@@ -10,43 +10,102 @@ from vals.graphql_client import Client
 from vals.graphql_client.pull_run import PullRun
 from vals.sdk.exceptions import ValsException
 from vals.sdk.util import be_host, fe_host
-from vals.sdk.v2.types import RunMetadata, RunStatus, TestResult
+from vals.sdk.v2.types import RunMetadata, RunParameters, RunStatus, TestResult
 from vals.sdk.v2.util import _get_auth_token, get_ariadne_client
 
 
 class Run(BaseModel):
     id: str
+    """Unique identifier for the run."""
+
     test_suite_id: str
+    """Unique identifier for the test suite run was created with."""
+
     test_suite_title: str
+    """Title of the test suite run was created with."""
+
+    model: str
+    """Model used to perform the run."""
+
     pass_percentage: float | None
-    status: str
+    """Average pass percentage of all tests."""
+
+    pass_rate: float | None
+    """Percentage of checks that passed"""
+
+    pass_rate_error: float | None
+    """Error margin for pass rate"""
+
+    success_rate: float | None
+    """Number of tests where all checks passed"""
+
+    success_rate_error: float | None
+    """Error margin for success rate"""
+
+    status: RunStatus
+    """Status of the run"""
+
     archived: bool
+    """Whether the run has been archived"""
+
     text_summary: str
+    """Automatically generated summary of common error modes for the run."""
+
     timestamp: datetime
+    """Timestamp of when the run was created."""
+
     completed_at: datetime | None
-    parameters: dict[str, Any]
+    """Timestamp of when the run was completed."""
+
+    parameters: RunParameters
+    """Parameters used to create the run."""
+
     test_results: list[TestResult]
+    """List of test results for the run."""
 
     _client: Client = PrivateAttr(default_factory=get_ariadne_client)
 
     @staticmethod
     def _create_from_pull_result(run_id: str, result: PullRun) -> "Run":
         """Helper method to create a Run instance from a pull_run query result"""
+
+        # Map maximum_threads to parallelism for backwards compatibility
+        parameters_dict = json.loads(result.run.parameters)
+        model = parameters_dict.pop("model_under_test", "")
+        if "maximum_threads" in parameters_dict:
+            parameters_dict["parallelism"] = parameters_dict.pop("maximum_threads")
+        parameters = RunParameters(**parameters_dict)
+
         return Run(
             id=run_id,
+            model=model,
+            pass_percentage=(
+                result.run.pass_percentage * 100
+                if result.run.pass_percentage is not None
+                else None
+            ),
+            pass_rate=result.run.pass_rate.value if result.run.pass_rate else None,
+            pass_rate_error=(
+                result.run.pass_rate.error if result.run.pass_rate else None
+            ),
+            success_rate=(
+                result.run.success_rate.value if result.run.success_rate else None
+            ),
+            success_rate_error=(
+                result.run.success_rate.error if result.run.success_rate else None
+            ),
+            status=RunStatus(result.run.status),
+            archived=result.run.archived,
+            text_summary=result.run.text_summary,
+            timestamp=result.run.timestamp,
+            completed_at=result.run.completed_at,
+            parameters=parameters,
             test_results=[
                 TestResult.from_graphql(test_result)
                 for test_result in result.test_results
             ],
-            pass_percentage=result.run.pass_percentage,
-            text_summary=result.run.text_summary,
-            archived=result.run.archived,
-            parameters=json.loads(result.run.parameters),
             test_suite_title=result.run.test_suite.title,
             test_suite_id=result.run.test_suite.title,
-            status=result.run.status,
-            timestamp=result.run.timestamp,
-            completed_at=result.run.completed_at,
         )
 
     @classmethod

@@ -18,6 +18,14 @@ query PullRun($runId: String!) {
     completedAt
     archived
     parameters
+    passRate {
+      value
+      error
+    }
+    successRate {
+      value
+      error
+    }
     testSuite {
       title
     }
@@ -46,6 +54,14 @@ query ListRuns(
   runs(archived: $archived, suiteId: $suiteId, limit: $limit, offset: $offset) {
     runId
     passPercentage
+    passRate {
+      value
+      error
+    }
+    successRate {
+      value
+      error
+    }
     name
     status
     textSummary
