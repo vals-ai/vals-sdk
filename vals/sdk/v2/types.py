@@ -277,11 +277,19 @@ class RunMetadata(BaseModel):
         return cls(
             id=graphql_run.run_id,
             name=graphql_run.name,
-            pass_percentage=graphql_run.pass_percentage * 100,
-            pass_rate=graphql_run.pass_rate.value,
-            pass_rate_error=graphql_run.pass_rate.error,
-            success_rate=graphql_run.success_rate.value,
-            success_rate_error=graphql_run.success_rate.error,
+            pass_percentage=(
+                graphql_run.pass_percentage if graphql_run.pass_percentage else None
+            ),
+            pass_rate=graphql_run.pass_rate.value if graphql_run.pass_rate else None,
+            pass_rate_error=(
+                graphql_run.pass_rate.error if graphql_run.pass_rate else None
+            ),
+            success_rate=(
+                graphql_run.success_rate.value if graphql_run.success_rate else None
+            ),
+            success_rate_error=(
+                graphql_run.success_rate.error if graphql_run.success_rate else None
+            ),
             status=RunStatus(graphql_run.status),
             text_summary=graphql_run.text_summary,
             timestamp=graphql_run.timestamp,
