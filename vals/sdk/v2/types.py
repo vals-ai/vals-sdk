@@ -357,7 +357,6 @@ class TestResult(BaseModel):
 
     @classmethod
     def from_graphql(cls, graphql_test_result: PullRunTestResults) -> "TestResult":
-        print("CHECK RESULTS", json.loads(graphql_test_result.result_json))
         obj = cls(
             _id=graphql_test_result.id,
             input_under_test=graphql_test_result.test.input_under_test,
