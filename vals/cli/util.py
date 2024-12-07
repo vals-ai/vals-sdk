@@ -34,3 +34,25 @@ def prompt_user_for_suite():
         idx = click.prompt("Invalid choice. Retry", type=int)
     suite_id = suites[idx]["id"]
     return suite_id
+
+
+def display_table(
+    column_headers: list[str], column_widths: list[int], rows: list[list[str]]
+):
+    header = (
+        "|"
+        + "|".join([f" {h:{w}} " for h, w in zip(column_headers, column_widths)])
+        + "|"
+    )
+    click.echo(header)
+    seperator_line = (
+        "+" + "+".join(["-" * (width + 2) for width in column_widths]) + "+"
+    )
+    click.echo(seperator_line)
+    for row in rows:
+        row_str = (
+            "| "
+            + " | ".join([f"{str(r):{w}}" for r, w in zip(row, column_widths)])
+            + " |"
+        )
+        click.echo(row_str)

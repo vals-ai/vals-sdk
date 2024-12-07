@@ -20,6 +20,7 @@ from vals.graphql_client.input_types import (
     QuestionAnswerPairInputType,
     TestMutationInfo,
 )
+from vals.graphql_client.list_runs import ListRunsRuns
 from vals.graphql_client.pull_run import PullRunTestResults
 from vals.sdk.v2.operator_type import OperatorType
 
@@ -211,6 +212,79 @@ class Test(BaseModel):
         )
 
 
+class RunParameters(BaseModel):
+    """Parameters for a run."""
+
+    eval_model: str = "gpt-4o"
+    """Model to use for the LLM as judge - this is *not* the model being tested."""
+
+    parallelism: int = 10
+    """How many tests to run in parallel"""
+
+    run_golden_eval: bool = False
+    """Compares the output to the golden ansewr, if provided"""
+
+    run_confidence_evaluation: bool = True
+    """ If false, don't produce confidence scores for checks """
+
+    heavyweight_factor: int = 1
+    """Run the auto eval multiple times and take the mode of the results"""
+
+    create_text_summary: bool = True
+    """If false, will not generate a text summary of the run"""
+
+    temperature: float = 0
+    """ Temperature for model being tested"""
+
+    max_output_tokens: int = 512
+    """Maximum number of tokens in the output for the model under test"""
+
+    system_prompt: str = ""
+    """System prompt for the model under test"""
+
+    new_line_stop_option: bool = False
+    """If true, will stop generation at a new line"""
+
+
+class RunStatus(str, Enum):
+    """Status of a run: 'in_progress', 'completed', or 'success'."""
+
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    SUCCESS = "success"
+
+
+class RunMetadata(BaseModel):
+    id: str
+    name: str
+    pass_percentage: float | None
+    status: RunStatus
+    text_summary: str
+    timestamp: datetime.datetime
+    completed_at: datetime.datetime | None
+    archived: bool
+    test_suite_title: str
+    model: str
+    parameters: RunParameters
+
+    @classmethod
+    def from_graphql(cls, graphql_run: ListRunsRuns) -> "RunMetadata":
+        parameters = json.loads(graphql_run.parameters)
+        return cls(
+            id=graphql_run.run_id,
+            name=graphql_run.name,
+            pass_percentage=graphql_run.pass_percentage,
+            status=RunStatus(graphql_run.status),
+            text_summary=graphql_run.text_summary,
+            timestamp=graphql_run.timestamp,
+            completed_at=graphql_run.completed_at,
+            archived=graphql_run.archived,
+            test_suite_title=graphql_run.test_suite.title,
+            model=parameters["model_under_test"],
+            parameters=RunParameters(**parameters),
+        )
+
+
 class Metadata(BaseModel):
     in_tokens: int
     out_tokens: int
@@ -278,14 +352,6 @@ class TestResult(BaseModel):
         )
         obj._id = graphql_test_result.id
         return obj
-
-
-class RunStatus(str, Enum):
-    """Status of a run: 'in_progress', 'completed', or 'success'."""
-
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    SUCCESS = "success"
 
 
 class QuestionAnswerPair(BaseModel):

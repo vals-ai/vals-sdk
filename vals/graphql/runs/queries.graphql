@@ -37,10 +37,16 @@ query PullRun($runId: String!) {
   }
 }
 
-query ListRuns($archived: Boolean, $suiteId: String) {
-  runs(archived: $archived, suiteId: $suiteId) {
+query ListRuns(
+  $archived: Boolean
+  $suiteId: String
+  $limit: Int
+  $offset: Int
+) {
+  runs(archived: $archived, suiteId: $suiteId, limit: $limit, offset: $offset) {
     runId
     passPercentage
+    name
     status
     textSummary
     timestamp
