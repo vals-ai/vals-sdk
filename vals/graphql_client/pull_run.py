@@ -36,13 +36,20 @@ class PullRunTestResults(BaseModel):
     pass_percentage: float = Field(alias="passPercentage")
     pass_percentage_with_optional: float = Field(alias="passPercentageWithOptional")
     result_json: Any = Field(alias="resultJson")
+    qa_pair: Optional["PullRunTestResultsQaPair"] = Field(alias="qaPair")
     test: "PullRunTestResultsTest"
     metadata: Optional[Any]
+
+
+class PullRunTestResultsQaPair(BaseModel):
+    context: Any
+    output_context: Any = Field(alias="outputContext")
 
 
 class PullRunTestResultsTest(BaseModel):
     test_id: str = Field(alias="testId")
     input_under_test: str = Field(alias="inputUnderTest")
+    context: Any
 
 
 PullRun.model_rebuild()

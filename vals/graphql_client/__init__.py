@@ -66,6 +66,7 @@ from .pull_run import (
     PullRunRun,
     PullRunRunTestSuite,
     PullRunTestResults,
+    PullRunTestResultsQaPair,
     PullRunTestResultsTest,
 )
 from .remove_old_tests import RemoveOldTests, RemoveOldTestsRemoveUnusedTests
@@ -125,6 +126,7 @@ __all__ = [
     "PullRunRun",
     "PullRunRunTestSuite",
     "PullRunTestResults",
+    "PullRunTestResultsQaPair",
     "PullRunTestResultsTest",
     "QuestionAnswerPairInputType",
     "RemoveOldTests",
