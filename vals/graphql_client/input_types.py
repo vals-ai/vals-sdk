@@ -80,6 +80,7 @@ class QuestionAnswerPairInputType(BaseModel):
     input_under_test: str = Field(alias="inputUnderTest")
     file_ids: Optional[List[Optional[str]]] = Field(alias="fileIds", default=None)
     context: Optional[Any] = None
+    output_context: Optional[Any] = Field(alias="outputContext", default=None)
     llm_output: str = Field(alias="llmOutput")
     metadata: Optional["MetadataType"] = None
     test_id: Optional[str] = Field(alias="testId", default=None)
