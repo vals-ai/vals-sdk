@@ -60,10 +60,18 @@ from .input_types import (
     RunResultFilterOptionsInput,
     TestMutationInfo,
 )
-from .list_runs import ListRuns, ListRunsRuns, ListRunsRunsTestSuite
+from .list_runs import (
+    ListRuns,
+    ListRunsRuns,
+    ListRunsRunsPassRate,
+    ListRunsRunsSuccessRate,
+    ListRunsRunsTestSuite,
+)
 from .pull_run import (
     PullRun,
     PullRunRun,
+    PullRunRunPassRate,
+    PullRunRunSuccessRate,
     PullRunRunTestSuite,
     PullRunTestResults,
     PullRunTestResultsTest,
@@ -117,12 +125,16 @@ __all__ = [
     "GraphQLClientInvalidResponseError",
     "ListRuns",
     "ListRunsRuns",
+    "ListRunsRunsPassRate",
+    "ListRunsRunsSuccessRate",
     "ListRunsRunsTestSuite",
     "MetadataType",
     "ParameterInputType",
     "PerCheckHumanReviewInputType",
     "PullRun",
     "PullRunRun",
+    "PullRunRunPassRate",
+    "PullRunRunSuccessRate",
     "PullRunRunTestSuite",
     "PullRunTestResults",
     "PullRunTestResultsTest",

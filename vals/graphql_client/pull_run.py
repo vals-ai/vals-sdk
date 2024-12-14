@@ -23,7 +23,19 @@ class PullRunRun(BaseModel):
     completed_at: Optional[datetime] = Field(alias="completedAt")
     archived: bool
     parameters: Any
+    pass_rate: Optional["PullRunRunPassRate"] = Field(alias="passRate")
+    success_rate: Optional["PullRunRunSuccessRate"] = Field(alias="successRate")
     test_suite: "PullRunRunTestSuite" = Field(alias="testSuite")
+
+
+class PullRunRunPassRate(BaseModel):
+    value: float
+    error: float
+
+
+class PullRunRunSuccessRate(BaseModel):
+    value: float
+    error: float
 
 
 class PullRunRunTestSuite(BaseModel):

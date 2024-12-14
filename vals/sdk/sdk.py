@@ -10,7 +10,6 @@ import requests
 from openai import OpenAI
 from pypdf import PdfReader
 from tqdm import tqdm
-from vals.cli.suite import pull_suite, update_suite
 from vals.sdk.auth import _get_auth_token
 from vals.sdk.run import (
     Metadata,
@@ -19,6 +18,7 @@ from vals.sdk.run import (
     get_run_url,
     start_run,
 )
+from vals.sdk.suite import pull_suite
 from vals.sdk.util import be_host
 from vals.sdk.v2.util import parse_file_id
 

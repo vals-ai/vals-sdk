@@ -184,6 +184,14 @@ class Client(AsyncBaseClient):
                 completedAt
                 archived
                 parameters
+                passRate {
+                  value
+                  error
+                }
+                successRate {
+                  value
+                  error
+                }
                 testSuite {
                   title
                 }
@@ -224,6 +232,14 @@ class Client(AsyncBaseClient):
               runs(archived: $archived, suiteId: $suiteId, limit: $limit, offset: $offset) {
                 runId
                 passPercentage
+                passRate {
+                  value
+                  error
+                }
+                successRate {
+                  value
+                  error
+                }
                 name
                 status
                 textSummary
