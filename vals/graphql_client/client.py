@@ -15,6 +15,7 @@ from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites_with_count import GetTestSuitesWithCount
 from .input_types import (
+    CheckInputType,
     ParameterInputType,
     QuestionAnswerPairInputType,
     TestMutationInfo,
@@ -349,11 +350,11 @@ class Client(AsyncBaseClient):
         return DeleteTestSuite.model_validate(data)
 
     async def update_global_checks(
-        self, test_suite_id: str, checks: str, **kwargs: Any
+        self, test_suite_id: str, checks: List[CheckInputType], **kwargs: Any
     ) -> UpdateGlobalChecks:
         query = gql(
             """
-            mutation updateGlobalChecks($testSuiteId: String!, $checks: String!) {
+            mutation updateGlobalChecks($testSuiteId: String!, $checks: [CheckInputType!]!) {
               updateGlobalChecks(testSuiteId: $testSuiteId, checks: $checks) {
                 success
               }

@@ -17,6 +17,8 @@ from vals.graphql_client.get_test_suites_with_count import (
     GetTestSuitesWithCountTestSuitesWithCountTestSuites,
 )
 from vals.graphql_client.input_types import (
+    CheckInputType,
+    CheckModifiersInputType,
     QuestionAnswerPairInputType,
     TestMutationInfo,
 )
@@ -88,13 +90,13 @@ class ConditionalCheck(BaseModel):
 
 
 class CheckModifiers(BaseModel):
-    optional: bool | None = None
+    optional: bool = False
     """Do not include this check towards the final pass percentage"""
 
     severity: float | None = None
     """Relative weight of this check - see documentation."""
 
-    examples: list[Example] | None = None
+    examples: list[Example] = []
     """In-context examples for the check"""
 
     extractor: str | None = None
@@ -112,8 +114,8 @@ class CheckModifiers(BaseModel):
         if not modifiers_dict:
             return cls()
 
-        examples = None
-        if modifiers_dict.get("examples", None):
+        examples = []
+        if modifiers_dict.get("examples"):
             examples = [Example(**example) for example in modifiers_dict["examples"]]
 
         conditional = None
@@ -148,6 +150,15 @@ class Check(BaseModel):
             operator=check_dict["operator"],
             criteria=check_dict.get("criteria", ""),
             modifiers=modifiers,
+        )
+
+    def to_graphql_input(self) -> dict:
+        return CheckInputType(
+            operator=self.operator,
+            criteria=self.criteria,
+            modifiers=CheckModifiersInputType(
+                **self.modifiers.model_dump(exclude_none=True)
+            ),
         )
 
 
@@ -202,9 +213,7 @@ class Test(BaseModel):
             test_suite_id=test_suite_id,
             test_id=self._id,
             input_under_test=self.input_under_test,
-            checks=json.dumps(
-                [check.model_dump(exclude_none=True) for check in self.checks]
-            ),
+            checks=[check.to_graphql_input() for check in self.checks],
             tags=self.tags,
             context=json.dumps(self.context),
             golden_output=self.golden_output,
