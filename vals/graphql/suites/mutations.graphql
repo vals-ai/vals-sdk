@@ -38,11 +38,15 @@ mutation deleteTestSuite($testSuiteId: String!) {
   }
 }
 
-mutation updateGlobalChecks($testSuiteId: String!, $checks: String!) {
+mutation updateGlobalChecks(
+  $testSuiteId: String!
+  $checks: [CheckInputType!]!
+) {
   updateGlobalChecks(testSuiteId: $testSuiteId, checks: $checks) {
     success
   }
 }
+
 mutation removeOldTests($testSuiteId: String!, $inUseTests: [String!]!) {
   removeUnusedTests(testSuiteId: $testSuiteId, inUseTests: $inUseTests) {
     success

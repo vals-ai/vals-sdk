@@ -51,6 +51,9 @@ from .get_test_suites_with_count import (
 )
 from .input_types import (
     CheckInputType,
+    CheckModifiersInputType,
+    ConditionalCheckInputType,
+    ExampleInputType,
     FilterOptionsInput,
     FixedOutputInputType,
     MetadataType,
@@ -97,7 +100,9 @@ __all__ = [
     "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairs",
     "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairs",
     "CheckInputType",
+    "CheckModifiersInputType",
     "Client",
+    "ConditionalCheckInputType",
     "CreateOrUpdateTestSuite",
     "CreateOrUpdateTestSuiteUpdateTestSuite",
     "CreateOrUpdateTestSuiteUpdateTestSuiteTestSuite",
@@ -106,6 +111,7 @@ __all__ = [
     "CreateQuestionAnswerSetCreateQuestionAnswerSetQuestionAnswerSet",
     "DeleteTestSuite",
     "DeleteTestSuiteDeleteSuite",
+    "ExampleInputType",
     "FilterOptionsInput",
     "FixedOutputInputType",
     "GetOperators",

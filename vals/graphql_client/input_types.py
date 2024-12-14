@@ -34,14 +34,40 @@ class RunResultFilterOptionsInput(BaseModel):
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
 
 
+class CheckInputType(BaseModel):
+    operator: str
+    criteria: str
+    modifiers: "CheckModifiersInputType"
+
+
+class CheckModifiersInputType(BaseModel):
+    optional: bool
+    severity: Optional[float] = None
+    examples: List["ExampleInputType"]
+    extractor: Optional[str] = None
+    conditional: Optional["ConditionalCheckInputType"] = None
+    category: Optional[str] = None
+
+
+class ExampleInputType(BaseModel):
+    type: str
+    text: str
+
+
+class ConditionalCheckInputType(BaseModel):
+    operator: str
+    criteria: str
+
+
 class TestMutationInfo(BaseModel):
     test_suite_id: str = Field(alias="testSuiteId")
     test_id: str = Field(alias="testId")
     input_under_test: str = Field(alias="inputUnderTest")
-    checks: str
+    checks: List["CheckInputType"]
     golden_output: Optional[str] = Field(alias="goldenOutput", default=None)
     file_ids: Optional[List[Optional[str]]] = Field(alias="fileIds", default=None)
     context: Optional[str] = None
+    typed_context: Optional[Any] = Field(alias="typedContext", default=None)
     tags: Optional[List[Optional[str]]] = None
 
 
@@ -65,12 +91,6 @@ class PerCheckHumanReviewInputType(BaseModel):
     is_flagged: Optional[bool] = Field(alias="isFlagged", default=None)
 
 
-class CheckInputType(BaseModel):
-    operator: str
-    criteria: str
-    modifiers: Any
-
-
 class FixedOutputInputType(BaseModel):
     label: str
     text: str
@@ -91,4 +111,7 @@ class MetadataType(BaseModel):
     duration_seconds: float = Field(alias="durationSeconds")
 
 
+CheckInputType.model_rebuild()
+CheckModifiersInputType.model_rebuild()
+TestMutationInfo.model_rebuild()
 QuestionAnswerPairInputType.model_rebuild()

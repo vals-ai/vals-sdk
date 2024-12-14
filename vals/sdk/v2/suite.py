@@ -457,7 +457,7 @@ class Suite(BaseModel):
 
         await self._client.update_global_checks(
             self.id,
-            json.dumps([gc.model_dump(exclude_none=True) for gc in self.global_checks]),
+            [gc.to_graphql_input() for gc in self.global_checks],
         )
 
     async def _generate_qa_pairs_from_function(
