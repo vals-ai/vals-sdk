@@ -224,7 +224,7 @@ class Test(BaseModel):
 class RunParameters(BaseModel):
     """Parameters for a run."""
 
-    eval_model: str = "gpt-4o"
+    eval_model: str = "openai/gpt-4o"
     """Model to use for the LLM as judge - this is *not* the model being tested."""
 
     parallelism: int = 10

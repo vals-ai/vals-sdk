@@ -23,7 +23,6 @@ from .input_types import (
 from .list_runs import ListRuns
 from .pull_run import PullRun
 from .remove_old_tests import RemoveOldTests
-from .run_param_info import RunParamInfo
 from .run_status import RunStatus
 from .start_run import StartRun
 from .update_global_checks import UpdateGlobalChecks
@@ -139,21 +138,6 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return StartRun.model_validate(data)
-
-    async def run_param_info(self, **kwargs: Any) -> RunParamInfo:
-        query = gql(
-            """
-            query RunParamInfo {
-              runParameterInfo
-            }
-            """
-        )
-        variables: Dict[str, object] = {}
-        response = await self.execute(
-            query=query, operation_name="RunParamInfo", variables=variables, **kwargs
-        )
-        data = self.get_data(response)
-        return RunParamInfo.model_validate(data)
 
     async def run_status(self, run_id: str, **kwargs: Any) -> RunStatus:
         query = gql(

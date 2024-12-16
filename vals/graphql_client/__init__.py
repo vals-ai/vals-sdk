@@ -80,7 +80,6 @@ from .pull_run import (
     PullRunTestResultsTest,
 )
 from .remove_old_tests import RemoveOldTests, RemoveOldTestsRemoveUnusedTests
-from .run_param_info import RunParamInfo
 from .run_status import RunStatus, RunStatusRun
 from .start_run import StartRun, StartRunStartRun
 from .update_global_checks import (
@@ -147,7 +146,6 @@ __all__ = [
     "QuestionAnswerPairInputType",
     "RemoveOldTests",
     "RemoveOldTestsRemoveUnusedTests",
-    "RunParamInfo",
     "RunResultFilterOptionsInput",
     "RunResultSortField",
     "RunStatus",

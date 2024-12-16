@@ -36,8 +36,8 @@ class RunResultFilterOptionsInput(BaseModel):
 
 class CheckInputType(BaseModel):
     operator: str
-    criteria: str
-    modifiers: "CheckModifiersInputType"
+    criteria: Optional[str] = None
+    modifiers: Optional["CheckModifiersInputType"] = None
 
 
 class CheckModifiersInputType(BaseModel):
