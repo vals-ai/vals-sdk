@@ -145,7 +145,7 @@ class Suite(BaseModel):
 
     @property
     def url(self):
-        return f"{fe_host()}/view?test_suite_id={self.id}"
+        return f"{fe_host()}/suites/{self.id}"
 
     def to_dict(self) -> dict[str, Any]:
         """
