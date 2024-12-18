@@ -206,6 +206,7 @@ class Client(AsyncBaseClient):
                   error
                 }
                 testSuite {
+                  id
                   title
                 }
               }

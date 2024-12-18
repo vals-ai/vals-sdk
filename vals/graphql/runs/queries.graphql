@@ -39,6 +39,7 @@ query PullRun($runId: String!) {
       error
     }
     testSuite {
+      id
       title
     }
   }

@@ -21,8 +21,8 @@ async def pull_async(run_id: str, file: TextIOWrapper, csv: bool, _json: bool):
 
     if csv:
         file.write(await run.to_csv_string())
-    elif _json:
-        file.write(json.dumps(run.to_dict()))
+    else:
+        file.write(json.dumps(run.to_dict(), indent=2))
 
     click.secho("Successfully pulled run results.", fg="green")
 
@@ -43,21 +43,25 @@ async def list_async(
     limit: int, offset: int, suite_id: str | None, show_archived: bool
 ):
     run_results = await Run.list_runs(
-        limit=limit, offset=offset, show_archived=show_archived
+        limit=limit,
+        offset=offset - 1,
+        show_archived=show_archived,
+        suite_id=suite_id,
     )
 
-    column_names = ["Run Name", "Id", "Status", "Pass Rate", "Timestamp"]
+    column_names = ["#", "Run Name", "Id", "Status", "Pass Rate", "Timestamp"]
     run_name_width = 40
-    column_widths = [run_name_width, 36, 13, 10, 20]
+    column_widths = [3, run_name_width, 36, 13, 10, 20]
 
     rows = []
-    for run in run_results:
+    for i, run in enumerate(run_results, start=offset):
         date_str = run.timestamp.strftime("%Y/%m/%d %H:%M")
         pass_percentage_str = f"{run.pass_rate:.2f}%" if run.pass_rate else "N/A"
         if len(run.name) > run_name_width:
             run.name = run.name[: run_name_width - 3] + "..."
         rows.append(
             [
+                i,
                 run.name,
                 run.id,
                 run.status.value,
@@ -78,7 +82,11 @@ async def list_async(
     help="Limit the number of runs to display",
 )
 @click.option(
-    "-o", "--offset", required=False, default=0, help="Filter runs by suite id"
+    "-o",
+    "--offset",
+    required=False,
+    default=1,
+    help="Start table at this row (1-indexed)",
 )
 @click.option("--suite-id", required=False, help="Filter runs by suite id")
 @click.option(

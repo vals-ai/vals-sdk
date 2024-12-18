@@ -53,6 +53,7 @@ class PullRunRunSuccessRate(BaseModel):
 
 
 class PullRunRunTestSuite(BaseModel):
+    id: str
     title: str
 
 

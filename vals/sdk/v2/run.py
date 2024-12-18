@@ -105,7 +105,7 @@ class Run(BaseModel):
                 for test_result in result.test_results
             ],
             test_suite_title=result.run.test_suite.title,
-            test_suite_id=result.run.test_suite.title,
+            test_suite_id=result.run.test_suite.id,
         )
 
     @classmethod
