@@ -37,9 +37,14 @@ query PullRun($runId: String!) {
     passPercentage
     passPercentageWithOptional
     resultJson
+    qaPair {
+      context
+      outputContext
+    }
     test {
       testId
       inputUnderTest
+      context
     }
     metadata
   }

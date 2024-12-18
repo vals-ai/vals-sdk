@@ -203,9 +203,14 @@ class Client(AsyncBaseClient):
                 passPercentage
                 passPercentageWithOptional
                 resultJson
+                qaPair {
+                  context
+                  outputContext
+                }
                 test {
                   testId
                   inputUnderTest
+                  context
                 }
                 metadata
               }

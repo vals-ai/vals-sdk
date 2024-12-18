@@ -353,6 +353,12 @@ class TestResult(BaseModel):
     _id: str
     input_under_test: str
 
+    context: dict[str, Any]
+    """Context pulled from the test"""
+
+    output_context: dict[str, Any]
+    """Context produced while producing the output."""
+
     llm_output: str
     """Output produced by the LLM"""
 
@@ -366,9 +372,19 @@ class TestResult(BaseModel):
 
     @classmethod
     def from_graphql(cls, graphql_test_result: PullRunTestResults) -> "TestResult":
+        output_context = {}
+        context = {}
+        if graphql_test_result.qa_pair:
+            output_context = graphql_test_result.qa_pair.output_context
+            context = graphql_test_result.qa_pair.context
+            if len(context) == 0 and graphql_test_result.test.context is not None:
+                context = json.loads(graphql_test_result.test.context)
+
         obj = cls(
             _id=graphql_test_result.id,
             input_under_test=graphql_test_result.test.input_under_test,
+            context=context,
+            output_context=output_context,
             llm_output=graphql_test_result.llm_output,
             pass_percentage=graphql_test_result.pass_percentage,
             check_results=[
@@ -399,7 +415,8 @@ class QuestionAnswerPair(BaseModel):
     input_under_test: str
     llm_output: str
     file_ids: list[str] | None = None
-    context: dict[str, Any] | None = None
+    context: dict[str, Any] = {}
+    output_context: dict[str, Any] = {}
     metadata: Metadata | None = None
 
     def to_graphql(self) -> QuestionAnswerPairInputType:
@@ -407,6 +424,7 @@ class QuestionAnswerPair(BaseModel):
             input_under_test=self.input_under_test,
             file_ids=self.file_ids,
             context=self.context,
+            output_context=self.output_context,
             llm_output=self.llm_output,
             metadata=self.metadata,
             test_id=None,
