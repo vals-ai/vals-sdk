@@ -27,7 +27,6 @@ from .create_question_answer_set import (
 from .delete_test_suite import DeleteTestSuite, DeleteTestSuiteDeleteSuite
 from .enums import (
     AppQuestionAnswerSetCreationMethodChoices,
-    AppQuestionAnswerSetStatusChoices,
     RunResultSortField,
     RunStatus,
     SortOrder,
@@ -66,11 +65,12 @@ from .input_types import (
 )
 from .list_runs import (
     ListRuns,
-    ListRunsRuns,
-    ListRunsRunsPassRate,
-    ListRunsRunsSuccessRate,
-    ListRunsRunsTestSuite,
-    ListRunsRunsTypedParameters,
+    ListRunsRunsWithCount,
+    ListRunsRunsWithCountRunResults,
+    ListRunsRunsWithCountRunResultsPassRate,
+    ListRunsRunsWithCountRunResultsSuccessRate,
+    ListRunsRunsWithCountRunResultsTestSuite,
+    ListRunsRunsWithCountRunResultsTypedParameters,
 )
 from .pull_run import (
     PullRun,
@@ -97,7 +97,6 @@ __all__ = [
     "AddBatchTestsBatchUpdateTestTests",
     "AddBatchTestsBatchUpdateTestTestsTestSuite",
     "AppQuestionAnswerSetCreationMethodChoices",
-    "AppQuestionAnswerSetStatusChoices",
     "AsyncBaseClient",
     "BaseModel",
     "BatchAddQuestionAnswerPairs",
@@ -135,11 +134,12 @@ __all__ = [
     "GraphQLClientHttpError",
     "GraphQLClientInvalidResponseError",
     "ListRuns",
-    "ListRunsRuns",
-    "ListRunsRunsPassRate",
-    "ListRunsRunsSuccessRate",
-    "ListRunsRunsTestSuite",
-    "ListRunsRunsTypedParameters",
+    "ListRunsRunsWithCount",
+    "ListRunsRunsWithCountRunResults",
+    "ListRunsRunsWithCountRunResultsPassRate",
+    "ListRunsRunsWithCountRunResultsSuccessRate",
+    "ListRunsRunsWithCountRunResultsTestSuite",
+    "ListRunsRunsWithCountRunResultsTypedParameters",
     "MetadataType",
     "ParameterInputType",
     "PerCheckHumanReviewInputType",

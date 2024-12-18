@@ -10,7 +10,7 @@ class AppQuestionAnswerSetCreationMethodChoices(str, Enum):
     UPLOAD = "UPLOAD"
 
 
-class AppQuestionAnswerSetStatusChoices(str, Enum):
+class RunStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"
     ERROR = "ERROR"
     SUCCESS = "SUCCESS"
@@ -25,12 +25,6 @@ class TestSuiteSortField(str, Enum):
 class SortOrder(str, Enum):
     ASC = "ASC"
     DESC = "DESC"
-
-
-class RunStatus(str, Enum):
-    IN_PROGRESS = "IN_PROGRESS"
-    ERROR = "ERROR"
-    SUCCESS = "SUCCESS"
 
 
 class RunResultSortField(str, Enum):

@@ -77,7 +77,9 @@ async def list_async(
     default=25,
     help="Limit the number of runs to display",
 )
-@click.option("-o", "--offset", required=False, help="Filter runs by suite id")
+@click.option(
+    "-o", "--offset", required=False, default=0, help="Filter runs by suite id"
+)
 @click.option("--suite-id", required=False, help="Filter runs by suite id")
 @click.option(
     "--show-archived",

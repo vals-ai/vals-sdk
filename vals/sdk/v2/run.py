@@ -121,7 +121,9 @@ class Run(BaseModel):
         result = await client.list_runs(
             limit=limit, offset=offset, suite_id=suite_id, archived=show_archived
         )
-        return [RunMetadata.from_graphql(run) for run in result.runs]
+        return [
+            RunMetadata.from_graphql(run) for run in result.runs_with_count.run_results
+        ]
 
     @classmethod
     async def from_id(cls, run_id: str) -> "Run":

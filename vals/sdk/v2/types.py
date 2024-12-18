@@ -23,7 +23,7 @@ from vals.graphql_client.input_types import (
     QuestionAnswerPairInputType,
     TestMutationInfo,
 )
-from vals.graphql_client.list_runs import ListRunsRuns
+from vals.graphql_client.list_runs import ListRunsRunsWithCountRunResults
 from vals.graphql_client.pull_run import PullRunTestResults
 from vals.sdk.v2.operator_type import OperatorType
 
@@ -288,7 +288,9 @@ class RunMetadata(BaseModel):
     parameters: RunParameters
 
     @classmethod
-    def from_graphql(cls, graphql_run: ListRunsRuns) -> "RunMetadata":
+    def from_graphql(
+        cls, graphql_run: ListRunsRunsWithCountRunResults
+    ) -> "RunMetadata":
         return cls(
             id=graphql_run.run_id,
             name=graphql_run.name,

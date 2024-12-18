@@ -242,38 +242,42 @@ class Client(AsyncBaseClient):
         query = gql(
             """
             query ListRuns($archived: Boolean, $suiteId: String, $limit: Int, $offset: Int) {
-              runs(archived: $archived, suiteId: $suiteId, limit: $limit, offset: $offset) {
-                runId
-                passPercentage
-                passRate {
-                  value
-                  error
-                }
-                successRate {
-                  value
-                  error
-                }
-                name
-                status
-                textSummary
-                timestamp
-                completedAt
-                archived
-                typedParameters {
-                  evalModel
-                  maximumThreads
-                  runGoldenEval
-                  runConfidenceEvaluation
-                  heavyweightFactor
-                  createTextSummary
-                  modelUnderTest
-                  temperature
-                  maxOutputTokens
-                  systemPrompt
-                  newLineStopOption
-                }
-                testSuite {
-                  title
+              runsWithCount(
+                filterOptions: {archived: $archived, suiteId: $suiteId, limit: $limit, offset: $offset, sortBy: STARTED_AT}
+              ) {
+                runResults {
+                  runId
+                  passPercentage
+                  passRate {
+                    value
+                    error
+                  }
+                  successRate {
+                    value
+                    error
+                  }
+                  name
+                  status
+                  textSummary
+                  timestamp
+                  completedAt
+                  archived
+                  typedParameters {
+                    evalModel
+                    maximumThreads
+                    runGoldenEval
+                    runConfidenceEvaluation
+                    heavyweightFactor
+                    createTextSummary
+                    modelUnderTest
+                    temperature
+                    maxOutputTokens
+                    systemPrompt
+                    newLineStopOption
+                  }
+                  testSuite {
+                    title
+                  }
                 }
               }
             }
