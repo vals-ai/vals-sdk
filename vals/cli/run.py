@@ -48,7 +48,7 @@ async def list_async(
 
     column_names = ["Run Name", "Id", "Status", "Pass Rate", "Timestamp"]
     run_name_width = 40
-    column_widths = [run_name_width, 36, 13, 8, 20]
+    column_widths = [run_name_width, 36, 13, 10, 20]
 
     rows = []
     for run in run_results:

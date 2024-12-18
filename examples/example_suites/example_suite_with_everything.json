@@ -1,0 +1,41 @@
+{
+  "title": "[VALS]: Sample Test Suite",
+  "description": "This is a test suite that uses all the features",
+  "tests": [
+    {
+      "input_under_test": "What is QSBS",
+      "golden_output": "C Corporation",
+      "context": { "foo": "bar", "baz": ["a", "b", "c"] },
+      "files_under_test": ["examples/data_files/postmoney_safe.docx"],
+      "global_checks": [
+        {
+          "operator": "grammar"
+        }
+      ],
+      "tags": ["legal", "finance"],
+      "checks": [
+        {
+          "operator": "includes",
+          "criteria": "C Corporation",
+          "modifiers": {
+            "extractor": "Extract proper nouns",
+            "conditional": { "operator": "grammar" },
+            "optional": true,
+            "severity": -1,
+            "examples": [
+              {
+                "text": "What is QSBS",
+                "type": "positive"
+              }
+            ],
+            "category": "Legal"
+          }
+        },
+        {
+          "operator": "excludes",
+          "criteria": "S Corporation"
+        }
+      ]
+    }
+  ]
+}

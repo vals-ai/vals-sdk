@@ -88,7 +88,7 @@ class ConditionalCheck(BaseModel):
     """
 
     operator: OperatorType
-    criteria: str
+    criteria: str = ""
 
 
 class CheckModifiers(BaseModel):
