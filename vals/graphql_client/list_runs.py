@@ -2,7 +2,7 @@
 # Source: vals/graphql/
 
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -24,7 +24,7 @@ class ListRunsRuns(BaseModel):
     timestamp: datetime
     completed_at: Optional[datetime] = Field(alias="completedAt")
     archived: bool
-    parameters: Any
+    typed_parameters: "ListRunsRunsTypedParameters" = Field(alias="typedParameters")
     test_suite: "ListRunsRunsTestSuite" = Field(alias="testSuite")
 
 
@@ -36,6 +36,20 @@ class ListRunsRunsPassRate(BaseModel):
 class ListRunsRunsSuccessRate(BaseModel):
     value: float
     error: float
+
+
+class ListRunsRunsTypedParameters(BaseModel):
+    eval_model: str = Field(alias="evalModel")
+    maximum_threads: int = Field(alias="maximumThreads")
+    run_golden_eval: bool = Field(alias="runGoldenEval")
+    run_confidence_evaluation: bool = Field(alias="runConfidenceEvaluation")
+    heavyweight_factor: int = Field(alias="heavyweightFactor")
+    create_text_summary: bool = Field(alias="createTextSummary")
+    model_under_test: str = Field(alias="modelUnderTest")
+    temperature: float
+    max_output_tokens: int = Field(alias="maxOutputTokens")
+    system_prompt: str = Field(alias="systemPrompt")
+    new_line_stop_option: bool = Field(alias="newLineStopOption")
 
 
 class ListRunsRunsTestSuite(BaseModel):

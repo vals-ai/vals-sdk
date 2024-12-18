@@ -19,6 +19,7 @@ from vals.graphql_client.get_test_suites_with_count import (
 from vals.graphql_client.input_types import (
     CheckInputType,
     CheckModifiersInputType,
+    MetadataType,
     QuestionAnswerPairInputType,
     TestMutationInfo,
 )
@@ -58,6 +59,7 @@ class TestSuiteMetadata(BaseModel):
     def from_graphql(
         cls, graphql_suite: GetTestSuitesWithCountTestSuitesWithCountTestSuites
     ) -> "TestSuiteMetadata":
+
         return cls(
             id=graphql_suite.id,
             title=graphql_suite.title,
@@ -169,6 +171,9 @@ class Test(BaseModel):
     _cross_version_id: str = ""
     """Internal id that stays constant across versions."""
 
+    _test_suite_id: str = ""
+    """Maintain internal representation of which Test Suite the test originally belonged to"""
+
     input_under_test: str
     """Input to the LLM"""
 
@@ -205,13 +210,15 @@ class Test(BaseModel):
         test._file_ids = json.loads(graphql_test.file_ids)
         test._id = graphql_test.test_id
         test._cross_version_id = graphql_test.cross_version_id
+        test._test_suite_id = graphql_test.test_suite.id
         return test
 
     def to_test_mutation_info(self, test_suite_id: str) -> TestMutationInfo:
         """Internal method to translate from the Test class to the TestMutationInfo class."""
         return TestMutationInfo(
             test_suite_id=test_suite_id,
-            test_id=self._id,
+            # If we're moving the test to a new test suite, we always need to create it
+            test_id=self._id if test_suite_id == self._test_suite_id else "0",
             input_under_test=self.input_under_test,
             checks=[check.to_graphql_input() for check in self.checks],
             tags=self.tags,
@@ -256,10 +263,10 @@ class RunParameters(BaseModel):
 
 
 class RunStatus(str, Enum):
-    """Status of a run: 'in_progress', 'completed', or 'success'."""
+    """Status of a run: 'in_progress', 'error', or 'success'."""
 
     IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
+    ERROR = "error"
     SUCCESS = "success"
 
 
@@ -282,7 +289,6 @@ class RunMetadata(BaseModel):
 
     @classmethod
     def from_graphql(cls, graphql_run: ListRunsRuns) -> "RunMetadata":
-        parameters = json.loads(graphql_run.parameters)
         return cls(
             id=graphql_run.run_id,
             name=graphql_run.name,
@@ -305,8 +311,8 @@ class RunMetadata(BaseModel):
             completed_at=graphql_run.completed_at,
             archived=graphql_run.archived,
             test_suite_title=graphql_run.test_suite.title,
-            model=parameters["model_under_test"],
-            parameters=RunParameters(**parameters),
+            model=graphql_run.typed_parameters.model_under_test,
+            parameters=RunParameters(**graphql_run.typed_parameters.model_dump()),
         )
 
 
@@ -408,6 +414,8 @@ class QuestionAnswerPair(BaseModel):
             file_ids=self.file_ids,
             context=self.context,
             llm_output=self.llm_output,
-            metadata=self.metadata,
+            metadata=(
+                MetadataType(**self.metadata.model_dump()) if self.metadata else None
+            ),
             test_id=None,
         )

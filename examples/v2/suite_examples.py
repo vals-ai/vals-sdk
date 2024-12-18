@@ -140,13 +140,6 @@ async def move_test_between_suites():
     print(f"Suite 1: {suite1.url}")
     print(f"Suite 2: {suite2.url}")
 
-    suite1.tests.append(suite2.tests[0])
-    await suite1.update()
-    await suite1.create(force_creation=True)
-
-    print(f"Suite 1: {suite1.url}")
-    print(f"Suite 2: {suite2.url}")
-
 
 async def all():
     await list_suites()

@@ -48,7 +48,7 @@ async def run_with_function():
         return input_under_test + "!!!"
 
     run = await suite.run(
-        model=function, wait_for_completion=True, model_name="test-model"
+        model=function, wait_for_completion=True, model_name="my_function_model"
     )
 
     print(f"Run URL: {run.url}")
@@ -83,7 +83,7 @@ async def run_with_function_context_and_files():
         return input_under_test
 
     run = await suite.run(
-        model=function, wait_for_completion=True, model_name="blah blah"
+        model=function, wait_for_completion=True, model_name="my_function_model_v2"
     )
 
     print(f"Run URL: {run.url}")

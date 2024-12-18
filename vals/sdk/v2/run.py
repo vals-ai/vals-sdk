@@ -70,7 +70,7 @@ class Run(BaseModel):
         """Helper method to create a Run instance from a pull_run query result"""
 
         # Map maximum_threads to parallelism for backwards compatibility
-        parameters_dict = json.loads(result.run.parameters)
+        parameters_dict = result.run.typed_parameters.model_dump()
         model = parameters_dict.pop("model_under_test", "")
         if "maximum_threads" in parameters_dict:
             parameters_dict["parallelism"] = parameters_dict.pop("maximum_threads")

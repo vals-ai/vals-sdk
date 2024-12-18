@@ -4,6 +4,7 @@ from .add_batch_tests import (
     AddBatchTests,
     AddBatchTestsBatchUpdateTest,
     AddBatchTestsBatchUpdateTestTests,
+    AddBatchTestsBatchUpdateTestTestsTestSuite,
 )
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel, Upload
@@ -41,7 +42,7 @@ from .exceptions import (
     GraphQLClientInvalidResponseError,
 )
 from .get_operators import GetOperators, GetOperatorsOperators
-from .get_test_data import GetTestData, GetTestDataTests
+from .get_test_data import GetTestData, GetTestDataTests, GetTestDataTestsTestSuite
 from .get_test_suite_data import GetTestSuiteData, GetTestSuiteDataTestSuites
 from .get_test_suites_with_count import (
     GetTestSuitesWithCount,
@@ -69,6 +70,7 @@ from .list_runs import (
     ListRunsRunsPassRate,
     ListRunsRunsSuccessRate,
     ListRunsRunsTestSuite,
+    ListRunsRunsTypedParameters,
 )
 from .pull_run import (
     PullRun,
@@ -76,6 +78,7 @@ from .pull_run import (
     PullRunRunPassRate,
     PullRunRunSuccessRate,
     PullRunRunTestSuite,
+    PullRunRunTypedParameters,
     PullRunTestResults,
     PullRunTestResultsTest,
 )
@@ -92,6 +95,7 @@ __all__ = [
     "AddBatchTests",
     "AddBatchTestsBatchUpdateTest",
     "AddBatchTestsBatchUpdateTestTests",
+    "AddBatchTestsBatchUpdateTestTestsTestSuite",
     "AppQuestionAnswerSetCreationMethodChoices",
     "AppQuestionAnswerSetStatusChoices",
     "AsyncBaseClient",
@@ -118,6 +122,7 @@ __all__ = [
     "GetOperatorsOperators",
     "GetTestData",
     "GetTestDataTests",
+    "GetTestDataTestsTestSuite",
     "GetTestSuiteData",
     "GetTestSuiteDataTestSuites",
     "GetTestSuitesWithCount",
@@ -134,6 +139,7 @@ __all__ = [
     "ListRunsRunsPassRate",
     "ListRunsRunsSuccessRate",
     "ListRunsRunsTestSuite",
+    "ListRunsRunsTypedParameters",
     "MetadataType",
     "ParameterInputType",
     "PerCheckHumanReviewInputType",
@@ -142,6 +148,7 @@ __all__ = [
     "PullRunRunPassRate",
     "PullRunRunSuccessRate",
     "PullRunRunTestSuite",
+    "PullRunRunTypedParameters",
     "PullRunTestResults",
     "PullRunTestResultsTest",
     "QuestionAnswerPairInputType",

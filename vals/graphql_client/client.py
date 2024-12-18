@@ -184,7 +184,19 @@ class Client(AsyncBaseClient):
                 timestamp
                 completedAt
                 archived
-                parameters
+                typedParameters {
+                  evalModel
+                  maximumThreads
+                  runGoldenEval
+                  runConfidenceEvaluation
+                  heavyweightFactor
+                  createTextSummary
+                  modelUnderTest
+                  temperature
+                  maxOutputTokens
+                  systemPrompt
+                  newLineStopOption
+                }
                 passRate {
                   value
                   error
@@ -247,7 +259,19 @@ class Client(AsyncBaseClient):
                 timestamp
                 completedAt
                 archived
-                parameters
+                typedParameters {
+                  evalModel
+                  maximumThreads
+                  runGoldenEval
+                  runConfidenceEvaluation
+                  heavyweightFactor
+                  createTextSummary
+                  modelUnderTest
+                  temperature
+                  maxOutputTokens
+                  systemPrompt
+                  newLineStopOption
+                }
                 testSuite {
                   title
                 }
@@ -318,6 +342,9 @@ class Client(AsyncBaseClient):
                   tags
                   context
                   goldenOutput
+                  testSuite {
+                    id
+                  }
                 }
               }
             }
@@ -433,6 +460,9 @@ class Client(AsyncBaseClient):
                 tags
                 context
                 goldenOutput
+                testSuite {
+                  id
+                }
               }
             }
             """
