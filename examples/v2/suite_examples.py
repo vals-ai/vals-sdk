@@ -113,6 +113,41 @@ async def load_from_json():
     print(f"Loaded from JSON: {suite}")
 
 
+async def move_test_between_suites():
+    suite1 = Suite(
+        title="Suite 1",
+        tests=[
+            Test(
+                input_under_test="What is QSBS?",
+                checks=[Check(operator="equals", criteria="QSBS")],
+            )
+        ],
+    )
+    await suite1.create()
+
+    suite2 = Suite(
+        title="Suite 2",
+        tests=[
+            Test(
+                input_under_test="What is an 83 election?",
+                checks=[Check(operator="equals", criteria="QSBS")],
+            ),
+            suite1.tests[0],
+        ],
+    )
+    await suite2.create()
+
+    print(f"Suite 1: {suite1.url}")
+    print(f"Suite 2: {suite2.url}")
+
+    suite1.tests.append(suite2.tests[0])
+    await suite1.update()
+    await suite1.create(force_creation=True)
+
+    print(f"Suite 1: {suite1.url}")
+    print(f"Suite 2: {suite2.url}")
+
+
 async def all():
     await list_suites()
     await create_suite()
@@ -121,6 +156,7 @@ async def all():
     await update_suite()
     await pull_suite()
     await load_from_json()
+    await move_test_between_suites()
 
 
 if __name__ == "__main__":
