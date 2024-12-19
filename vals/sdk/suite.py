@@ -507,14 +507,22 @@ class Suite(BaseModel):
 
             if is_simple_model_function:
                 casted_model_function = cast(SimpleModelFunctionType, model_function)
-                llm_output = casted_model_function(test.input_under_test)
+                if inspect.iscoroutinefunction(casted_model_function):
+                    llm_output = await casted_model_function(test.input_under_test)
+                else:
+                    llm_output = casted_model_function(test.input_under_test)
             else:
                 casted_model_function = cast(
                     ModelFunctionWithFilesAndContextType, model_function
                 )
-                llm_output = casted_model_function(
-                    test.input_under_test, files, test.context
-                )
+                if inspect.iscoroutinefunction(casted_model_function):
+                    llm_output = await casted_model_function(
+                        test.input_under_test, files, test.context
+                    )
+                else:
+                    llm_output = casted_model_function(
+                        test.input_under_test, files, test.context
+                    )
 
             time_end = time()
             in_tokens_end = patch.in_tokens
