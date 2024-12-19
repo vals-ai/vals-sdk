@@ -6,7 +6,7 @@ import requests
 from gql import gql
 from vals.cli.util import display_error_and_exit, prompt_user_for_rag_suite
 from vals.sdk.auth import _get_auth_token
-from vals.sdk.util import be_host, get_client, list_rag_suites
+from vals.sdk.util import be_host, list_rag_suites
 
 
 @click.group(name="rag")

@@ -7,7 +7,7 @@ Note: The file paths assume this is run from the `examples/` directory.
 import asyncio
 import json
 
-from vals.sdk.v2.suite import Check, Suite, Test
+from vals.sdk.suite import Check, Suite, Test
 
 
 async def list_suites():
@@ -109,7 +109,7 @@ async def pull_suite():
 
 async def load_from_json():
     """Create a suite from a json file."""
-    suite = await Suite.from_json_file("example_suites/example_suite.json")
+    suite = await Suite.from_json_file("suites/example_suite.json")
     print(f"Loaded from JSON: {suite}")
 
 

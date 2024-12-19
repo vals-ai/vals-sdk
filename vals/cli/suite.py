@@ -6,8 +6,8 @@ from typing import Any
 import click
 from vals.cli.util import display_error_and_exit, display_table
 from vals.sdk.exceptions import ValsException
-from vals.sdk.v2.suite import Suite
-from vals.sdk.v2.types import RunParameters, RunStatus
+from vals.sdk.suite import Suite
+from vals.sdk.types import RunParameters, RunStatus
 
 
 @click.group(name="suite")

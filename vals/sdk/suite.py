@@ -1,478 +1,580 @@
+import inspect
 import json
 import os
-from typing import Any, Dict, List
+from time import time
+from typing import Any, Callable, cast, overload
 
 import requests
-from gql import gql
-from jsonschema import ValidationError, validate
-from vals.sdk.auth import _get_auth_token
-from vals.sdk.exceptions import ValsException
-from vals.sdk.util import SUITE_SCHEMA_PATH, be_host, get_client
-
-OPERATORS = [
-    "includes",
-    "logical_includes",
-    "excludes",
-    "equals",
-    "mostly_equals",
-    "includes_exactly",
-    "includes_nearly_exactly",
-    "excludes_exactly",
-    "equals_exactly",
-    "less_than_length",
-    "answers",
-    "not_answers",
-    "is_concise",
-    "is_coherent",
-    "is_safe",
-    "is_not_hallucinating",
-    "is_not_generated",
-    "no_legal_advice",
-    "is_not_templated",
-    "satisfies_statement",
-    "consistent_phrasing",
-    "valid_json",
-    "valid_yaml",
-    "regex",
-    "matches_json_schema",
-    "includes_any",
-    "includes_any_v2",
-    "list_format",
-    "paragraph_format",
-    "affirmative_answer",
-    "negative_answer",
-    "matches_tone",
-    "check_salesiness",
-    "matches_format",
-    "grammar",
-    "equal_intent",
-    "capitalized_correctly",
-    "is_polite",
-    "progresses_conversation",
-    "legacy_equals",
-    "consistent_with_json",
-    "consistent_with_context",
-    "consistent_with_docs",
-    "includes_only",
-]
-
-UNARY_OPERATORS = [
-    "answers",
-    "not_answers",
-    "is_concise",
-    "is_coherent",
-    "is_safe",
-    "is_not_hallucinating",
-    "is_not_generated",
-    "no_legal_advice",
-    "is_not_templated",
-    "valid_json",
-    "valid_yaml",
-    "list_format",
-    "paragraph_format",
-    "affirmative_answer",
-    "negative_answer",
-    "grammar",
-    "capitalized_correctly",
-    "is_polite",
-    "progresses_conversation",
-    "consistent_with_json",
-    "consistent_with_context",
-    "consistent_with_docs",
-    "safety_consistency",
-]
+import vals.sdk.patch as patch
+from pydantic import BaseModel, PrivateAttr
+from tqdm import tqdm
+from vals.graphql_client.client import Client
+from vals.graphql_client.get_operators import GetOperatorsOperators
+from vals.graphql_client.input_types import (
+    MetadataType,
+    ParameterInputType,
+    QuestionAnswerPairInputType,
+)
+from vals.sdk.run import Run
+from vals.sdk.types import (
+    Check,
+    ModelFunctionType,
+    ModelFunctionWithFilesAndContextType,
+    QuestionAnswerPair,
+    RunParameters,
+    SimpleModelFunctionType,
+    Test,
+    TestSuiteMetadata,
+)
+from vals.sdk.util import (
+    _get_auth_token,
+    be_host,
+    fe_host,
+    get_ariadne_client,
+    md5_hash,
+    parse_file_id,
+    read_file,
+)
 
 
-def create_suite(suite_data: Dict[str, Any]) -> str:
-    """
-    Method to create a test suite. Suite_data
-    should be a JSON-like python dict that contains the information outlined in our docs.
+class Suite(BaseModel):
+    id: str | None = None
 
-    Returns the ID of the newly created suite.
-    """
-    _validate_suite(suite_data)
-    suite_id = _create_test_suite(suite_data)
-
-    files = _upload_files(suite_id, suite_data)
-
-    _add_global_checks(suite_data, suite_id)
-    _add_tests(suite_data, files, suite_id, create_only=True)
-
-    return suite_id
-
-
-def update_suite(suite_id: str, suite_data: Dict[str, Any]) -> None:
-    """
-    Method to update a test suite. data is in the same format as create_suite.
-    """
-    _validate_suite(suite_data)
-
-    files = _upload_files(suite_id, suite_data)
-
-    _add_tests(suite_data, files, suite_id)
-    _add_global_checks(suite_data, suite_id)
-
-
-def list_test_suites() -> List[Dict[str, Any]]:
-    """
-
-    Method to produce a list of test suites for a given org.
+    title: str
+    description: str = ""
+    global_checks: list[Check] = []
+    tests: list[Test] = []
 
     """
-    query = gql(
-        f"""
-        query getTestSuites {{
-            testSuites {{
-            description
-            id
-            org
-            title
-            created
-            creator
-            }}
-            }}
+    Helper to see if we've instantiated the suite, but haven't 
+    fetched it from the server yet. 
+    """
+    _client: Client = PrivateAttr(default_factory=get_ariadne_client)
+
+    @classmethod
+    async def list_suites(cls, limit=50, offset=0) -> list[TestSuiteMetadata]:
         """
-    )
-    response = get_client().execute(query)
+        Generate a list of all the test suites on the server.
 
-    # TODO: Error check
-    return response["testSuites"]
-
-
-def pull_suite(suite_id: str, include_id=False):
-    """
-    Get the JSON representation of a given test suite.
-    """
-    output = {}
-    query = gql(
-        f"""
-        query getTestSuiteData {{
-            testSuites(testSuiteId: "{suite_id}") {{
-                description
-                id
-                org
-                title
-                created
-                globalChecks
-            }}
-        }}
-    """
-    )
-
-    response = get_client().execute(query)
-
-    if len(response["testSuites"]) == 0:
-        raise Exception(f"Unable to find test suite with id: {suite_id}")
-
-    suite = response["testSuites"][0]
-    output["title"] = suite["title"]
-    output["description"] = suite["description"]
-
-    query = gql(
-        f"""
-        query getTestData {{
-            tests(testSuiteId: "{suite_id}") {{
-                checks
-                testId
-                crossVersionId
-                fileIds
-                inputUnderTest
-                goldenOutput
-                fileUids
-                tags
-                context
-            }}
-        }}    
+        limit: Total number to return
+        offset: Start list at this index.
         """
-    )
-    response = get_client().execute(query)
-    raw_tests = response["tests"]
-
-    tests = []
-    for raw_test in raw_tests:
-        test = {}
-        if include_id:
-            test["id"] = raw_test["testId"]
-            test["cross_version_id"] = raw_test["crossVersionId"]
-
-        test["input_under_test"] = raw_test["inputUnderTest"]
-
-        if raw_test["fileIds"] is not None:
-            file_ids = json.loads(raw_test["fileIds"])
-            if len(file_ids) != 0:
-                test["file_ids"] = file_ids
-
-        if raw_test["goldenOutput"] != "":
-            test["golden_output"] = raw_test["goldenOutput"]
-
-        test["checks"] = json.loads(raw_test["checks"])
-        context = json.loads(raw_test["context"])
-        if len(context) != 0:
-            test["context"] = context
-
-        tags = json.loads(raw_test["tags"])
-
-        if len(tags) != 0:
-            test["tags"] = tags
-
-        tests.append(test)
-
-    output["tests"] = tests
-    return output
-
-
-def _validate_checks(checks):
-    for check in checks:
-        operator = check["operator"]
-        if operator not in OPERATORS:
-            raise ValsException(f"Unrecognized operator: {operator}")
-        if operator not in UNARY_OPERATORS and "criteria" not in check:
-            raise ValsException(
-                f"'criteria' field must be specified for check with operator: '{operator}'"
-            )
-
-
-def _validate_suite(parsed_json):
-    if not os.path.exists(SUITE_SCHEMA_PATH):
-        raise ValsException(
-            "Could not find schema file. The CLI tool is likely misconfigured."
+        client = get_ariadne_client()
+        gql_response = await client.get_test_suites_with_count(
+            limit=limit,
+            offset=offset,
         )
+        gql_suites = gql_response.test_suites_with_count.test_suites
+        return [TestSuiteMetadata.from_graphql(gql_suite) for gql_suite in gql_suites]
 
-    # Use jsonschema to do most of our validation
-    try:
-        with open(SUITE_SCHEMA_PATH, "r") as schema_file:
-            schema = json.load(schema_file)
-            validate(instance=parsed_json, schema=schema)
-    except ValidationError as e:
-        raise ValsException(
-            f"The file provided did not conform to the correct format. Validation Error: {e.message}. Look at the examples or the jsonschema to see the correct format."
+    @classmethod
+    async def from_id(cls, suite_id: str) -> "Suite":
+        """
+        Create a new local test suite based on the data from the server.
+        """
+        client = get_ariadne_client()
+        suites_list = await client.get_test_suite_data(suite_id)
+        if len(suites_list.test_suites) == 0:
+            raise Exception("Couldn't find suite with id: " + suite_id)
+
+        suite_data = suites_list.test_suites[0]
+        title = suite_data.title
+        description = suite_data.description
+
+        global_checks = []
+        if suite_data.global_checks is not None:
+            global_checks = [
+                Check.from_graphql(check)
+                for check in json.loads(suite_data.global_checks)
+            ]
+
+        test_data = await client.get_test_data(suite_id)
+
+        tests = []
+        for graphql_test in test_data.tests:
+            test = Test.from_graphql_test(graphql_test)
+            tests.append(test)
+
+        suite = cls(
+            id=suite_id,
+            title=title,
+            description=description,
+            global_checks=global_checks,
+            tests=tests,
         )
+        return suite
 
-    if "global_checks" in parsed_json:
-        _validate_checks(parsed_json["global_checks"])
+    @classmethod
+    async def from_dict(cls, data: dict[str, Any]) -> "Suite":
+        """
+        Imports the test suite from a dictionary - useful if
+        importing from the old format.
 
-    # We need to do some custom validation that JSON schema doesn't support
-    tests = parsed_json["tests"]
-    for test in tests:
-        if "input_under_test" not in test and "file_under_test" not in test:
-            raise ValsException(
-                "For all tests, either 'input_under_test' or 'file_under_test' must be provided"
+        Does not create the suite - you must call suite.create() after construction.
+        """
+
+        title = data["title"]
+        description = data.get("description", "")
+        global_checks = [
+            Check.from_graphql(check_dict)
+            for check_dict in data.get("global_checks", [])
+        ]
+        tests = [
+            Test(
+                input_under_test=test["input_under_test"],
+                checks=[
+                    Check.from_graphql(check_dict) for check_dict in test["checks"]
+                ],
+                golden_output=test.get("golden_output", ""),
+                tags=test.get("tags", []),
+                files_under_test=test.get("files_under_test", []),
+                context=test.get("context", {}),
             )
+            for test in data["tests"]
+        ]
+        suite = cls(
+            title=title,
+            description=description,
+            global_checks=global_checks,
+            tests=tests,
+        )
+        await suite._validate_suite()
+        return suite
 
-        if "file_under_test" in test:
-            fp = test["file_under_test"]
-            if not os.path.exists(fp):
-                raise ValsException(f"File does not exist: {fp}")
-            if not os.path.isfile(fp):
-                raise ValsException(f"Path is a directory: {fp}")
+    @classmethod
+    async def from_json_file(cls, file_path: str) -> "Suite":
+        """
+        Imports the test suite from a local JSON file.
+        """
+        with open(file_path, "r") as f:
+            data = json.load(f)
+        return await cls.from_dict(data)
 
-        _validate_checks(test["checks"])
+    @property
+    def url(self):
+        return f"{fe_host()}/suites/{self.id}"
 
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Converts the test suite to a dictionary.
+        """
+        return self.model_dump(exclude_none=True, exclude_defaults=True)
 
-def _upload_file(suite_id: str, file_path: str) -> str:
-    with open(file_path, "rb") as f:
+    def to_json_file(self, file_path: str) -> None:
+        """
+        Converts the test suite to a JSON file.
+        """
+        with open(file_path, "w") as f:
+            json.dump(self.to_dict(), f, indent=2)
+
+    def to_csv_string(self) -> str:
+        """
+        Like to_csv_file, but returns the file as a string instead of writing it to a file.
+        """
+        if not self.id:
+            raise Exception("Suite has not been created yet.")
+
+        url = f"{be_host()}/export_tests_to_file/?suite_id={self.id}"
         response = requests.post(
-            f"{be_host()}/upload_file/?test_suite_id={suite_id}",
-            files={"file": f},
+            url,
             headers={"Authorization": _get_auth_token()},
         )
         if response.status_code != 200:
-            raise Exception(f"Failed to upload file {file_path}")
-        return response.json()["file_id"]
+            raise Exception(f"Failed to export tests: {response.text}")
 
+        return response.text
 
-def _upload_files(suite_id: str, data: Dict[str, Any]):
-    # Map from file path to file id
-    files = {}
-    for test in data["tests"]:
-        if "file_under_test" in test:
-            file_path = test["file_under_test"]
-            if file_path not in files:
-                files[file_path] = _upload_file(suite_id, file_path)
-
-        if "files_under_test" in test:
-            # We can either have a single file path, or a list of file paths
-            file_path = test["files_under_test"]
-            if type(file_path) == str:
-                file_paths = [file_path]
-            elif type(file_path) == list:
-                file_paths = file_path
-            for file_path in file_paths:
-                files[file_path] = _upload_file(suite_id, file_path)
-
-        if "file_fixed_output" in test:
-            file_path = test["file_fixed_output"]
-            if file_path not in files:
-                files[file_path] = _upload_file(suite_id, file_path)
-
-    return files
-
-
-def _create_test_suite(data: Dict[str, Any]) -> str:
-    query = gql(
-        f"""
-    mutation createTestSuite {{
-        updateTestSuite(
-            description: {json.dumps(data['description'])},
-            testSuiteId: "0",
-            title: "{data['title']}"
-        ) {{
-            testSuite {{
-            description
-            id
-            org
-            title
-            }}
-        }}
-    }}
-    """
-    )
-    result = get_client().execute(query)
-    suite_id = result["updateTestSuite"]["testSuite"]["id"]
-    return suite_id
-
-
-def _add_global_checks(data, suite_id):
-    if "global_checks" not in data:
-        return
-
-    query = gql(
-        f"""
-    mutation mutateGlobalChecks {{
-        updateGlobalChecks (
-            testSuiteId: "{suite_id}",
-            checks: {json.dumps(json.dumps(data["global_checks"]))}
-        ) {{
-            success
-        }}
-    }}
-    """
-    )
-    result = get_client().execute(query)
-
-
-def _add_batch_to_suite(batch: List[str], create_only: bool):
-    """
-    Helper method to add a list of tests to a given suite
-    """
-    #
-    query_str = f"""
-        mutation addBatchTests {{
-            batchUpdateTest(
-                tests: [
-                    {",".join(batch)}
-                ],
-                createOnly: {str(create_only).lower()}
-            ) {{
-                tests {{
-                    testId
-                }}
-            }}
-        }}
+    def to_csv_file(self, file_path: str) -> None:
         """
-    query = gql(query_str)
-    response = get_client().execute(query)
-    tests = response["batchUpdateTest"]["tests"]
-    return [t["testId"] for t in tests]
+        Converts the test suite to a CSV file.
+        """
+        with open(file_path, "w") as f:
+            f.write(self.to_csv_string())
 
+    async def create(self, force_creation: bool = False) -> None:
+        """
+        Creates the test suite on the server.
 
-def _add_tests(data, files, suite_id, create_only=False):
-    test_ids = []
-    batch = []
-    i = 0
+        force_creation: If True, will create a new test suite, even if it
+        already exists.
+        """
+        if force_creation:
+            self.id = None
 
-    for test in data["tests"]:
-        # TODO: Escape chars better
+        if self.id is not None:
+            raise Exception("This suite has already been created.")
 
-        input_under_test = test["input_under_test"]
+        await self._validate_suite()
 
-        # TODO: avoid double json
-        checks = json.dumps(json.dumps(test["checks"]))
-        # TODO: Do this server side
-
-        if "fixed_output" in test:
-            fixed_output = test["fixed_output"]
-            fixed_output_type = "raw"
-        elif "file_fixed_output" in test:
-            fixed_output = files[test["file_fixed_output"]]
-            fixed_output_type = "file"
-        else:
-            fixed_output = ""
-            fixed_output_type = "raw"
-
-        file_ids = []
-
-        if "files_under_test" in test:
-            file_path = test["files_under_test"]
-            if type(file_path) == str:
-                file_paths = [file_path]
-            elif type(file_path) == list:
-                file_paths = file_path
-
-            file_ids = [files[file_path] for file_path in file_paths]
-        # Backwards compatability for old suites
-        elif "file_under_test" in test:
-            file_paths = [test["file_under_test"]]
-
-            file_ids = [files[file_path] for file_path in file_paths]
-        elif "file_ids" in test:
-            file_ids = test["file_ids"]
-
-        if "context" in test:
-            context = json.dumps(json.dumps(test["context"]))
-        else:
-            context = json.dumps(json.dumps({}))
-
-        if "golden_output" in test:
-            golden_output = test["golden_output"]
-        else:
-            golden_output = ""
-
-        tags = []
-        if "tags" in test:
-            tags = test["tags"]
-
-        test_id = 0 if "id" not in test else test["id"]
-
-        # We collate the tests we want to add in batches
-        # When we have 100 tests in a batch, we add it to the suite.
-        batch.append(
-            f"""
-            {{
-                  checks: {checks}, 
-                  inputUnderTest: {json.dumps(input_under_test)}, 
-                  testSuiteId: "{suite_id}",
-                  fileIds: {json.dumps(file_ids)}
-                  context: {context}
-                  goldenOutput: {json.dumps(golden_output)}
-                  tags: {json.dumps(tags)}
-                  testId: "{test_id}"
-            }}
-            """
+        # Create suite object on the server
+        suite = await self._client.create_or_update_test_suite(
+            "0", self.title, self.description
         )
-        i += 1
-        if i % 100 == 0:
-            new_ids = _add_batch_to_suite(batch, create_only=create_only)
-            test_ids.extend(new_ids)
-            batch = []
+        if suite.update_test_suite is None:
+            raise Exception("Unable to update the test suite.")
+        self.id = suite.update_test_suite.test_suite.id
 
-    if len(batch) != 0:
-        new_ids = _add_batch_to_suite(batch, create_only=create_only)
-        test_ids.extend(new_ids)
+        await self._upload_global_checks()
+        await self._upload_files()
+        await self._upload_tests(create_only=True)
 
-    test_id_list = ", ".join([f'"{test_id}"' for test_id in test_ids])
-    query = gql(
-        f"""
-            mutation removeOldTests {{
-              removeUnusedTests(
-                  testSuiteId: "{suite_id}",
-                  inUseTests: [{test_id_list}]
-                ) {{
-                    success
-                }}
-            }}
-            """
-    )
-    response = get_client().execute(query)
+    async def delete(self) -> None:
+        """
+        Deletes the test suite from the server.
+        """
+        if self.id is None:
+            raise Exception(
+                "This suite has not been created yet, so there's nothing to delete"
+            )
 
-    # TODO: Check for errors
+        await self._client.delete_test_suite(self.id)
+
+    async def update(self) -> None:
+        """
+        Pushes any local changes to the the test suite object to the server.
+        """
+        if self.id is None:
+            raise Exception(
+                "This suite has not been created yet, so there's nothing to update"
+            )
+
+        await self._client.create_or_update_test_suite(
+            self.id, self.title, self.description
+        )
+
+        await self._upload_files()
+        await self._upload_global_checks()
+        await self._upload_tests(create_only=False)
+
+        # Remove any tests that are no longer used after the update.
+        await self._client.remove_old_tests(self.id, [test._id for test in self.tests])
+
+    @overload
+    async def run(
+        self,
+        model: str,
+        model_name: str = "sdk",
+        run_name: str | None = None,
+        wait_for_completion: bool = False,
+        parameters: RunParameters | None = None,
+    ):
+        """
+        Runs based on a model string (e.g. "gpt-4o").
+        """
+        pass
+
+    @overload
+    async def run(
+        self,
+        model: ModelFunctionType,
+        model_name: str = "sdk",
+        run_name: str | None = None,
+        wait_for_completion: bool = False,
+        parameters: RunParameters | None = None,
+    ):
+        """
+        Runs based on a model function. This can either be a simple model function, which just takes
+        an input as a string and produces an output string, or a model function that takes in the input string, a dictionary of filename to file contents, and a context dictionary.
+        """
+        pass
+
+    @overload
+    async def run(
+        self,
+        model: list[QuestionAnswerPair],
+        model_name: str = "sdk",
+        run_name: str | None = None,
+        wait_for_completion: bool = False,
+        parameters: RunParameters | None = None,
+    ) -> Run:
+        """
+        Runs based on on a list of question-answer pairs, which contain inputs and outputs.
+
+        IMPORTANT NOTE: The combined "inputs" of the question-answer pairs (the input under test, the context, and the files) need
+        to match exactly the inputs of the tests in the suite, otherwise, Vals will not know how to match to the auto-eval correctly.
+        """
+        pass
+
+    async def run(
+        self,
+        model: str | ModelFunctionType | list[QuestionAnswerPair],
+        model_name: str = "sdk",
+        run_name: str | None = None,
+        wait_for_completion: bool = False,
+        parameters: RunParameters | None = None,
+    ) -> Run:
+        """
+        Base method for running the test suite. See overloads for documentation.
+        """
+        if self.id is None:
+            raise Exception(
+                "This suite has not been created yet. Call suite.create() before calling suite.run()"
+            )
+        if parameters is None:
+            parameters = RunParameters()
+
+        parameter_json = parameters.model_dump()
+        del parameter_json[
+            "parallelism"
+        ]  # Need to explicitly map parallelism to maximum_threads
+        parameter_input = ParameterInputType(
+            **parameter_json,
+            model_under_test="",
+            maximum_threads=parameters.parallelism,
+        )
+
+        # Collate the local output pairs if we're using a model function.
+        qa_set_id = None
+        if isinstance(model, Callable):
+            # Generate the QA pairs from the model function
+            parameter_input.model_under_test = model_name
+            qa_pairs = await self._generate_qa_pairs_from_function(model)
+            qa_set_id = await self._create_qa_set(
+                qa_pairs, parameter_input.model_dump(), model_name
+            )
+        elif isinstance(model, list):
+            # Use the QA pairs we are already provided
+            parameter_input.model_under_test = model_name
+            qa_set_id = await self._create_qa_set(
+                [qa_pair.to_graphql() for qa_pair in model],
+                parameter_input.model_dump(),
+                model_name,
+            )
+        elif isinstance(model, str):
+            # Just use a model string (e.g. "gpt-4o")
+            parameter_input.model_under_test = model
+            qa_set_id = None
+        else:
+            raise Exception(f"Got unexpected type for model: {type(model)}")
+
+        # Start and pull the run.
+        response = await self._client.start_run(
+            self.id, parameter_input, qa_set_id, run_name
+        )
+        if response.start_run is None:
+            raise Exception("Unable to start the run.")
+
+        run_id = response.start_run.run_id
+        run = await Run.from_id(run_id)
+
+        if wait_for_completion:
+            await run.wait_for_run_completion()
+
+        await run.pull()
+
+        return run
+
+    async def _upload_files(self):
+        """
+        Helper method to upload the files to the server.
+        Uploads any tests.files_under_test that haven't been uploaded yet.
+        """
+        if self.id is None:
+            raise Exception("This suite has not been created yet.")
+
+        file_name_and_hash_to_file_id = {}
+
+        # First, we populate the dictionary of files that have already been uploaded
+        # for this test suite.
+        for test in self.tests:
+            for file_id in test._file_ids:
+                _, name, _hash = parse_file_id(file_id)
+                file_name_and_hash_to_file_id[(name, _hash)] = file_id
+
+        # Next, for files we haven't uploaded yet, we upload them
+        # and add them to the dictionary
+        for test in self.tests:
+            if len(test.files_under_test) != 0:
+                file_ids = []
+                for file_path in test.files_under_test:
+                    if not os.path.exists(file_path):
+                        raise Exception(f"File does not exist: {file_path}")
+
+                    # First, we compute the filename and the hash of its contents
+                    with open(file_path, "rb") as f:
+                        file_hash = md5_hash(f)
+                    filename = os.path.basename(file_path)
+                    name_hash_tuple = (filename, file_hash)
+
+                    # If the file hasn't been uploaded yet, we upload it
+                    if name_hash_tuple not in file_name_and_hash_to_file_id:
+                        file_id = self._upload_file(self.id, file_path)
+                        file_name_and_hash_to_file_id[name_hash_tuple] = file_id
+
+                    # Either way, we add the file id to the test.
+                    file_ids.append(file_name_and_hash_to_file_id[name_hash_tuple])
+
+                # Main downside of this approach is that we can only overwrite files
+                # we can't add or remove just one file.
+                test._file_ids = file_ids
+
+    async def _upload_tests(self, create_only: bool = True) -> None:
+        """
+        Helper method to upload the tests to the server in batches of 100.
+        """
+        if self.id is None:
+            raise Exception("This suite has not been created yet.")
+
+        # Upload tests in batches of 100
+        created_tests = []
+        test_mutations = [test.to_test_mutation_info(self.id) for test in self.tests]
+        for i in range(0, len(test_mutations), 100):
+            batch = test_mutations[i : i + 100]
+            batch_result = await self._client.add_batch_tests(
+                tests=batch,
+                create_only=create_only,
+            )
+            if batch_result.batch_update_test is None:
+                raise Exception("Unable to add tests to the test suite.")
+            created_tests.extend(batch_result.batch_update_test.tests)
+
+        # Update the local suite with the new tests to ensure everything is in sync.
+        self.tests = [Test.from_graphql_test(test) for test in created_tests]
+
+    async def _validate_checks(
+        self, check: Check, operators_dict: dict[str, GetOperatorsOperators]
+    ) -> None:
+        """Helper method to ensure that operator is correct"""
+        if check.operator not in operators_dict:
+            raise ValueError(f"Invalid operator: {check.operator}")
+        operator = operators_dict[check.operator]
+        if not operator.is_unary and (check.criteria is None or check.criteria == ""):
+            raise ValueError(
+                f"Operator {operator.name_in_doc} is unary, but no criteria was provided."
+            )
+
+    async def _validate_suite(self) -> None:
+        """Helper method to ensure that all operator strings are correct. Most of the validation is done by Pydantic
+        but this handles things Pydantic can't check for, like whether a file exists."""
+        operators = (await self._client.get_operators()).operators
+        operators_dict = {op.name_in_doc: op for op in operators}
+
+        for test in self.tests:
+            for check in test.checks:
+                await self._validate_checks(check, operators_dict)
+
+            for file_path in test.files_under_test:
+                if not os.path.exists(file_path):
+                    raise ValueError(f"File does not exist: {file_path}")
+                if not os.path.isfile(file_path):
+                    raise ValueError(f"Path is a directory: {file_path}")
+
+        for check in self.global_checks:
+            await self._validate_checks(check, operators_dict)
+
+    async def _upload_global_checks(self) -> None:
+        """
+        Helper method to upload the global checks to the server.
+        """
+        if self.id is None:
+            raise Exception("This suite has not been created yet.")
+
+        await self._client.update_global_checks(
+            self.id,
+            [gc.to_graphql_input() for gc in self.global_checks],
+        )
+
+    async def _generate_qa_pairs_from_function(
+        self,
+        model_function: ModelFunctionType,
+    ) -> list[QuestionAnswerPairInputType]:
+        if self.id is None:
+            raise Exception(
+                "This suite has not been created yet, so we can't create a QA set from it."
+            )
+        # Pull latest suite data to ensure we're up to date
+        updated_suite = await Suite.from_id(self.id)
+        for field in self.__fields__:
+            setattr(self, field, getattr(updated_suite, field))
+        # Inspect the model function to determine if it takes 1 or 3 parameters
+        # We dynamically change our call signature based on what the user passes in.
+        sig = inspect.signature(model_function)
+        num_params = len(sig.parameters)
+        if num_params not in [1, 3]:
+            raise ValueError("Model function must accept either 1 or 3 parameters")
+        is_simple_model_function = num_params == 1
+
+        qa_pairs: list[QuestionAnswerPairInputType] = []
+        for test in tqdm(self.tests):
+            files = {}
+            for file_id in test._file_ids:
+                _, file_name, _ = parse_file_id(file_id)
+                files[file_name] = read_file(file_id)
+
+            time_start = time()
+            in_tokens_start = patch.in_tokens
+            out_tokens_start = patch.out_tokens
+
+            if is_simple_model_function:
+                casted_model_function = cast(SimpleModelFunctionType, model_function)
+                llm_output = casted_model_function(test.input_under_test)
+            else:
+                casted_model_function = cast(
+                    ModelFunctionWithFilesAndContextType, model_function
+                )
+                llm_output = casted_model_function(
+                    test.input_under_test, files, test.context
+                )
+
+            time_end = time()
+            in_tokens_end = patch.in_tokens
+            out_tokens_end = patch.out_tokens
+
+            qa_pairs.append(
+                QuestionAnswerPairInputType(
+                    input_under_test=test.input_under_test,
+                    file_ids=test._file_ids,
+                    context=test.context,
+                    llm_output=llm_output,
+                    metadata=MetadataType(
+                        in_tokens=in_tokens_end - in_tokens_start,
+                        out_tokens=out_tokens_end - out_tokens_start,
+                        duration_seconds=time_end - time_start,
+                    ),
+                    test_id=test._id,
+                )
+            )
+        return qa_pairs
+
+    async def _create_qa_set(
+        self,
+        qa_pairs: list[QuestionAnswerPairInputType],
+        parameters: dict[str, int | float | str | bool] = {},
+        model_under_test: str | None = None,
+        batch_size: int = 50,
+    ) -> str | None:
+        """
+        Helper function to create a question-answer set from a model function.
+        A question-answer set is just a set of inputs to the LLM, and the LLM's responses.
+        """
+        if self.id is None:
+            raise Exception(
+                "This suite has not been created yet, so we can't create a QA set from it."
+            )
+
+        response = await self._client.create_question_answer_set(
+            self.id,
+            [],
+            parameters,
+            model_under_test or "sdk",
+        )
+        set_id = response.create_question_answer_set.question_answer_set.id
+
+        for i in range(0, len(qa_pairs), batch_size):
+            batch = qa_pairs[i : i + batch_size]
+            await self._client.batch_add_question_answer_pairs(set_id, batch)
+        if response.create_question_answer_set is None:
+            raise Exception("Unable to create the question-answer set.")
+
+        return set_id
+
+    def _upload_file(self, suite_id: str, file_path: str) -> str:
+        with open(file_path, "rb") as f:
+            response = requests.post(
+                f"{be_host()}/upload_file/?test_suite_id={suite_id}",
+                files={"file": f},
+                headers={"Authorization": _get_auth_token()},
+            )
+            if response.status_code != 200:
+                raise Exception(f"Failed to upload file {file_path}")
+            return response.json()["file_id"]

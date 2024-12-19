@@ -1,14 +1,36 @@
+import hashlib
 import os
+from io import BytesIO
 
+import httpx
+import requests
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
-
-from .auth import _get_auth_token, _get_region
+from vals.graphql_client.client import Client as AriadneClient
+from vals.sdk.auth import _get_auth_token, _get_region
 
 VALS_ENV = os.getenv("VALS_ENV")
-SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "jsonschemas")
-SUITE_SCHEMA_PATH = os.path.join(SCHEMA_PATH, "suiteschema.json")
-RUN_SCHEMA_PATH = os.path.join(SCHEMA_PATH, "run_params_schema.json")
+
+
+def read_pdf(file: BytesIO):
+    """
+    Convenience method to parse PDFs to strings
+    """
+    text = ""
+    pdf_reader = PdfReader(file)
+    num_pages = len(pdf_reader.pages)
+    for page_number in range(num_pages):
+        page = pdf_reader.pages[page_number]
+        text += page.extract_text()
+    return text
+
+
+def read_docx(file: BytesIO):
+    """
+    Convenience method to parse docx files to strings
+    """
+    output = pypandoc.convert_text(file.read(), to="plain", format="docx")
+    return output
 
 
 def be_host():
@@ -35,9 +57,8 @@ def fe_host():
     return "https://platform.vals.ai"
 
 
-def get_client():
-    # We do not share clients because it kills multithreading, instead we just
-    # create a new client each request.
+def get_client_legacy():
+    """Legacy client, only used for rag suites"""
 
     transport = RequestsHTTPTransport(
         url=f"{be_host()}/graphql/",
@@ -62,7 +83,60 @@ def list_rag_suites():
             }}
         """
     )
-    response = get_client().execute(query)
+    response = get_client_legacy().execute(query)
 
     # TODO: Error check
     return response["ragSuites"]
+
+
+def get_ariadne_client() -> AriadneClient:
+    """
+    Use the new codegen-based client
+    """
+    headers = {"Authorization": _get_auth_token()}
+    return AriadneClient(
+        url=f"{be_host()}/graphql/",
+        http_client=httpx.AsyncClient(headers=headers, timeout=60),
+    )
+
+
+def md5_hash(file) -> str:
+    """Produces an md5 hash of the file."""
+    hasher = hashlib.md5()
+    while chunk := file.read(8192):  # Read in 8 KB chunks
+        hasher.update(chunk)
+    hash = hasher.hexdigest()
+    file.seek(0)
+    return hash
+
+
+def parse_file_id(file_id: str) -> tuple[str, str, str | None]:
+    if len(file_id) >= 37 and file_id[-37] == ";":
+        # This is a heuristic to check if we are in the old file id regime.
+        # I checked and all previously uploaded files should match this
+        # Counting the number of slashes ensures that it's not a new file id, that
+        # happens to have a semicolon in the wrong spot
+        org, rest = file_id.split("/")
+        filename, test_suite_id = rest.split(";")
+        return org, filename, None
+
+    tokens = file_id.split("/")
+    if len(tokens) != 2:
+        raise Exception(f"Improperly formatted file_id: {file_id}")
+
+    org, filename_with_hash = tokens
+
+    hash, filename = filename_with_hash.split("-", 1)
+
+    if len(hash) != 32:
+        raise Exception(f"Improperly formatted file_id: {file_id}")
+
+    return org, filename, hash
+
+
+def read_file(file_id: str) -> BytesIO:
+    response = requests.post(
+        url=f"{be_host()}/download_file/?file_id={file_id}",
+        headers={"Authorization": _get_auth_token()},
+    )
+    return BytesIO(response.content)

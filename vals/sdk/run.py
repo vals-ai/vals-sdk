@@ -1,345 +1,203 @@
+import asyncio
 import json
 import time
-from typing import Any, Dict, List
+from datetime import datetime
+from typing import Any
 
-import attrs
 import requests
-from gql import gql
-from jsonschema import ValidationError, validate
-from vals.sdk.auth import _get_auth_token
+from pydantic import BaseModel, PrivateAttr
+from vals.graphql_client import Client
+from vals.graphql_client.pull_run import PullRun
 from vals.sdk.exceptions import ValsException
-from vals.sdk.util import RUN_SCHEMA_PATH, be_host, fe_host, get_client
-
-# Rudimentary cache for pulling params
-_default_params = None
+from vals.sdk.types import RunMetadata, RunParameters, RunStatus, TestResult
+from vals.sdk.util import _get_auth_token, be_host, fe_host, get_ariadne_client
 
 
-run_param_info_query = gql(
-    """
-query RunParamInfo {
-  runParameterInfo
-}
-"""
-)
+class Run(BaseModel):
+    id: str
+    """Unique identifier for the run."""
 
+    test_suite_id: str
+    """Unique identifier for the test suite run was created with."""
 
-def _get_default_parameters() -> Dict[str, Any]:
-    global _default_params
-    if _default_params is not None:
-        return _default_params
+    test_suite_title: str
+    """Title of the test suite run was created with."""
 
-    response = get_client().execute(run_param_info_query)
-    param_info = response["runParameterInfo"]
+    model: str
+    """Model used to perform the run."""
 
-    _default_params = {}
-    for k, v in param_info.items():
-        default_val = v["default"]
-        if v["type"] == "select":
-            default_val = default_val["value"]
-        _default_params[k] = default_val
+    pass_percentage: float | None
+    """Average pass percentage of all tests."""
 
-    return _default_params
+    pass_rate: float | None
+    """Percentage of checks that passed"""
 
+    pass_rate_error: float | None
+    """Error margin for pass rate"""
 
-start_run_mutation = gql(
-    """
-    mutation StartRunMutation(
-        $test_suite_id: String!
-        $parameters: GenericScalar!
-        $qa_set_id: String = null
-    ) {
-        startRun(
-            testSuiteId: $test_suite_id, 
-            parameters: $parameters,
-            qaSetId: $qa_set_id
-        ) {
-            runId
-        }
-    }
-    """
-)
+    success_rate: float | None
+    """Number of tests where all checks passed"""
 
+    success_rate_error: float | None
+    """Error margin for success rate"""
 
-def start_run(
-    suite_id: str,
-    parameters: Dict[Any, Any] = {},
-    qa_set_id: str | None = None,
-) -> str:
-    """
-    Method to start a run.
+    status: RunStatus
+    """Status of the run"""
 
-    suite_id: The ID of the suite to run.
-    parameters: Any run parameters. Examples include 'use_golden_output'
-    'threads', etc.
+    archived: bool
+    """Whether the run has been archived"""
 
-    Returns the run id.
-    """
-    try:
-        with open(RUN_SCHEMA_PATH, "r") as f:
-            schema = json.load(f)
-            default_params = _get_default_parameters()
-            parameters = {**default_params, **parameters}
+    text_summary: str
+    """Automatically generated summary of common error modes for the run."""
 
-            # Description isn't included by default
-            if "description" not in parameters:
-                parameters["description"] = "Ran with PRL SDK."
+    timestamp: datetime
+    """Timestamp of when the run was created."""
 
-            # Validation
-            validate(instance=parameters, schema=schema)
+    completed_at: datetime | None
+    """Timestamp of when the run was completed."""
 
-    except ValidationError as e:
-        raise ValsException(
-            f"Config file provided did not conform to JSON schema. Message: {e.message}"
+    parameters: RunParameters
+    """Parameters used to create the run."""
+
+    test_results: list[TestResult]
+    """List of test results for the run."""
+
+    _client: Client = PrivateAttr(default_factory=get_ariadne_client)
+
+    @staticmethod
+    def _create_from_pull_result(run_id: str, result: PullRun) -> "Run":
+        """Helper method to create a Run instance from a pull_run query result"""
+
+        # Map maximum_threads to parallelism for backwards compatibility
+        parameters_dict = result.run.typed_parameters.model_dump()
+        model = parameters_dict.pop("model_under_test", "")
+        if "maximum_threads" in parameters_dict:
+            parameters_dict["parallelism"] = parameters_dict.pop("maximum_threads")
+        parameters = RunParameters(**parameters_dict)
+
+        return Run(
+            id=run_id,
+            model=model,
+            pass_percentage=(
+                result.run.pass_percentage * 100
+                if result.run.pass_percentage is not None
+                else None
+            ),
+            pass_rate=result.run.pass_rate.value if result.run.pass_rate else None,
+            pass_rate_error=(
+                result.run.pass_rate.error if result.run.pass_rate else None
+            ),
+            success_rate=(
+                result.run.success_rate.value if result.run.success_rate else None
+            ),
+            success_rate_error=(
+                result.run.success_rate.error if result.run.success_rate else None
+            ),
+            status=RunStatus(result.run.status),
+            archived=result.run.archived,
+            text_summary=result.run.text_summary,
+            timestamp=result.run.timestamp,
+            completed_at=result.run.completed_at,
+            parameters=parameters,
+            test_results=[
+                TestResult.from_graphql(test_result)
+                for test_result in result.test_results
+            ],
+            test_suite_title=result.run.test_suite.title,
+            test_suite_id=result.run.test_suite.id,
         )
 
-    response = get_client().execute(
-        start_run_mutation,
-        variable_values={
-            "test_suite_id": suite_id,
-            "parameters": parameters,
-            "qa_set_id": qa_set_id,
-        },
-    )
-    run_id = response["startRun"]["runId"]
-    return run_id
+    @classmethod
+    async def list_runs(
+        cls,
+        limit: int = 25,
+        offset: int = 0,
+        suite_id: str | None = None,
+        show_archived: bool = False,
+    ) -> list["RunMetadata"]:
+        """List runs associated with this organization"""
+        client = get_ariadne_client()
+        result = await client.list_runs(
+            limit=limit, offset=offset, suite_id=suite_id, archived=show_archived
+        )
+        return [
+            RunMetadata.from_graphql(run) for run in result.runs_with_count.run_results
+        ]
 
+    @classmethod
+    async def from_id(cls, run_id: str) -> "Run":
+        """Pull most recent metadata and test results from the vals servers."""
+        client = get_ariadne_client()
+        result = await client.pull_run(run_id=run_id)
+        return cls._create_from_pull_result(run_id, result)
 
-def get_csv(run_id: str) -> bytes:
-    """
-    A method to pull a CSV from a run result.
+    @property
+    def url(self) -> str:
+        return f"{fe_host()}/results/{self.id}"
 
-    Returns: The CSV, as bytes.
-    """
-    response = requests.post(
-        url=f"{be_host()}/export_results_to_file/?run_id={run_id}",
-        headers={"Authorization": _get_auth_token()},
-    )
+    def to_dict(self) -> dict[str, Any]:
+        """Converts the run to a dictionary."""
+        return self.model_dump(exclude_none=True, exclude_defaults=True, mode="json")
 
-    if response.status_code != 200:
-        raise ValsException("Received Error from Vals Servers: " + response.text)
+    def to_json_file(self, file_path: str) -> None:
+        """Converts the run to a JSON file."""
+        with open(file_path, "w") as f:
+            json.dump(self.to_dict(), f, indent=2)
 
-    return response.content
+    async def pull(self) -> None:
+        """Update this Run instance with latest data from vals servers."""
+        result = await self._client.pull_run(run_id=self.id)
+        updated = self._create_from_pull_result(self.id, result)
+        # TODO: There's probably a better way to update the object.
+        for field in updated.__fields__:
+            setattr(self, field, getattr(updated, field))
 
+    async def run_status(self) -> RunStatus:
+        """Get the status of a run"""
 
-def get_run_results(
-    include_archived: bool = False, suite_id: str = None
-) -> List[Dict[str, Any]]:
-    query = gql(
-        f"""
-        query MyQuery {{
-          runs(archived: {"null" if include_archived else "false"}, suiteId: {"null" if suite_id is None else '"' + suite_id + '"'}) {{
-            runId
-            passPercentage
-            status
-            runId
-            textSummary
-            timestamp
-            archived
-            parameters
-            testSuite {{
-              title
-            }}
-          }}
-        }}
-    """
-    )
-    results = get_client().execute(query)["runs"]
+        result = await self._client.run_status(run_id=self.id)
+        self.status = result.run.status
+        return RunStatus(result.run.status)
 
-    for result in results:
-        result["parameters"] = json.loads(result["parameters"])
-    # TODO: Error Handling
-
-    return results
-
-
-def run_status(run_id: str) -> str:
-    """
-    For a given run, returns the run status, either 'in_progress', 'success', or 'error'.
-    """
-    query = gql(
-        f"""
-        query MyQuery {{
-            run(runId: "{run_id.strip()}") {{
-                status
-            }}
-        }}
+    async def wait_for_run_completion(
+        self,
+    ) -> RunStatus:
         """
-    )
-    results = get_client().execute(query)
-    status = results["run"]["status"]
-    if status == "":
+        Block a process until a given run has finished running.
+
+        Returns the status of the run after completion.
+        """
+        await asyncio.sleep(1)
         status = "in_progress"
+        start_time = time.time()
+        while status == "in_progress":
+            status = await self.run_status()
 
-    return status
+            # Sleep longer between polls, the longer the run goes.
+            if time.time() - start_time < 60:
+                sleep_time = 1
+            elif time.time() - start_time < 60 * 10:
+                sleep_time = 5
+            else:
+                sleep_time = 10
 
+            await asyncio.sleep(sleep_time)
 
-def run_summary(run_id: str) -> Dict[str, Any]:
-    """
-    Produces the top-level analytics and summary data for a given run (text summary, pass percentage, etc.)
-    """
-    query = gql(
-        f"""          
-        query MyQuery {{
-            run(runId: "{run_id.strip()}") {{
-                status
-                archived
-                parameters
-                textSummary
-                timestamp
-                completedAt
-                archived
-                passPercentage
-                passPercentageWithOptional
-            }}
-        }}
-        """
-    )
-    results = get_client().execute(query)
+        return RunStatus(status)
 
-    # TODO: Make a non-json, pretty version if useful
-    dict_result = results["run"]
-    dict_result["parameters"] = json.loads(dict_result["parameters"])
+    async def to_csv_string(self) -> str:
+        """Same as to_csv, but returns a string instead of writing to a file."""
+        response = requests.post(
+            url=f"{be_host()}/export_results_to_file/?run_id={self.id}",
+            headers={"Authorization": _get_auth_token()},
+        )
 
-    return dict_result
+        if response.status_code != 200:
+            raise ValsException("Received Error from Vals Servers: " + response.text)
 
+        return response.text
 
-def _pull_test_results(run_id: str) -> Dict[str, Any]:
-    query = gql(
-        f"""
-        query MyQuery2 {{
-                testResults(runId: "{run_id}") {{
-                  id
-                  llmOutput
-                  passPercentage
-                  passPercentageWithOptional
-                  resultJson
-                  test {{
-                    testId
-                    inputUnderTest
-                  }}
-                  metadata
-                }}
-              }}
-    """
-    )
-    results = get_client().execute(query)["testResults"]
-    for result in results:
-        result["resultJson"] = json.loads(result["resultJson"])
-
-    return results
-
-
-def pull_run_results_json(run_id: str) -> Dict[str, Any]:
-    """
-    Pull all data about a run as JSON, including both the summary
-    and the test results
-    """
-    summary = run_summary(run_id)
-    test_results = _pull_test_results(run_id)
-    return {**summary, "results": test_results}
-
-
-def wait_for_run_completion(run_id: str) -> str:
-    """
-    Block a process until a given run has finished running.
-
-    """
-    time.sleep(5)
-    status = "in_progress"
-    while status == "in_progress":
-        status = run_status(run_id)
-        time.sleep(1)
-
-    return status
-
-
-def get_run_url(run_id: str) -> str:
-    """
-    Utility function to transform a run id to a viewable Vals AI URL.
-    """
-    return f"{fe_host()}/results/{run_id}"
-
-
-@attrs.define
-class Metadata:
-    """
-    Metadata for a question answer pair.
-    """
-
-    in_tokens: int
-    out_tokens: int
-    duration_seconds: float
-
-    def to_graphql_dict(self) -> Dict[str, int | float]:
-        # needs to be in camelcase for graphql
-        return {
-            "inTokens": self.in_tokens,
-            "outTokens": self.out_tokens,
-            "durationSeconds": self.duration_seconds,
-        }
-
-
-@attrs.define
-class QuestionAnswerPair:
-    """
-    TODO: We should read this type directly from the backend.
-    """
-
-    input_under_test: str
-    file_ids: List[str]
-    context: Dict[str, Any]
-    llm_output: str
-    metadata: Metadata
-    test_id: str
-
-
-def _create_question_answer_set(
-    test_suite_id: str,
-    pairs: List[QuestionAnswerPair],
-    parameters: Dict[str, Any] = {},
-    model_id: str = "",
-):
-    # Define the mutation
-    mutation = gql(
-        """
-    mutation CreateQuestionAnswerSet($testSuiteId: String!, $questionAnswerPairs: [QuestionAnswerPairInputType!]!, $parameters: GenericScalar!, $modelId: String!) {
-        createQuestionAnswerSet(
-            testSuiteId: $testSuiteId,
-            questionAnswerPairs: $questionAnswerPairs,
-            parameters: $parameters,
-            modelId: $modelId
-        ) {
-            questionAnswerSet {
-                id
-            }
-        }
-    }
-    """
-    )
-
-    # Get the GraphQL client
-    client = get_client()
-
-    # Prepare the variables
-    variables = {
-        "testSuiteId": test_suite_id,
-        "questionAnswerPairs": [
-            {
-                "inputUnderTest": pair.input_under_test,
-                "fileIds": pair.file_ids,
-                "context": pair.context,
-                "llmOutput": pair.llm_output,
-                "metadata": pair.metadata.to_graphql_dict(),
-                "testId": pair.test_id,
-            }
-            for pair in pairs
-        ],
-        "parameters": parameters,
-        "modelId": model_id,
-    }
-
-    # Execute the mutation
-    result = client.execute(mutation, variable_values=variables)
-
-    # Return the created QuestionAnswerSet ID
-    return result["createQuestionAnswerSet"]["questionAnswerSet"]["id"]
+    async def to_csv(self, file_path: str) -> None:
+        """Get the CSV results of a run, as bytes."""
+        with open(file_path, "w") as f:
+            f.write(await self.to_csv_string())

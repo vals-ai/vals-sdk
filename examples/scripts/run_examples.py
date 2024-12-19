@@ -3,9 +3,8 @@ import json
 from io import BytesIO
 from typing import Any
 
-from vals.sdk.sdk import read_docx
-from vals.sdk.v2.suite import Check, Run, Suite, Test
-from vals.sdk.v2.types import QuestionAnswerPair
+from vals.sdk.suite import Check, Run, Suite, Test
+from vals.sdk.types import QuestionAnswerPair
 
 
 async def run_with_model_under_test():

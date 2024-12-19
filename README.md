@@ -18,9 +18,8 @@ are just thin wrappers around the SDK.
 
 We've provided a set of examples in `examples/`. They are organized as follows:
 
-- `example_suites/` - These are example JSON files, of the sort that you may use for `vals suite create <example.json>`.
-- `example_scripts/` - These are example Python scripts that leverage the sdk.
-- `example_run_configs/` - When you start a run, you can optionally provide more parameters (more details below). These are examples of parameter files.
+- `suites/` - These are example JSON files, of the sort that you may use for `vals suite create <example.json>`.
+- `scripts/` - These are example Python scripts that leverage the sdk.
 
 ## Authentication
 
@@ -50,97 +49,17 @@ Use the `--help` flag at the top and subcommand level for guidance.
 
 Commands must be run from the pip environment the cli was installed in. Commands are split up into subcommand. Currently there are two subcommands:
 
-- `vals suite`: relating to creating / updating tests and suites
-- `vals run`: relating to creating and querying runs and run results.
+- `vals suite --help`: relating to creating / updating tests and suites
+- `vals run --help`: relating to creating and querying runs and run results.
 
-#### Create Test Suite
-
-Create a test suite from command line
-
-```
-vals suite create --interactive
-```
-
-Create a test suite from JSON file
-
-```
-vals suite create ./example_suite.json
-```
-
-The `vals suite create` commands will produce a link to the created test suite.
-
-#### Run
-
-The test suite id embedded at the end of the URL is used in run requests.
-
-Start a new run:
-
-```
-vals run start
-```
-
-Or specify the suite id (the last part of the)
-
-```
-vals run start -s <suite id>
-```
-
-Full details of the CLI usage can be found in our documentation at [https://www.platform.vals.ai/docs/index.html#/cli](https://www.platform.vals.ai/docs/index.html#/cli)
+Full documentation of the CLI usage can be found in our documentation at [https://www.platform.vals.ai/docs/index.html#/cli](https://www.platform.vals.ai/docs/index.html#/cli)
 
 ## SDK Usage
 
-All of the functionality that is in the CLI can also be accessed via Python import.
-For example - to create a suite within Python, you could do the following:
+All of the functionality that is in the CLI can also be accessed via Python functions,
+as well as features only available in the SDK.
 
-```python
-
-from vals.sdk.suite import create_suite
-
-create_suite(
-  {
-    "title": "Tax Questions",
-    "description": "Questions relating to tax incentives",
-    "tests": [
-      {
-        "input_under_test": "What is QSBS?",
-        "checks": {
-          {
-            "operator": "includes",
-            "criteria": "C Corporation"
-          }
-        }
-      }
-    ]
-  }
-)
-```
-
-## Passing Functions to SDK
-
-The SDK also includes features the CLI does not. This includes the
-ability to test _any_ arbitrary Python function, rather than just the base model.
-Therefore, even if you have very complicated internal logic for parsing, chunking, prompt-chaining, etc.
-it still can be evaluated with the Vals platform.
-
-First, define a function with the following signature:
-
-```python
-def my_model(input_under_test: str) -> str:
-  llm_output = "..."
-  return llm_output
-```
-
-Then, create a suite in the platform and run it like the following:
-
-```python
-run_id = run_evaluations(
-    # Replace with the link suite link
-    "https://platform.vals.ai/view?test_suite_id=xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx",
-    test_function,
-)
-```
-
-There is a full, working example in `examples/examples_scripts/sdk_example.py`, and additional documentation in our docs: [https://www.platform.vals.ai/docs/index.html#/sdk](https://www.platform.vals.ai/docs/index.html#/sdk)
+See usage documentation in our docs: [https://www.platform.vals.ai/docs/index.html#/sdk](https://www.platform.vals.ai/docs/index.html#/sdk)
 
 # Development
 

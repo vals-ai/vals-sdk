@@ -1,11 +1,10 @@
 import asyncio
 import json
-from datetime import datetime
 from io import TextIOWrapper
 
 import click
 from vals.cli.util import display_table
-from vals.sdk.v2.run import Run
+from vals.sdk.run import Run
 
 
 @click.group(name="run")
