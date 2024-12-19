@@ -70,7 +70,7 @@ class Run(BaseModel):
         """Helper method to create a Run instance from a pull_run query result"""
 
         # Map maximum_threads to parallelism for backwards compatibility
-        parameters_dict = json.loads(result.run.parameters)
+        parameters_dict = result.run.typed_parameters.model_dump()
         model = parameters_dict.pop("model_under_test", "")
         if "maximum_threads" in parameters_dict:
             parameters_dict["parallelism"] = parameters_dict.pop("maximum_threads")
@@ -105,7 +105,7 @@ class Run(BaseModel):
                 for test_result in result.test_results
             ],
             test_suite_title=result.run.test_suite.title,
-            test_suite_id=result.run.test_suite.title,
+            test_suite_id=result.run.test_suite.id,
         )
 
     @classmethod
@@ -121,7 +121,9 @@ class Run(BaseModel):
         result = await client.list_runs(
             limit=limit, offset=offset, suite_id=suite_id, archived=show_archived
         )
-        return [RunMetadata.from_graphql(run) for run in result.runs]
+        return [
+            RunMetadata.from_graphql(run) for run in result.runs_with_count.run_results
+        ]
 
     @classmethod
     async def from_id(cls, run_id: str) -> "Run":

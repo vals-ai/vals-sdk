@@ -21,6 +21,12 @@ class GetTestDataTests(BaseModel):
     tags: Any
     context: Any
     golden_output: str = Field(alias="goldenOutput")
+    test_suite: "GetTestDataTestsTestSuite" = Field(alias="testSuite")
+
+
+class GetTestDataTestsTestSuite(BaseModel):
+    id: str
 
 
 GetTestData.model_rebuild()
+GetTestDataTests.model_rebuild()

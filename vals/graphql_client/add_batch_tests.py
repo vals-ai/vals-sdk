@@ -27,7 +27,13 @@ class AddBatchTestsBatchUpdateTestTests(BaseModel):
     tags: Any
     context: Any
     golden_output: str = Field(alias="goldenOutput")
+    test_suite: "AddBatchTestsBatchUpdateTestTestsTestSuite" = Field(alias="testSuite")
+
+
+class AddBatchTestsBatchUpdateTestTestsTestSuite(BaseModel):
+    id: str
 
 
 AddBatchTests.model_rebuild()
 AddBatchTestsBatchUpdateTest.model_rebuild()
+AddBatchTestsBatchUpdateTestTests.model_rebuild()

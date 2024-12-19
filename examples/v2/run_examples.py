@@ -27,7 +27,7 @@ async def run_with_model_under_test():
     print(f"Pass percentage: {run.pass_percentage}")
 
     # Can save the results to a CSV file.
-    run.to_csv("out.csv")
+    await run.to_csv("out.csv")
 
 
 async def run_with_function():
@@ -47,7 +47,9 @@ async def run_with_function():
         # This would be replaced with your custom model.
         return input_under_test + "!!!"
 
-    run = await suite.run(model=function, wait_for_completion=True)
+    run = await suite.run(
+        model=function, wait_for_completion=True, model_name="my_function_model"
+    )
 
     print(f"Run URL: {run.url}")
     print(f"Pass percentage: {run.pass_percentage}")
@@ -80,7 +82,9 @@ async def run_with_function_context_and_files():
         # to return a response.
         return input_under_test
 
-    run = await suite.run(model=function, wait_for_completion=True)
+    run = await suite.run(
+        model=function, wait_for_completion=True, model_name="my_function_model_v2"
+    )
 
     print(f"Run URL: {run.url}")
     print(f"Pass percentage: {run.pass_percentage}")
@@ -158,7 +162,7 @@ async def all():
     await run_with_function_context_and_files()
     await run_with_qa_pairs()
     await run_with_qa_pairs_and_context()
-    await pull_run("19dc86c6-774e-4946-99f4-01ad1bcf4ccf")
+    #   await pull_run("19dc86c6-774e-4946-99f4-01ad1bcf4ccf")
 
 
 if __name__ == "__main__":

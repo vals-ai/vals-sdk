@@ -107,7 +107,7 @@ class Suite(BaseModel):
         """
 
         title = data["title"]
-        description = data["description"]
+        description = data.get("description", "")
         global_checks = [
             Check.from_graphql(check_dict)
             for check_dict in data.get("global_checks", [])
@@ -145,7 +145,7 @@ class Suite(BaseModel):
 
     @property
     def url(self):
-        return f"{fe_host()}/view?test_suite_id={self.id}"
+        return f"{fe_host()}/suites/{self.id}"
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -184,10 +184,16 @@ class Suite(BaseModel):
         with open(file_path, "w") as f:
             f.write(self.to_csv_string())
 
-    async def create(self) -> None:
+    async def create(self, force_creation: bool = False) -> None:
         """
         Creates the test suite on the server.
+
+        force_creation: If True, will create a new test suite, even if it
+        already exists.
         """
+        if force_creation:
+            self.id = None
+
         if self.id is not None:
             raise Exception("This suite has already been created.")
 
@@ -321,6 +327,7 @@ class Suite(BaseModel):
             )
         elif isinstance(model, list):
             # Use the QA pairs we are already provided
+            parameter_input.model_under_test = model_name
             qa_set_id = await self._create_qa_set(
                 [qa_pair.to_graphql() for qa_pair in model],
                 parameter_input.model_dump(),

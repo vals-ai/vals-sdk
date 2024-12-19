@@ -19,6 +19,9 @@ query getTestData($suiteId: String!) {
     tags
     context
     goldenOutput
+    testSuite {
+      id
+    }
   }
 }
 

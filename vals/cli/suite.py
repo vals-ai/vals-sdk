@@ -7,7 +7,7 @@ import click
 from vals.cli.util import display_error_and_exit, display_table
 from vals.sdk.exceptions import ValsException
 from vals.sdk.v2.suite import Suite
-from vals.sdk.v2.types import RunParameters
+from vals.sdk.v2.types import RunParameters, RunStatus
 
 
 @click.group(name="suite")
@@ -67,17 +67,17 @@ async def update_command(file: TextIOWrapper, suite_id: str):
 
 
 async def list_command_async(limit: int, offset: int):
-    suites = await Suite.list_suites(limit=limit, offset=offset)
+    suites = await Suite.list_suites(limit=limit, offset=offset - 1)
     title_width = 40
     rows = []
-    for i, suite in enumerate(suites):
+    for i, suite in enumerate(suites, start=offset):
         truncated_title = (
             suite.title[: title_width - 3] + "..."
             if len(suite.title) > title_width
             else suite.title
         )
         date_str = suite.last_modified_at.strftime("%Y/%m/%d %H:%M")
-        rows.append([i + 1, truncated_title, suite.id, date_str])
+        rows.append([i, truncated_title, suite.id, date_str])
 
     display_table(
         column_headers=["#", "Title", "Suite ID", "Last Modified"],
@@ -88,7 +88,9 @@ async def list_command_async(limit: int, offset: int):
 
 @click.command(name="list")
 @click.option("-l", "--limit", type=int, default=25, help="Number of rows to return")
-@click.option("-o", "--offset", type=int, default=0, help="Start table at this row")
+@click.option(
+    "-o", "--offset", type=int, default=1, help="Start table at this row (1-indexed)"
+)
 def list_command(
     limit: int,
     offset: int,
@@ -108,10 +110,10 @@ async def pull_command_async(
         )
 
     suite = await Suite.from_id(suite_id)
-    if to_json:
-        file.write(json.dumps(suite.to_dict(), indent=2))
-    elif to_csv:
+    if to_csv:
         file.write(suite.to_csv_string())
+    else:
+        file.write(json.dumps(suite.to_dict(), indent=2))
 
     click.secho("Successfully pulled test suite.", fg="green")
 
@@ -143,8 +145,10 @@ async def run_command_async(
     params = {k: v for k, v in params.items() if v is not None}
     parameters = RunParameters(**params)
     suite = await Suite.from_id(suite_id)
+
     if wait_for_completion:
         click.echo("Starting run and waiting for it to finish...")
+
     run = await suite.run(
         model=model,
         run_name=run_name,
@@ -152,7 +156,14 @@ async def run_command_async(
         parameters=parameters,
     )
 
-    click.secho(f"Run has completed with status: {run.status}", fg="green")
+    if wait_for_completion:
+        if run.status == RunStatus.SUCCESS:
+            click.secho(f"Run has finished successfully", fg="green")
+        elif run.status == RunStatus.ERROR:
+            click.secho(f"Run has completed with an error", fg="red")
+    else:
+        click.secho(f"Run has been successfully started", fg="green")
+
     click.secho(f"Run ID: {run.id}")
     click.secho(run.url, bold=True)
 

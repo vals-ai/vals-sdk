@@ -28,6 +28,9 @@ mutation addBatchTests($tests: [TestMutationInfo!]!, $createOnly: Boolean!) {
       tags
       context
       goldenOutput
+      testSuite {
+        id
+      }
     }
   }
 }

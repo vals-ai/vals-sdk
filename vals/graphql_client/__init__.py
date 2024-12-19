@@ -4,6 +4,7 @@ from .add_batch_tests import (
     AddBatchTests,
     AddBatchTestsBatchUpdateTest,
     AddBatchTestsBatchUpdateTestTests,
+    AddBatchTestsBatchUpdateTestTestsTestSuite,
 )
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel, Upload
@@ -26,7 +27,6 @@ from .create_question_answer_set import (
 from .delete_test_suite import DeleteTestSuite, DeleteTestSuiteDeleteSuite
 from .enums import (
     AppQuestionAnswerSetCreationMethodChoices,
-    AppQuestionAnswerSetStatusChoices,
     RunResultSortField,
     RunStatus,
     SortOrder,
@@ -41,7 +41,7 @@ from .exceptions import (
     GraphQLClientInvalidResponseError,
 )
 from .get_operators import GetOperators, GetOperatorsOperators
-from .get_test_data import GetTestData, GetTestDataTests
+from .get_test_data import GetTestData, GetTestDataTests, GetTestDataTestsTestSuite
 from .get_test_suite_data import GetTestSuiteData, GetTestSuiteDataTestSuites
 from .get_test_suites_with_count import (
     GetTestSuitesWithCount,
@@ -65,10 +65,12 @@ from .input_types import (
 )
 from .list_runs import (
     ListRuns,
-    ListRunsRuns,
-    ListRunsRunsPassRate,
-    ListRunsRunsSuccessRate,
-    ListRunsRunsTestSuite,
+    ListRunsRunsWithCount,
+    ListRunsRunsWithCountRunResults,
+    ListRunsRunsWithCountRunResultsPassRate,
+    ListRunsRunsWithCountRunResultsSuccessRate,
+    ListRunsRunsWithCountRunResultsTestSuite,
+    ListRunsRunsWithCountRunResultsTypedParameters,
 )
 from .pull_run import (
     PullRun,
@@ -76,6 +78,7 @@ from .pull_run import (
     PullRunRunPassRate,
     PullRunRunSuccessRate,
     PullRunRunTestSuite,
+    PullRunRunTypedParameters,
     PullRunTestResults,
     PullRunTestResultsQaPair,
     PullRunTestResultsTest,
@@ -93,8 +96,8 @@ __all__ = [
     "AddBatchTests",
     "AddBatchTestsBatchUpdateTest",
     "AddBatchTestsBatchUpdateTestTests",
+    "AddBatchTestsBatchUpdateTestTestsTestSuite",
     "AppQuestionAnswerSetCreationMethodChoices",
-    "AppQuestionAnswerSetStatusChoices",
     "AsyncBaseClient",
     "BaseModel",
     "BatchAddQuestionAnswerPairs",
@@ -119,6 +122,7 @@ __all__ = [
     "GetOperatorsOperators",
     "GetTestData",
     "GetTestDataTests",
+    "GetTestDataTestsTestSuite",
     "GetTestSuiteData",
     "GetTestSuiteDataTestSuites",
     "GetTestSuitesWithCount",
@@ -131,10 +135,12 @@ __all__ = [
     "GraphQLClientHttpError",
     "GraphQLClientInvalidResponseError",
     "ListRuns",
-    "ListRunsRuns",
-    "ListRunsRunsPassRate",
-    "ListRunsRunsSuccessRate",
-    "ListRunsRunsTestSuite",
+    "ListRunsRunsWithCount",
+    "ListRunsRunsWithCountRunResults",
+    "ListRunsRunsWithCountRunResultsPassRate",
+    "ListRunsRunsWithCountRunResultsSuccessRate",
+    "ListRunsRunsWithCountRunResultsTestSuite",
+    "ListRunsRunsWithCountRunResultsTypedParameters",
     "MetadataType",
     "ParameterInputType",
     "PerCheckHumanReviewInputType",
@@ -143,6 +149,7 @@ __all__ = [
     "PullRunRunPassRate",
     "PullRunRunSuccessRate",
     "PullRunRunTestSuite",
+    "PullRunRunTypedParameters",
     "PullRunTestResults",
     "PullRunTestResultsQaPair",
     "PullRunTestResultsTest",

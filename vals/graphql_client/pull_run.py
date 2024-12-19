@@ -22,10 +22,24 @@ class PullRunRun(BaseModel):
     timestamp: datetime
     completed_at: Optional[datetime] = Field(alias="completedAt")
     archived: bool
-    parameters: Any
+    typed_parameters: "PullRunRunTypedParameters" = Field(alias="typedParameters")
     pass_rate: Optional["PullRunRunPassRate"] = Field(alias="passRate")
     success_rate: Optional["PullRunRunSuccessRate"] = Field(alias="successRate")
     test_suite: "PullRunRunTestSuite" = Field(alias="testSuite")
+
+
+class PullRunRunTypedParameters(BaseModel):
+    eval_model: str = Field(alias="evalModel")
+    maximum_threads: int = Field(alias="maximumThreads")
+    run_golden_eval: bool = Field(alias="runGoldenEval")
+    run_confidence_evaluation: bool = Field(alias="runConfidenceEvaluation")
+    heavyweight_factor: int = Field(alias="heavyweightFactor")
+    create_text_summary: bool = Field(alias="createTextSummary")
+    model_under_test: str = Field(alias="modelUnderTest")
+    temperature: float
+    max_output_tokens: int = Field(alias="maxOutputTokens")
+    system_prompt: str = Field(alias="systemPrompt")
+    new_line_stop_option: bool = Field(alias="newLineStopOption")
 
 
 class PullRunRunPassRate(BaseModel):
@@ -39,6 +53,7 @@ class PullRunRunSuccessRate(BaseModel):
 
 
 class PullRunRunTestSuite(BaseModel):
+    id: str
     title: str
 
 
