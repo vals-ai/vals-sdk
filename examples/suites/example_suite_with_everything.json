@@ -6,7 +6,7 @@
       "input_under_test": "What is QSBS",
       "golden_output": "C Corporation",
       "context": { "foo": "bar", "baz": ["a", "b", "c"] },
-      "files_under_test": ["examples/data_files/postmoney_safe.docx"],
+      "files_under_test": ["data_files/postmoney_safe.docx"],
       "global_checks": [
         {
           "operator": "grammar"
