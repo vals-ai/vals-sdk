@@ -27,8 +27,8 @@ async def pull_async(run_id: str, file: TextIOWrapper, csv: bool, _json: bool):
 
 
 @click.command
-@click.argument("run-id", type=click.STRING, required=True)
 @click.argument("file", type=click.File("w"), required=True)
+@click.argument("run-id", type=click.STRING, required=True)
 @click.option("--csv", is_flag=True, default=False, help="Save as a CSV")
 @click.option("--json", is_flag=True, default=False, help="Save as a JSON")
 def pull(run_id: str, file: TextIOWrapper, csv: bool, json: bool):
