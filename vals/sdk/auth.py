@@ -53,7 +53,7 @@ def get_descope_client():
         project_id = "P2lXkZaPuDqCzGxoxGHseomQi7ac"
     else:
         raise Exception(f"Unrecognized VALS_ENV: {VALS_ENV}")
-    return DescopeClient(project_id=project_id)
+    return DescopeClient(project_id=project_id, jwt_validation_leeway=30)
 
 
 def _get_auth_token():
