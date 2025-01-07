@@ -1,10 +1,8 @@
 import asyncio
-import json
 from io import BytesIO
 from typing import Any
 
-from vals.sdk.suite import Check, Run, Suite, Test
-from vals.sdk.types import QuestionAnswerPair
+from vals import Check, QuestionAnswerPair, Run, Suite, Test
 
 
 async def run_with_model_under_test():
