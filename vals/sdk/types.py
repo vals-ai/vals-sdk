@@ -319,9 +319,9 @@ class RunMetadata(BaseModel):
 
 
 class Metadata(BaseModel):
-    in_tokens: int
-    out_tokens: int
-    duration_seconds: float
+    in_tokens: int | None = None
+    out_tokens: int | None = None
+    duration_seconds: float | None = None
 
 
 class Confidence(Enum):
