@@ -7,7 +7,7 @@ Note: The file paths assume this is run from the `examples/` directory.
 import asyncio
 import json
 
-from vals.sdk.suite import Check, Suite, Test
+from vals import Check, Suite, Test
 
 
 async def list_suites():
