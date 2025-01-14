@@ -93,10 +93,14 @@ def get_ariadne_client() -> AriadneClient:
     """
     Use the new codegen-based client
     """
-    headers = {"Authorization": _get_auth_token()}
+
+    def append_auth_header(request: httpx.Request):
+        request.headers["Authorization"] = _get_auth_token()
+        return request
+
     return AriadneClient(
         url=f"{be_host()}/graphql/",
-        http_client=httpx.AsyncClient(headers=headers, timeout=60),
+        http_client=httpx.AsyncClient(auth=append_auth_header, timeout=60),
     )
 
 
