@@ -41,6 +41,8 @@ def be_host():
         return "http://localhost:8000"
     if VALS_ENV == "DEV":
         return "https://devbe.playgroundrl.com"
+    if VALS_ENV == "BENCH":
+        return "https://benchbe.playgroundrl.com"
 
     return "https://prodbe.playgroundrl.com"
 
@@ -53,6 +55,8 @@ def fe_host():
         return "http://localhost:3000"
     if VALS_ENV == "DEV":
         return "https://dev.platform.vals.ai"
+    if VALS_ENV == "BENCH":
+        return "https://bench.platform.vals.ai"
 
     return "https://platform.vals.ai"
 
