@@ -47,10 +47,11 @@ def get_descope_client():
     region = _get_region()
     if region == "eu-north-1":
         project_id = "P2lXkjgPTaW5f8ZlhBzCpnxeqlpj"
-    elif VALS_ENV == "LOCAL" or VALS_ENV == "DEV":
+    elif VALS_ENV == "LOCAL" or VALS_ENV == "DEV" or VALS_ENV == "BENCH":
         project_id = "P2ktNOjz5Tgzs9wwS3VpShnCbmik"
     elif VALS_ENV == "PROD":
         project_id = "P2lXkZaPuDqCzGxoxGHseomQi7ac"
+
     else:
         raise Exception(f"Unrecognized VALS_ENV: {VALS_ENV}")
     return DescopeClient(project_id=project_id, jwt_validation_leeway=30)
