@@ -55,3 +55,9 @@ mutation removeOldTests($testSuiteId: String!, $inUseTests: [String!]!) {
     success
   }
 }
+
+mutation RerunTests($runId: String!) {
+  rerunFailingTests(runId: $runId) {
+    success
+  }
+}
