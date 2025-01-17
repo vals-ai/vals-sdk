@@ -1,12 +1,12 @@
+import asyncio
 import json
 from typing import Any, Dict
 
 import click
 import requests
-from gql import gql
-from vals.cli.util import display_error_and_exit, prompt_user_for_rag_suite
+from vals.cli.util import display_error_and_exit
 from vals.sdk.auth import _get_auth_token
-from vals.sdk.util import be_host, list_rag_suites
+from vals.sdk.util import be_host, get_ariadne_client
 
 
 @click.group(name="rag")
@@ -17,29 +17,42 @@ def rag_group():
     pass
 
 
-def create_rag_suite(data: Dict[str, Any]) -> str:
-    # Construct the GraphQL mutation string
-    query = gql(
-        f"""
-        mutation createRagSuite {{
-            updateRagSuite(
-                ragSuiteId: "0",
-                query: {json.dumps(data['query'])},
-                filePath: {json.dumps(data['id'])}
-            ) {{
-                ragSuite {{
-                    id
-                    query
-                }}
-            }}
-        }}
-        """
+async def list_rag_suites():
+    client = get_ariadne_client()
+
+    response = await client.get_rag_suites()
+
+    # TODO: Error check
+    return response.rag_suites
+
+
+def prompt_user_for_rag_suite():
+    suites = list_rag_suites()
+    click.echo("Rag Suites:")
+    click.echo(
+        "\n".join([f"{i}: {s['id']} {s['query']}" for i, s in enumerate(suites)])
     )
-    # Execute the query
-    result = get_client().execute(query)
-    # Extract the 'id' of the created RagSuite from the result
-    suite_id = result["updateRagSuite"]["ragSuite"]["id"]
+
+    idx = click.prompt("Enter the number of the rag suite to run", type=int)
+    while not 0 <= idx <= len(suites):
+        idx = click.prompt("Invalid choice. Retry", type=int)
+    suite_id = suites[idx]["id"]
     return suite_id
+
+
+async def create_rag_suite(data: Dict[str, Any]) -> str:
+    client = get_ariadne_client()
+    result = await client.create_rag_suite(query=data["query"], file_path=data["id"])
+    # Extract the 'id' of the created RagSuite from the result
+    suite_id = result.update_rag_suite.rag_suite.id
+    return suite_id
+
+
+async def list_command_async():
+    suites = await list_rag_suites()
+
+    suite_text = "\n".join([f"{i}: {s.id} {s.query}" for i, s in enumerate(suites)])
+    click.echo(suite_text)
 
 
 @click.command(name="list")
@@ -47,12 +60,27 @@ def list_command():
     """
     List rag suites associated with this organization
     """
-    suites = list_rag_suites()
+    asyncio.run(list_command_async())
 
-    suite_text = "\n".join(
-        [f"{i}: {s['id']} {s['query']}" for i, s in enumerate(suites)]
+
+async def upload_command_async(file: str, query: str):
+    with open(file, "rb") as f:
+        response = requests.post(
+            f"{be_host()}/upload_rag_file/",
+            files={"file": f},
+            headers={"Authorization": _get_auth_token()},
+        )
+        if response.status_code != 200:
+            display_error_and_exit(f"Failed to upload file {file}")
+
+    suite_id = await create_rag_suite(
+        {"id": response.json()["file_id"], "query": query}
     )
-    click.echo(suite_text)
+
+    click.secho(
+        "Successfully Uploaded RAG. ID: {}".format(suite_id),
+        fg="green",
+    )
 
 
 @click.command(name="upload")
@@ -71,68 +99,23 @@ def upload_command(file: str, query: str):
     Returns:
         str: The file ID that can be used to rerank the documents.
     """
-
-    with open(file, "rb") as f:
-        response = requests.post(
-            f"{be_host()}/upload_rag_file/",
-            files={"file": f},
-            headers={"Authorization": _get_auth_token()},
-        )
-        if response.status_code != 200:
-            display_error_and_exit(f"Failed to upload file {file}")
-
-    suite_id = create_rag_suite({"id": response.json()["file_id"], "query": query})
-
-    click.secho(
-        "Successfully Uploaded RAG. ID: {}".format(suite_id),
-        fg="green",
-    )
+    asyncio.run(upload_command_async(file, query))
 
 
-@click.command(name="rerank")
-@click.argument("id", type=click.STRING, required=False)
-@click.option("--query", type=click.STRING, default="")
-@click.option("--light-ranking", type=click.STRING, default=True)
-@click.option("--model", type=click.STRING, default="gpt-3")
-def rerank_command(
-    id: str = None, query: str = "", light_ranking: bool = True, model: str = "gpt-3"
+async def rerank_command_async(
+    id: str | None = None,
+    query: str = "",
+    light_ranking: bool = True,
+    model: str = "gpt-3",
 ):
-    """
-    Reranks the documents in the file based on the provided query.
-
-    Args:
-        file_id (str, optional): The ID of the file containing the documents to be reranked. If not provided you will be prompted to choose a rag suite.
-        query (str, optional): The query to be used for reranking, if not provided the original query will be used.
-        light_ranking (bool, optional): Whether to use light ranking. Defaults to True.
-        model (str, optional): The model to be used. Defaults to "gpt-3".
-
-    Returns:
-        None. Prints a list of scores that match the order of the documents in the file.
-    """
     if id == None:
         id = prompt_user_for_rag_suite()
-    q = gql(
-        f"""
-        query getRagSuites {{
-            ragSuites {{
-            id
-            org
-            path
-            query
-            }}
-            }}
-        """
-    )
 
-    response = get_client().execute(q)
+    suites = await list_rag_suites()
 
     # TODO: Error check
     file_id, original_query = next(
-        (
-            (suite["path"], suite["query"])
-            for suite in response["ragSuites"]
-            if suite["id"] == id
-        ),
+        ((suite.path, suite.query) for suite in suites if suite.id == id),
         None,
     )
 
@@ -171,6 +154,32 @@ def rerank_command(
         f"Successfully Ran RAG Rankings. Scores saved to {file_name}.",
         fg="green",
     )
+
+
+@click.command(name="rerank")
+@click.argument("id", type=click.STRING, required=False)
+@click.option("--query", type=click.STRING, default="")
+@click.option("--light-ranking", type=click.STRING, default=True)
+@click.option("--model", type=click.STRING, default="gpt-3")
+def rerank_command(
+    id: str | None = None,
+    query: str = "",
+    light_ranking: bool = True,
+    model: str = "gpt-3",
+):
+    """
+    Reranks the documents in the file based on the provided query.
+
+    Args:
+        file_id (str, optional): The ID of the file containing the documents to be reranked. If not provided you will be prompted to choose a rag suite.
+        query (str, optional): The query to be used for reranking, if not provided the original query will be used.
+        light_ranking (bool, optional): Whether to use light ranking. Defaults to True.
+        model (str, optional): The model to be used. Defaults to "gpt-3".
+
+    Returns:
+        None. Prints a list of scores that match the order of the documents in the file.
+    """
+    asyncio.run(rerank_command_async(id, query, light_ranking, model))
 
 
 rag_group.add_command(upload_command)

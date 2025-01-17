@@ -55,3 +55,12 @@ mutation removeOldTests($testSuiteId: String!, $inUseTests: [String!]!) {
     success
   }
 }
+
+mutation createRagSuite($query: String!, $filePath: String!) {
+  updateRagSuite(ragSuiteId: "0", query: $query, filePath: $filePath) {
+    ragSuite {
+      id
+      query
+    }
+  }
+}

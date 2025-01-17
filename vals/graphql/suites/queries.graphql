@@ -49,3 +49,12 @@ query getOperators {
     isUnary
   }
 }
+
+query getRagSuites {
+  ragSuites {
+    id
+    org
+    path
+    query
+  }
+}

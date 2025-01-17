@@ -6,7 +6,7 @@ Run with python generate_operator_type.py.
 
 import asyncio
 
-from vals.sdk.v2.util import get_ariadne_client
+from vals.sdk.util import get_ariadne_client
 
 
 async def generate_operator_type():

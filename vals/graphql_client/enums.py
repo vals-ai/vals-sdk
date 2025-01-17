@@ -14,17 +14,31 @@ class RunStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"
     ERROR = "ERROR"
     SUCCESS = "SUCCESS"
+    RERUNNING = "RERUNNING"
+
+
+class RunHumanReviewStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    ARCHIVED = "ARCHIVED"
+
+
+class ReviewTableSortField(str, Enum):
+    CREATED_AT = "CREATED_AT"
+    COMPLETED_TIME = "COMPLETED_TIME"
+    STATUS = "STATUS"
+    COMPLETED_AT = "COMPLETED_AT"
+
+
+class SortOrder(str, Enum):
+    ASC = "ASC"
+    DESC = "DESC"
 
 
 class TestSuiteSortField(str, Enum):
     TITLE = "TITLE"
     CREATED = "CREATED"
     LAST_MODIFIED_AT = "LAST_MODIFIED_AT"
-
-
-class SortOrder(str, Enum):
-    ASC = "ASC"
-    DESC = "DESC"
 
 
 class RunResultSortField(str, Enum):

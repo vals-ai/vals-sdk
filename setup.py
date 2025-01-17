@@ -9,26 +9,20 @@ setup(
     install_requires=[
         "Click",
         "gql",
-        "attrs",
-        "jsonschema",
         "tqdm",
-        # TODO: Remove boto3
-        "boto3",
         "requests",
-        "aiohttp",
         "pandas",
-        "requests-toolbelt",
         "descope",
-        "pypandoc-binary",
-        "pypdf",
+        "pydantic",
+        "httpx",
     ],
-    # This sorta works for Test-Pypi, but not fully.
-    # use_scm_version={"local_scheme": "no-local-version"},
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
     extras_require={
         # Requirements only needed for development, not for users
         "dev": ["ariadne-codegen"],
+        # Requirements for parsing utilities we provide
+        "parsing": ["pypdf", "pypandoc-binary"],
     },
     entry_points={
         "console_scripts": [
