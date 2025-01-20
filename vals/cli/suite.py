@@ -4,11 +4,11 @@ from io import TextIOWrapper
 from typing import Any
 
 import click
-from vals.cli.util import display_error_and_exit, display_table
+from vals.cli.util import display_error_and_exit
 from vals.sdk.exceptions import ValsException
 from vals.sdk.suite import Suite
 from vals.sdk.types import RunParameters, RunStatus
-
+from tabulate import tabulate
 
 @click.group(name="suite")
 def suite_group():
@@ -68,22 +68,13 @@ async def update_command(file: TextIOWrapper, suite_id: str):
 
 async def list_command_async(limit: int, offset: int):
     suites = await Suite.list_suites(limit=limit, offset=offset - 1)
-    title_width = 40
     rows = []
     for i, suite in enumerate(suites, start=offset):
-        truncated_title = (
-            suite.title[: title_width - 3] + "..."
-            if len(suite.title) > title_width
-            else suite.title
-        )
+        truncated_title = suite.title
         date_str = suite.last_modified_at.strftime("%Y/%m/%d %H:%M")
         rows.append([i, truncated_title, suite.id, date_str])
 
-    display_table(
-        column_headers=["#", "Title", "Suite ID", "Last Modified"],
-        column_widths=[3, title_width, 36, 20],
-        rows=rows,
-    )
+    click.echo(tabulate(rows, headers=["#", "Title", "Suite ID", "Last Modified"], tablefmt="rounded_grid"))
 
 
 @click.command(name="list")

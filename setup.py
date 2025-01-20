@@ -21,6 +21,7 @@ setup(
         "descope",
         "pypandoc-binary",
         "pypdf",
+        "tabulate",
     ],
     # This sorta works for Test-Pypi, but not fully.
     # use_scm_version={"local_scheme": "no-local-version"},

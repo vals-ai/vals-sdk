@@ -1,9 +1,8 @@
 import asyncio
 import json
 from io import TextIOWrapper
-
+from tabulate import tabulate
 import click
-from vals.cli.util import display_table
 from vals.sdk.run import Run
 
 
@@ -39,37 +38,35 @@ def pull(run_id: str, file: TextIOWrapper, csv: bool, json: bool):
 
 
 async def list_async(
-    limit: int, offset: int, suite_id: str | None, show_archived: bool
+    limit: int, offset: int, suite_id: str | None, show_archived: bool, search: str
 ):
     run_results = await Run.list_runs(
         limit=limit,
         offset=offset - 1,
         show_archived=show_archived,
         suite_id=suite_id,
+        search=search,
     )
 
-    column_names = ["#", "Run Name", "Id", "Status", "Pass Rate", "Timestamp"]
-    run_name_width = 40
-    column_widths = [3, run_name_width, 36, 13, 10, 20]
+    column_names = ["#", "Run Name", "Id", "Status", "Model", "Pass Rate", "Timestamp"]
 
     rows = []
     for i, run in enumerate(run_results, start=offset):
         date_str = run.timestamp.strftime("%Y/%m/%d %H:%M")
         pass_percentage_str = f"{run.pass_rate:.2f}%" if run.pass_rate else "N/A"
-        if len(run.name) > run_name_width:
-            run.name = run.name[: run_name_width - 3] + "..."
         rows.append(
             [
                 i,
                 run.name,
                 run.id,
                 run.status.value,
+                run.model,
                 pass_percentage_str,
                 date_str,
             ]
         )
-
-    display_table(column_names, column_widths, rows)
+    
+    click.echo(tabulate(rows, headers=column_names, tablefmt="rounded_grid"))
 
 
 @click.command()
@@ -91,13 +88,15 @@ async def list_async(
 @click.option(
     "--show-archived",
     is_flag=True,
+    default=False,
     help="When enabled, archived runs are displayed in the output",
 )
-def list(limit: int, offset: int, suite_id: str | None, show_archived: bool):
+@click.option("--search", type=click.STRING, default="", help="Search for a run based off its name, model or test suite title")
+def list(limit: int, offset: int, suite_id: str | None, show_archived: bool, search: str):
     """
     List runs associated with this organization
     """
-    asyncio.run(list_async(limit, offset, suite_id, show_archived))
+    asyncio.run(list_async(limit, offset, suite_id, show_archived, search))
 
 
 run_group.add_command(pull)
