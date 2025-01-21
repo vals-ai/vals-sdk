@@ -4,11 +4,11 @@ from io import TextIOWrapper
 from typing import Any
 
 import click
-from vals.cli.util import display_error_and_exit, display_table
+from vals.cli.util import display_error_and_exit
 from vals.sdk.exceptions import ValsException
 from vals.sdk.suite import Suite
 from vals.sdk.types import RunParameters, RunStatus
-
+from tabulate import tabulate
 
 @click.group(name="suite")
 def suite_group():
@@ -66,24 +66,17 @@ async def update_command(file: TextIOWrapper, suite_id: str):
     asyncio.run(update_command_async(file, suite_id))
 
 
-async def list_command_async(limit: int, offset: int):
-    suites = await Suite.list_suites(limit=limit, offset=offset - 1)
-    title_width = 40
+async def list_command_async(limit: int, offset: int, search: str):
+    suites = await Suite.list_suites(limit=limit, offset=offset - 1, search=search)
+    headers = ["#", "Title", "Suite ID", "Last Modified"]
     rows = []
     for i, suite in enumerate(suites, start=offset):
-        truncated_title = (
-            suite.title[: title_width - 3] + "..."
-            if len(suite.title) > title_width
-            else suite.title
-        )
+        truncated_title = suite.title
         date_str = suite.last_modified_at.strftime("%Y/%m/%d %H:%M")
         rows.append([i, truncated_title, suite.id, date_str])
 
-    display_table(
-        column_headers=["#", "Title", "Suite ID", "Last Modified"],
-        column_widths=[3, title_width, 36, 20],
-        rows=rows,
-    )
+    table = tabulate(rows, headers=headers, tablefmt="rounded_grid")
+    click.echo(table)
 
 
 @click.command(name="list")
@@ -91,14 +84,16 @@ async def list_command_async(limit: int, offset: int):
 @click.option(
     "-o", "--offset", type=int, default=1, help="Start table at this row (1-indexed)"
 )
+@click.option("--search", type=str, default="", help="Search for a suite by title")
 def list_command(
     limit: int,
     offset: int,
+    search: str,
 ):
     """
     List test suites associated with this organization
     """
-    asyncio.run(list_command_async(limit, offset))
+    asyncio.run(list_command_async(limit, offset, search))
 
 
 async def pull_command_async(

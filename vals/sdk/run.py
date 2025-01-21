@@ -114,11 +114,16 @@ class Run(BaseModel):
         offset: int = 0,
         suite_id: str | None = None,
         show_archived: bool = False,
+        search: str = "",
     ) -> list["RunMetadata"]:
         """List runs associated with this organization"""
         client = get_ariadne_client()
         result = await client.list_runs(
-            limit=limit, offset=offset, suite_id=suite_id, archived=show_archived
+            limit=limit,
+            offset=offset,
+            suite_id=suite_id,
+            archived=show_archived,
+            search=search,
         )
         return [
             RunMetadata.from_graphql(run) for run in result.runs_with_count.run_results
