@@ -66,7 +66,8 @@ async def list_async(
             ]
         )
     
-    click.echo(tabulate(rows, headers=column_names, tablefmt="rounded_grid"))
+    table = tabulate(rows, headers=column_names, tablefmt="rounded_grid")
+    click.echo(table)
 
 
 @click.command()

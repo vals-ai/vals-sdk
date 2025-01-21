@@ -66,15 +66,17 @@ async def update_command(file: TextIOWrapper, suite_id: str):
     asyncio.run(update_command_async(file, suite_id))
 
 
-async def list_command_async(limit: int, offset: int):
-    suites = await Suite.list_suites(limit=limit, offset=offset - 1)
+async def list_command_async(limit: int, offset: int, search: str):
+    suites = await Suite.list_suites(limit=limit, offset=offset - 1, search=search)
+    headers = ["#", "Title", "Suite ID", "Last Modified"]
     rows = []
     for i, suite in enumerate(suites, start=offset):
         truncated_title = suite.title
         date_str = suite.last_modified_at.strftime("%Y/%m/%d %H:%M")
         rows.append([i, truncated_title, suite.id, date_str])
 
-    click.echo(tabulate(rows, headers=["#", "Title", "Suite ID", "Last Modified"], tablefmt="rounded_grid"))
+    table = tabulate(rows, headers=headers, tablefmt="rounded_grid")
+    click.echo(table)
 
 
 @click.command(name="list")
@@ -82,14 +84,16 @@ async def list_command_async(limit: int, offset: int):
 @click.option(
     "-o", "--offset", type=int, default=1, help="Start table at this row (1-indexed)"
 )
+@click.option("--search", type=str, default="", help="Search for a suite by title")
 def list_command(
     limit: int,
     offset: int,
+    search: str,
 ):
     """
     List test suites associated with this organization
     """
-    asyncio.run(list_command_async(limit, offset))
+    asyncio.run(list_command_async(limit, offset, search))
 
 
 async def pull_command_async(
