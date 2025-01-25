@@ -23,6 +23,7 @@ from .input_types import (
 from .list_runs import ListRuns
 from .pull_run import PullRun
 from .remove_old_tests import RemoveOldTests
+from .rerun_tests import RerunTests
 from .run_param_info import RunParamInfo
 from .run_status import RunStatus
 from .start_run import StartRun
@@ -431,6 +432,23 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return RemoveOldTests.model_validate(data)
+
+    async def rerun_tests(self, run_id: str, **kwargs: Any) -> RerunTests:
+        query = gql(
+            """
+            mutation RerunTests($runId: String!) {
+              rerunFailingTests(runId: $runId) {
+                success
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"runId": run_id}
+        response = await self.execute(
+            query=query, operation_name="RerunTests", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return RerunTests.model_validate(data)
 
     async def get_test_suite_data(
         self, suite_id: str, **kwargs: Any

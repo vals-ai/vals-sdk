@@ -6,7 +6,23 @@ from typing import Any, List, Optional
 from pydantic import Field
 
 from .base_model import BaseModel
-from .enums import RunResultSortField, RunStatus, SortOrder, TestSuiteSortField
+from .enums import (
+    ReviewTableSortField,
+    RunHumanReviewStatusEnum,
+    RunResultSortField,
+    RunStatus,
+    SortOrder,
+    TestSuiteSortField,
+)
+
+
+class ReviewTableFilterOptionsInput(BaseModel):
+    limit: Optional[int] = None
+    offset: Optional[int] = None
+    search: Optional[str] = None
+    sort_by: Optional[ReviewTableSortField] = Field(alias="sortBy", default=None)
+    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+    status: Optional[RunHumanReviewStatusEnum] = None
 
 
 class FilterOptionsInput(BaseModel):
@@ -30,6 +46,7 @@ class RunResultFilterOptionsInput(BaseModel):
         alias="modelsUnderTest", default=None
     )
     suite_id: Optional[str] = Field(alias="suiteId", default=None)
+    suite_ids: Optional[List[str]] = Field(alias="suiteIds", default=None)
     sort_by: Optional[RunResultSortField] = Field(alias="sortBy", default=None)
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
 
@@ -85,7 +102,7 @@ class ParameterInputType(BaseModel):
     new_line_stop_option: bool = Field(alias="newLineStopOption")
 
 
-class PerCheckHumanReviewInputType(BaseModel):
+class PerCheckTestReviewInputType(BaseModel):
     id: int
     binary_human_eval: Optional[int] = Field(alias="binaryHumanEval", default=None)
     is_flagged: Optional[bool] = Field(alias="isFlagged", default=None)

@@ -206,3 +206,8 @@ class Run(BaseModel):
         """Get the CSV results of a run, as bytes."""
         with open(file_path, "w") as f:
             f.write(await self.to_csv_string())
+
+    async def retry_failing_tests(self) -> None:
+        """Retry all failing tests in a run."""
+
+        await self._client.rerun_tests(run_id=self.id)

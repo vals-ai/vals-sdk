@@ -268,6 +268,7 @@ class RunStatus(str, Enum):
     IN_PROGRESS = "in_progress"
     ERROR = "error"
     SUCCESS = "success"
+    RERUNNING = "rerunning"
 
 
 class RunMetadata(BaseModel):
@@ -341,7 +342,7 @@ class CheckResult(BaseModel):
     """Result of evaluation for a single check."""
 
     # Same as the input fields.
-    operator: OperatorType
+    operator: OperatorType | str
     criteria: str
     modifiers: CheckModifiers
     is_global: bool
