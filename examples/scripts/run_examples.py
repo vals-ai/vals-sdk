@@ -153,20 +153,13 @@ async def pull_run(run_id: str):
     print(run.to_dict())
 
 
-async def retry():
-    run_id = "8e6edeb4-6f17-4587-a7dc-49308f9e89aa"
-    run = await Run.from_id(run_id)
-    await run.retry_failing_tests()
-
-
 async def all():
-    # await run_with_model_under_test()
-    # await run_with_function()
-    # await run_with_function_context_and_files()
-    # await run_with_qa_pairs()
-    # await run_with_qa_pairs_and_context()
+    await run_with_model_under_test()
+    await run_with_function()
+    await run_with_function_context_and_files()
+    await run_with_qa_pairs()
+    await run_with_qa_pairs_and_context()
     #   await pull_run("19dc86c6-774e-4946-99f4-01ad1bcf4ccf")
-    await retry()
 
 
 if __name__ == "__main__":
