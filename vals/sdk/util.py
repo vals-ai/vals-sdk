@@ -14,7 +14,12 @@ def read_pdf(file: BytesIO):
     """
     Convenience method to parse PDFs to strings
     """
-    from pypdf import PdfReader
+    try:
+        from pypdf import PdfReader
+    except ImportError:
+        raise Exception(
+            "To use read_pdf and read_docx, please run `pip install vals[parsing]`"
+        )
 
     text = ""
     pdf_reader = PdfReader(file)
@@ -29,7 +34,10 @@ def read_docx(file: BytesIO):
     """
     Convenience method to parse docx files to strings
     """
-    import pypandoc
+    try:
+        import pypandoc
+    except ImportError:
+        raise Exception("To use read_docx, please run `pip install vals[parsing]`")
 
     output = pypandoc.convert_text(file.read(), to="plain", format="docx")
     return output

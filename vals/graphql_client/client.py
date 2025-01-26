@@ -246,13 +246,14 @@ class Client(AsyncBaseClient):
         suite_id: Union[Optional[str], UnsetType] = UNSET,
         limit: Union[Optional[int], UnsetType] = UNSET,
         offset: Union[Optional[int], UnsetType] = UNSET,
+        search: Union[Optional[str], UnsetType] = UNSET,
         **kwargs: Any
     ) -> ListRuns:
         query = gql(
             """
-            query ListRuns($archived: Boolean, $suiteId: String, $limit: Int, $offset: Int) {
+            query ListRuns($archived: Boolean, $suiteId: String, $limit: Int, $offset: Int, $search: String) {
               runsWithCount(
-                filterOptions: {archived: $archived, suiteId: $suiteId, limit: $limit, offset: $offset, sortBy: STARTED_AT}
+                filterOptions: {archived: $archived, suiteId: $suiteId, limit: $limit, offset: $offset, sortBy: STARTED_AT, search: $search}
               ) {
                 runResults {
                   runId
@@ -297,6 +298,7 @@ class Client(AsyncBaseClient):
             "suiteId": suite_id,
             "limit": limit,
             "offset": offset,
+            "search": search,
         }
         response = await self.execute(
             query=query, operation_name="ListRuns", variables=variables, **kwargs
@@ -530,12 +532,15 @@ class Client(AsyncBaseClient):
         self,
         offset: Union[Optional[int], UnsetType] = UNSET,
         limit: Union[Optional[int], UnsetType] = UNSET,
+        search: Union[Optional[str], UnsetType] = UNSET,
         **kwargs: Any
     ) -> GetTestSuitesWithCount:
         query = gql(
             """
-            query getTestSuitesWithCount($offset: Int, $limit: Int) {
-              testSuitesWithCount(filterOptions: {offset: $offset, limit: $limit}) {
+            query getTestSuitesWithCount($offset: Int, $limit: Int, $search: String) {
+              testSuitesWithCount(
+                filterOptions: {offset: $offset, limit: $limit, search: $search}
+              ) {
                 testSuites {
                   id
                   title
@@ -553,7 +558,11 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"offset": offset, "limit": limit}
+        variables: Dict[str, object] = {
+            "offset": offset,
+            "limit": limit,
+            "search": search,
+        }
         response = await self.execute(
             query=query,
             operation_name="getTestSuitesWithCount",
