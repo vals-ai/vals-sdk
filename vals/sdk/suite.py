@@ -52,7 +52,7 @@ class Suite(BaseModel):
     _client: Client = PrivateAttr(default_factory=get_ariadne_client)
 
     @classmethod
-    async def list_suites(cls, limit=50, offset=0) -> list[TestSuiteMetadata]:
+    async def list_suites(cls, limit=50, offset=0, search="") -> list[TestSuiteMetadata]:
         """
         Generate a list of all the test suites on the server.
 
@@ -63,6 +63,7 @@ class Suite(BaseModel):
         gql_response = await client.get_test_suites_with_count(
             limit=limit,
             offset=offset,
+            search=search,
         )
         gql_suites = gql_response.test_suites_with_count.test_suites
         return [TestSuiteMetadata.from_graphql(gql_suite) for gql_suite in gql_suites]

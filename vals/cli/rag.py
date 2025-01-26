@@ -26,20 +26,6 @@ async def list_rag_suites():
     return response.rag_suites
 
 
-def prompt_user_for_rag_suite():
-    suites = list_rag_suites()
-    click.echo("Rag Suites:")
-    click.echo(
-        "\n".join([f"{i}: {s['id']} {s['query']}" for i, s in enumerate(suites)])
-    )
-
-    idx = click.prompt("Enter the number of the rag suite to run", type=int)
-    while not 0 <= idx <= len(suites):
-        idx = click.prompt("Invalid choice. Retry", type=int)
-    suite_id = suites[idx]["id"]
-    return suite_id
-
-
 async def create_rag_suite(data: Dict[str, Any]) -> str:
     client = get_ariadne_client()
     result = await client.create_rag_suite(query=data["query"], file_path=data["id"])
@@ -50,6 +36,9 @@ async def create_rag_suite(data: Dict[str, Any]) -> str:
 
 async def list_command_async():
     suites = await list_rag_suites()
+    if len(suites) == 0:
+        click.secho("No rag suites found", fg="red")
+        return
 
     suite_text = "\n".join([f"{i}: {s.id} {s.query}" for i, s in enumerate(suites)])
     click.echo(suite_text)
@@ -103,14 +92,11 @@ def upload_command(file: str, query: str):
 
 
 async def rerank_command_async(
-    id: str | None = None,
+    id: str,
     query: str = "",
     light_ranking: bool = True,
     model: str = "gpt-3",
 ):
-    if id == None:
-        id = prompt_user_for_rag_suite()
-
     suites = await list_rag_suites()
 
     # TODO: Error check
@@ -157,7 +143,7 @@ async def rerank_command_async(
 
 
 @click.command(name="rerank")
-@click.argument("id", type=click.STRING, required=False)
+@click.argument("id", type=click.STRING, required=True)
 @click.option("--query", type=click.STRING, default="")
 @click.option("--light-ranking", type=click.STRING, default=True)
 @click.option("--model", type=click.STRING, default="gpt-3")
@@ -171,7 +157,7 @@ def rerank_command(
     Reranks the documents in the file based on the provided query.
 
     Args:
-        file_id (str, optional): The ID of the file containing the documents to be reranked. If not provided you will be prompted to choose a rag suite.
+        file_id (str, optional): The ID of the file containing the documents to be reranked.
         query (str, optional): The query to be used for reranking, if not provided the original query will be used.
         light_ranking (bool, optional): Whether to use light ranking. Defaults to True.
         model (str, optional): The model to be used. Defaults to "gpt-3".

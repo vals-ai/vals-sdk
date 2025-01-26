@@ -14,6 +14,8 @@ def read_pdf(file: BytesIO):
     """
     Convenience method to parse PDFs to strings
     """
+    from pypdf import PdfReader
+
     text = ""
     pdf_reader = PdfReader(file)
     num_pages = len(pdf_reader.pages)
@@ -27,6 +29,8 @@ def read_docx(file: BytesIO):
     """
     Convenience method to parse docx files to strings
     """
+    import pypandoc
+
     output = pypandoc.convert_text(file.read(), to="plain", format="docx")
     return output
 

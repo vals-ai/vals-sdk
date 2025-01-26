@@ -32,11 +32,13 @@ from .create_rag_suite import (
 from .delete_test_suite import DeleteTestSuite, DeleteTestSuiteDeleteSuite
 from .enums import (
     AppQuestionAnswerSetCreationMethodChoices,
-    ReviewTableSortField,
-    RunHumanReviewStatusEnum,
     RunResultSortField,
+    RunReviewStatusEnum,
+    RunReviewTableSortField,
     RunStatus,
     SortOrder,
+    TestResultReviewSortField,
+    TestResultReviewStatusEnum,
     TestSuiteSortField,
     TierEnum,
 )
@@ -68,9 +70,11 @@ from .input_types import (
     ParameterInputType,
     PerCheckTestReviewInputType,
     QuestionAnswerPairInputType,
-    ReviewTableFilterOptionsInput,
     RunResultFilterOptionsInput,
+    RunReviewTableFilterOptionsInput,
+    TestFilterOptions,
     TestMutationInfo,
+    TestReviewFilterOptionsInput,
 )
 from .list_runs import (
     ListRuns,
@@ -93,6 +97,7 @@ from .pull_run import (
     PullRunTestResultsTest,
 )
 from .remove_old_tests import RemoveOldTests, RemoveOldTestsRemoveUnusedTests
+from .rerun_tests import RerunTests, RerunTestsRerunFailingTests
 from .run_param_info import RunParamInfo
 from .run_status import RunStatus, RunStatusRun
 from .start_run import StartRun, StartRunStartRun
@@ -170,19 +175,25 @@ __all__ = [
     "QuestionAnswerPairInputType",
     "RemoveOldTests",
     "RemoveOldTestsRemoveUnusedTests",
-    "ReviewTableFilterOptionsInput",
-    "ReviewTableSortField",
-    "RunHumanReviewStatusEnum",
+    "RerunTests",
+    "RerunTestsRerunFailingTests",
     "RunParamInfo",
     "RunResultFilterOptionsInput",
     "RunResultSortField",
+    "RunReviewStatusEnum",
+    "RunReviewTableFilterOptionsInput",
+    "RunReviewTableSortField",
     "RunStatus",
     "RunStatus",
     "RunStatusRun",
     "SortOrder",
     "StartRun",
     "StartRunStartRun",
+    "TestFilterOptions",
     "TestMutationInfo",
+    "TestResultReviewSortField",
+    "TestResultReviewStatusEnum",
+    "TestReviewFilterOptionsInput",
     "TestSuiteSortField",
     "TierEnum",
     "UpdateGlobalChecks",

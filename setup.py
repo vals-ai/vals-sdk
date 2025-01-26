@@ -15,6 +15,7 @@ setup(
         "descope",
         "pydantic",
         "httpx",
+        "tabulate",
     ],
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
