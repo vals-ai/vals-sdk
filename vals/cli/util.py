@@ -1,7 +1,6 @@
 import sys
 
 import click
-from vals.sdk.util import list_rag_suites
 
 
 def prompt_user_for_rag_suite():

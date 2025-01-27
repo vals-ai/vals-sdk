@@ -52,12 +52,14 @@ class Suite(BaseModel):
     _client: Client = PrivateAttr(default_factory=get_ariadne_client)
 
     @classmethod
-    async def list_suites(cls, limit=50, offset=0, search="") -> list[TestSuiteMetadata]:
+    async def list_suites(
+        cls, limit=50, offset=0, search=""
+    ) -> list[TestSuiteMetadata]:
         """
         Generate a list of all the test suites on the server.
 
         limit: Total number to return
-        offset: Start list at this index.
+        offset: Start list at this index
         """
         client = get_ariadne_client()
         gql_response = await client.get_test_suites_with_count(

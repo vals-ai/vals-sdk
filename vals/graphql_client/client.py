@@ -9,8 +9,10 @@ from .base_model import UNSET, UnsetType
 from .batch_add_question_answer_pairs import BatchAddQuestionAnswerPairs
 from .create_or_update_test_suite import CreateOrUpdateTestSuite
 from .create_question_answer_set import CreateQuestionAnswerSet
+from .create_rag_suite import CreateRagSuite
 from .delete_test_suite import DeleteTestSuite
 from .get_operators import GetOperators
+from .get_rag_suites import GetRagSuites
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites_with_count import GetTestSuitesWithCount
@@ -433,6 +435,28 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return RemoveOldTests.model_validate(data)
 
+    async def create_rag_suite(
+        self, query: str, file_path: str, **kwargs: Any
+    ) -> CreateRagSuite:
+        _query = gql(
+            """
+            mutation createRagSuite($query: String!, $filePath: String!) {
+              updateRagSuite(ragSuiteId: "0", query: $query, filePath: $filePath) {
+                ragSuite {
+                  id
+                  query
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"query": query, "filePath": file_path}
+        response = await self.execute(
+            query=_query, operation_name="createRagSuite", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return CreateRagSuite.model_validate(data)
+
     async def rerun_tests(self, run_id: str, **kwargs: Any) -> RerunTests:
         query = gql(
             """
@@ -514,7 +538,9 @@ class Client(AsyncBaseClient):
         query = gql(
             """
             query getTestSuitesWithCount($offset: Int, $limit: Int, $search: String) {
-              testSuitesWithCount(filterOptions: {offset: $offset, limit: $limit, search: $search}) {
+              testSuitesWithCount(
+                filterOptions: {offset: $offset, limit: $limit, search: $search}
+              ) {
                 testSuites {
                   id
                   title
@@ -532,7 +558,11 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"offset": offset, "limit": limit, "search": search}
+        variables: Dict[str, object] = {
+            "offset": offset,
+            "limit": limit,
+            "search": search,
+        }
         response = await self.execute(
             query=query,
             operation_name="getTestSuitesWithCount",
@@ -559,3 +589,23 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return GetOperators.model_validate(data)
+
+    async def get_rag_suites(self, **kwargs: Any) -> GetRagSuites:
+        query = gql(
+            """
+            query getRagSuites {
+              ragSuites {
+                id
+                org
+                path
+                query
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {}
+        response = await self.execute(
+            query=query, operation_name="getRagSuites", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return GetRagSuites.model_validate(data)

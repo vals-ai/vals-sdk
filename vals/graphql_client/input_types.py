@@ -7,22 +7,24 @@ from pydantic import Field
 
 from .base_model import BaseModel
 from .enums import (
-    ReviewTableSortField,
-    RunHumanReviewStatusEnum,
     RunResultSortField,
+    RunReviewStatusEnum,
+    RunReviewTableSortField,
     RunStatus,
     SortOrder,
+    TestResultReviewSortField,
+    TestResultReviewStatusEnum,
     TestSuiteSortField,
 )
 
 
-class ReviewTableFilterOptionsInput(BaseModel):
+class RunReviewTableFilterOptionsInput(BaseModel):
     limit: Optional[int] = None
     offset: Optional[int] = None
     search: Optional[str] = None
-    sort_by: Optional[ReviewTableSortField] = Field(alias="sortBy", default=None)
+    sort_by: Optional[RunReviewTableSortField] = Field(alias="sortBy", default=None)
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
-    status: Optional[RunHumanReviewStatusEnum] = None
+    status: Optional[RunReviewStatusEnum] = None
 
 
 class FilterOptionsInput(BaseModel):
@@ -33,6 +35,13 @@ class FilterOptionsInput(BaseModel):
     test_suite_id: Optional[str] = Field(alias="testSuiteId", default=None)
     sort_by: Optional[TestSuiteSortField] = Field(alias="sortBy", default=None)
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+
+
+class TestFilterOptions(BaseModel):
+    search: Optional[str] = None
+    tags: Optional[List[Optional[str]]] = None
+    offset: Optional[int] = None
+    limit: Optional[int] = None
 
 
 class RunResultFilterOptionsInput(BaseModel):
@@ -49,6 +58,15 @@ class RunResultFilterOptionsInput(BaseModel):
     suite_ids: Optional[List[str]] = Field(alias="suiteIds", default=None)
     sort_by: Optional[RunResultSortField] = Field(alias="sortBy", default=None)
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+
+
+class TestReviewFilterOptionsInput(BaseModel):
+    limit: Optional[int] = None
+    offset: Optional[int] = None
+    search: Optional[str] = None
+    sort_by: Optional[TestResultReviewSortField] = Field(alias="sortBy", default=None)
+    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+    status: Optional[TestResultReviewStatusEnum] = None
 
 
 class CheckInputType(BaseModel):

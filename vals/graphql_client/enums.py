@@ -4,6 +4,13 @@
 from enum import Enum
 
 
+class RunReviewStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    ARCHIVED = "ARCHIVED"
+    CANCELLED = "CANCELLED"
+
+
 class AppQuestionAnswerSetCreationMethodChoices(str, Enum):
     LIVE_QUERY = "LIVE_QUERY"
     SDK = "SDK"
@@ -17,17 +24,16 @@ class RunStatus(str, Enum):
     RERUNNING = "RERUNNING"
 
 
-class RunHumanReviewStatusEnum(str, Enum):
+class TestResultReviewStatusEnum(str, Enum):
     PENDING = "PENDING"
     COMPLETED = "COMPLETED"
     ARCHIVED = "ARCHIVED"
 
 
-class ReviewTableSortField(str, Enum):
+class RunReviewTableSortField(str, Enum):
     CREATED_AT = "CREATED_AT"
     COMPLETED_TIME = "COMPLETED_TIME"
     STATUS = "STATUS"
-    COMPLETED_AT = "COMPLETED_AT"
 
 
 class SortOrder(str, Enum):
@@ -52,3 +58,9 @@ class TierEnum(str, Enum):
     FREE = "FREE"
     STARTUP = "STARTUP"
     ENTERPRISE = "ENTERPRISE"
+
+
+class TestResultReviewSortField(str, Enum):
+    STARTED_AT = "STARTED_AT"
+    STATUS = "STATUS"
+    COMPLETED_AT = "COMPLETED_AT"
