@@ -387,8 +387,6 @@ class Suite(BaseModel):
         # Next, for files we haven't uploaded yet, we upload them
         # and add them to the dictionary
         for test in self.tests:
-            print("FILES UNDER TEST", test.files_under_test)
-            print("TEST FILE IDS", test._file_ids)
             if len(test.files_under_test) != 0:
                 file_ids = []
                 for file_path in test.files_under_test:
