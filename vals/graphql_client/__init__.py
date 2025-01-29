@@ -31,16 +31,20 @@ from .create_rag_suite import (
 )
 from .delete_test_suite import DeleteTestSuite, DeleteTestSuiteDeleteSuite
 from .enums import (
+    AppPairwiseRunReviewWinningRunChoices,
+    AppPairwiseTestResultReviewWinningRunChoices,
     AppQuestionAnswerSetCreationMethodChoices,
     RunResultSortField,
     RunReviewStatusEnum,
     RunReviewTableSortField,
     RunStatus,
     SortOrder,
+    TestResultCheckErrorEnum,
     TestResultReviewSortField,
     TestResultReviewStatusEnum,
     TestSuiteSortField,
     TierEnum,
+    WinningRunEnum,
 )
 from .exceptions import (
     GraphQLClientError,
@@ -74,6 +78,7 @@ from .input_types import (
     RunReviewTableFilterOptionsInput,
     TestFilterOptions,
     TestMutationInfo,
+    TestResultFilterOptions,
     TestReviewFilterOptionsInput,
 )
 from .list_runs import (
@@ -111,6 +116,8 @@ __all__ = [
     "AddBatchTestsBatchUpdateTest",
     "AddBatchTestsBatchUpdateTestTests",
     "AddBatchTestsBatchUpdateTestTestsTestSuite",
+    "AppPairwiseRunReviewWinningRunChoices",
+    "AppPairwiseTestResultReviewWinningRunChoices",
     "AppQuestionAnswerSetCreationMethodChoices",
     "AsyncBaseClient",
     "BaseModel",
@@ -191,6 +198,8 @@ __all__ = [
     "StartRunStartRun",
     "TestFilterOptions",
     "TestMutationInfo",
+    "TestResultCheckErrorEnum",
+    "TestResultFilterOptions",
     "TestResultReviewSortField",
     "TestResultReviewStatusEnum",
     "TestReviewFilterOptionsInput",
@@ -199,4 +208,5 @@ __all__ = [
     "UpdateGlobalChecks",
     "UpdateGlobalChecksUpdateGlobalChecks",
     "Upload",
+    "WinningRunEnum",
 ]

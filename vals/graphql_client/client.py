@@ -222,6 +222,7 @@ class Client(AsyncBaseClient):
                 qaPair {
                   context
                   outputContext
+                  errorMessage
                 }
                 test {
                   testId

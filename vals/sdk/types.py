@@ -379,6 +379,8 @@ class TestResult(BaseModel):
     check_results: list[CheckResult]
     """Results for every check"""
 
+    error_message: str = ""
+
     @classmethod
     def from_graphql(cls, graphql_test_result: PullRunTestResults) -> "TestResult":
         output_context = {}
@@ -396,6 +398,7 @@ class TestResult(BaseModel):
             output_context=output_context,
             llm_output=graphql_test_result.llm_output,
             pass_percentage=graphql_test_result.pass_percentage,
+            error_message=graphql_test_result.qa_pair.error_message,
             check_results=[
                 CheckResult(
                     operator=check_result["operator"],
