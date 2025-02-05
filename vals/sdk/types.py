@@ -440,3 +440,18 @@ class QuestionAnswerPair(BaseModel):
             ),
             test_id=None,
         )
+
+
+class OperatorInput(BaseModel):
+    input: str
+    llm_output: str
+    context: dict[str, str]
+    files: dict[str, BytesIO]
+
+
+class OperatorOutput(BaseModel):
+    name: str
+    score: int
+
+
+ModelCustomOperatorFunctionType = Callable[[OperatorInput], OperatorOutput]

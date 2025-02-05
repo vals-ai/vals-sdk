@@ -2,7 +2,7 @@
 # Source: http://localhost:8000/graphql/
 
 from typing import Any, List, Optional
-
+from io import BytesIO
 from pydantic import Field
 
 from .base_model import BaseModel
