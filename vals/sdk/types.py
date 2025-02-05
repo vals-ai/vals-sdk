@@ -444,14 +444,16 @@ class QuestionAnswerPair(BaseModel):
 
 class OperatorInput(BaseModel):
     input: str
-    llm_output: str
-    context: dict[str, str]
-    files: dict[str, BytesIO]
+    model_output: str
+    context: dict[str, str] | None = None
+    output_context: dict[str, str] | None = None
+    files: dict[str, BytesIO] | None = None
 
 
 class OperatorOutput(BaseModel):
     name: str
     score: int
+    explanation: str
 
 
 ModelCustomOperatorFunctionType = Callable[[OperatorInput], OperatorOutput]

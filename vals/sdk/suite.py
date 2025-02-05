@@ -21,6 +21,7 @@ from vals.sdk.types import (
     ModelCustomOperatorFunctionType,
     ModelFunctionType,
     ModelFunctionWithFilesAndContextType,
+    OperatorInput,
     OperatorOutput,
     QuestionAnswerPair,
     RunParameters,
@@ -593,10 +594,17 @@ class Suite(BaseModel):
     ) -> OperatorOutput:
         """Process a single QA pair through the custom operator.
         Handles both async and sync custom operator functions."""
+        operator_input = OperatorInput(
+            input=qa_pair.input_under_test,
+            model_output=qa_pair.llm_output,
+            files=qa_pair.file_ids,
+            context=qa_pair.context,
+            output_context=qa_pair.output_context,
+        )
         if inspect.iscoroutinefunction(custom_operator):
-            result = await custom_operator(qa_pair)
+            result = await custom_operator(operator_input)
         else:
-            result = custom_operator(qa_pair)
+            result = custom_operator(operator_input)
 
         return result
 
