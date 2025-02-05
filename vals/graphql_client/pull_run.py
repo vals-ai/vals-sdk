@@ -71,6 +71,7 @@ class PullRunTestResults(BaseModel):
 class PullRunTestResultsQaPair(BaseModel):
     context: Any
     output_context: Any = Field(alias="outputContext")
+    error_message: str = Field(alias="errorMessage")
 
 
 class PullRunTestResultsTest(BaseModel):
