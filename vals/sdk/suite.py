@@ -35,6 +35,7 @@ from vals.sdk.util import (
     parse_file_id,
     read_file,
 )
+import asyncio
 
 
 class Suite(BaseModel):
@@ -260,7 +261,7 @@ class Suite(BaseModel):
         run_name: str | None = None,
         wait_for_completion: bool = False,
         parameters: RunParameters | None = None,
-    ):
+    ) -> Run:
         """
         Runs based on a model string (e.g. "gpt-4o").
         """
@@ -274,10 +275,15 @@ class Suite(BaseModel):
         run_name: str | None = None,
         wait_for_completion: bool = False,
         parameters: RunParameters | None = None,
-    ):
+        push_qa_batch_size: int | None = None,
+    ) -> Run:
         """
         Runs based on a model function. This can either be a simple model function, which just takes
-        an input as a string and produces an output string, or a model function that takes in the input string, a dictionary of filename to file contents, and a context dictionary.
+        an input as a string and produces an output string, or a model function that takes in the input string,
+        a dictionary of filename to file contents, and a context dictionary.
+
+        Args:
+            push_qa_batch_size: How frequently to upload QA pairs to the server. Defaults to parameters.parallelism.
         """
         pass
 
@@ -293,8 +299,9 @@ class Suite(BaseModel):
         """
         Runs based on on a list of question-answer pairs, which contain inputs and outputs.
 
-        IMPORTANT NOTE: The combined "inputs" of the question-answer pairs (the input under test, the context, and the files) need
-        to match exactly the inputs of the tests in the suite, otherwise, Vals will not know how to match to the auto-eval correctly.
+        IMPORTANT NOTE: The combined "inputs" of the question-answer pairs (the input under test, the context,
+        and the files) need to match exactly the inputs of the tests in the suite, otherwise, Vals will not
+        know how to match to the auto-eval correctly.
         """
         pass
 
@@ -305,9 +312,14 @@ class Suite(BaseModel):
         run_name: str | None = None,
         wait_for_completion: bool = False,
         parameters: RunParameters | None = None,
+        push_qa_batch_size: int | None = None,
     ) -> Run:
         """
         Base method for running the test suite. See overloads for documentation.
+
+        Args:
+            push_qa_batch_size: How frequently to upload QA pairs to the server.
+                         Defaults to parameters.parallelism.
         """
         if self.id is None:
             raise Exception(
@@ -315,6 +327,9 @@ class Suite(BaseModel):
             )
         if parameters is None:
             parameters = RunParameters()
+
+        if push_qa_batch_size is None:
+            push_qa_batch_size = parameters.parallelism
 
         parameter_json = parameters.model_dump()
         del parameter_json[
@@ -331,9 +346,11 @@ class Suite(BaseModel):
         if isinstance(model, Callable):
             # Generate the QA pairs from the model function
             parameter_input.model_under_test = model_name
-            qa_pairs = await self._generate_qa_pairs_from_function(model, parameter_input)
-            qa_set_id = await self._create_qa_set(
-                qa_pairs, parameter_input.model_dump(), model_name
+            qa_set_id = await self._create_empty_qa_set(
+                parameter_input.model_dump(), model_name
+            )
+            qa_pairs = await self._generate_qa_pairs_from_function(
+                model, parameter_input, qa_set_id, push_qa_batch_size
             )
         elif isinstance(model, list):
             # Use the QA pairs we are already provided
@@ -349,6 +366,8 @@ class Suite(BaseModel):
             qa_set_id = None
         else:
             raise Exception(f"Got unexpected type for model: {type(model)}")
+
+        # _create_test_results(qa_set_id)
 
         # Start and pull the run.
         response = await self._client.start_run(
@@ -477,10 +496,86 @@ class Suite(BaseModel):
             [gc.to_graphql_input() for gc in self.global_checks],
         )
 
+    async def _create_empty_qa_set(
+        self,
+        parameters: dict[str, int | float | str | bool] = {},
+        model_under_test: str | None = None,
+    ) -> str:
+        """Creates an empty QA set and returns its ID."""
+        if self.id is None:
+            raise Exception(
+                "This suite has not been created yet, so we can't create a QA set from it."
+            )
+
+        response = await self._client.create_question_answer_set(
+            self.id,
+            [],
+            parameters,
+            model_under_test or "sdk",
+        )
+
+        if response.create_question_answer_set is None:
+            raise Exception("Unable to create the question-answer set.")
+
+        return response.create_question_answer_set.question_answer_set.id
+
+    async def _process_single_test(
+        self,
+        test: Test,
+        model_function: ModelFunctionType,
+        is_simple_model_function: bool,
+        files: dict[str, str],
+    ) -> QuestionAnswerPairInputType:
+        """Process a single test and return a QuestionAnswerPair with metadata."""
+        # Add debug delay
+        await asyncio.sleep(1)  # Adds a 1 second delay
+
+        time_start = time()
+        in_tokens_start = patch.in_tokens
+        out_tokens_start = patch.out_tokens
+
+        if is_simple_model_function:
+            casted_model_function = cast(SimpleModelFunctionType, model_function)
+            if inspect.iscoroutinefunction(casted_model_function):
+                llm_output = await casted_model_function(test.input_under_test)
+            else:
+                llm_output = casted_model_function(test.input_under_test)
+        else:
+            casted_model_function = cast(
+                ModelFunctionWithFilesAndContextType, model_function
+            )
+            if inspect.iscoroutinefunction(casted_model_function):
+                llm_output = await casted_model_function(
+                    test.input_under_test, files, test.context
+                )
+            else:
+                llm_output = casted_model_function(
+                    test.input_under_test, files, test.context
+                )
+
+        time_end = time()
+        in_tokens_end = patch.in_tokens
+        out_tokens_end = patch.out_tokens
+
+        return QuestionAnswerPairInputType(
+            input_under_test=test.input_under_test,
+            file_ids=test._file_ids,
+            context=test.context,
+            llm_output=llm_output,
+            metadata=MetadataType(
+                in_tokens=in_tokens_end - in_tokens_start,
+                out_tokens=out_tokens_end - out_tokens_start,
+                duration_seconds=time_end - time_start,
+            ),
+            test_id=test._id,
+        )
+
     async def _generate_qa_pairs_from_function(
         self,
         model_function: ModelFunctionType,
         parameter_input: ParameterInputType,
+        qa_set_id: str,
+        push_qa_batch_size: int,
     ) -> list[QuestionAnswerPairInputType]:
         if self.id is None:
             raise Exception(
@@ -499,21 +594,53 @@ class Suite(BaseModel):
         is_simple_model_function = num_params == 1
 
         # Process tests in parallel with limited concurrency
-        qa_pairs = []
+        qa_pairs: list[QuestionAnswerPairInputType] = []
+        last_uploaded_idx = 0
+        upload_tasks = []
+
         with tqdm(total=len(self.tests), desc="Processing tests") as pbar:
             # Create chunks of tests to process based on maximum_threads
             for i in range(0, len(self.tests), parameter_input.maximum_threads):
-                chunk = self.tests[i:i + parameter_input.maximum_threads]
+                chunk = self.tests[i : i + parameter_input.maximum_threads]
                 # Process each chunk concurrently
                 chunk_results = await asyncio.gather(
-                    *(self._process_single_test(test, model_function, is_simple_model_function) 
-                      for test in chunk)
+                    *(
+                        self._process_single_test(
+                            test, model_function, is_simple_model_function
+                        )
+                        for test in chunk
+                    )
                 )
                 qa_pairs.extend(chunk_results)
                 pbar.update(len(chunk))
 
+                # Upload batch when we reach batch_size
+                while len(qa_pairs) >= last_uploaded_idx + push_qa_batch_size:
+                    batch_to_upload = qa_pairs[
+                        last_uploaded_idx : last_uploaded_idx + push_qa_batch_size
+                    ]
+                    task = asyncio.create_task(
+                        self._client.batch_add_question_answer_pairs(
+                            qa_set_id, batch_to_upload
+                        )
+                    )
+                    upload_tasks.append(task)
+                    last_uploaded_idx += push_qa_batch_size
+
+        # Upload any remaining pairs
+        if last_uploaded_idx < len(qa_pairs):
+            remaining_pairs = qa_pairs[last_uploaded_idx:]
+            task = asyncio.create_task(
+                self._client.batch_add_question_answer_pairs(qa_set_id, remaining_pairs)
+            )
+            upload_tasks.append(task)
+
+        # Wait for all uploads to complete
+        if upload_tasks:
+            await asyncio.gather(*upload_tasks)
+
         return qa_pairs
-    
+
     async def _process_single_test(
         self,
         test: Test,
@@ -521,7 +648,8 @@ class Suite(BaseModel):
         is_simple_model_function: bool,
     ) -> QuestionAnswerPairInputType:
         """Process a single test and return its QuestionAnswerPair.
-        Main thing is to handle both the async and sync cases for the custom model functions."""
+        Main thing is to handle both the async and sync cases for the custom model functions.
+        """
         files = {}
         for file_id in test._file_ids:
             _, file_name, _ = parse_file_id(file_id)
@@ -553,11 +681,17 @@ class Suite(BaseModel):
         time_end = time()
         in_tokens_end = patch.in_tokens
         out_tokens_end = patch.out_tokens
-        
+
         return await self._process_model_output(
-            output, test, test._file_ids, time_start, time_end, 
-            in_tokens_start, out_tokens_start,
-            in_tokens_end, out_tokens_end
+            output,
+            test,
+            test._file_ids,
+            time_start,
+            time_end,
+            in_tokens_start,
+            out_tokens_start,
+            in_tokens_end,
+            out_tokens_end,
         )
 
     async def _create_qa_set(
@@ -603,7 +737,6 @@ class Suite(BaseModel):
                 raise Exception(f"Failed to upload file {file_path}")
             return response.json()["file_id"]
 
-
     async def _process_model_output(
         self,
         output: str | dict | QuestionAnswerPairInputType,
@@ -617,10 +750,11 @@ class Suite(BaseModel):
         out_tokens_end: int,
     ) -> QuestionAnswerPairInputType:
         """Helper function to process model output into a QuestionAnswerPairInputType.
-        The output can now be either a string, a dict or a QuestionAnswerPairInputType, so we need to handle all cases."""
+        The output can now be either a string, a dict or a QuestionAnswerPairInputType, so we need to handle all cases.
+        """
         if isinstance(output, QuestionAnswerPairInputType):
             return output
-        
+
         # If output is just a string, treat it as llm_output
         if isinstance(output, str):
             return QuestionAnswerPairInputType(
@@ -635,14 +769,14 @@ class Suite(BaseModel):
                 ),
                 test_id=test._id,
             )
-        
+
         # If output is a dict, use provided values or defaults
         llm_output = output.get("llm_output", "")
         metadata = output.get("metadata", {})
         in_tokens = metadata.get("in_tokens", in_tokens_end - in_tokens_start)
         out_tokens = metadata.get("out_tokens", out_tokens_end - out_tokens_start)
         output_context = output.get("output_context", None)
-        
+
         return QuestionAnswerPairInputType(
             input_under_test=test.input_under_test,
             file_ids=file_ids,
