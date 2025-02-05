@@ -3,7 +3,7 @@ import json
 import os
 from time import time
 from typing import Any, Callable, cast, overload
-
+import asyncio
 import requests
 import vals.sdk.patch as patch
 from pydantic import BaseModel, PrivateAttr
@@ -331,7 +331,7 @@ class Suite(BaseModel):
         if isinstance(model, Callable):
             # Generate the QA pairs from the model function
             parameter_input.model_under_test = model_name
-            qa_pairs = await self._generate_qa_pairs_from_function(model)
+            qa_pairs = await self._generate_qa_pairs_from_function(model, parameter_input)
             qa_set_id = await self._create_qa_set(
                 qa_pairs, parameter_input.model_dump(), model_name
             )
@@ -480,6 +480,7 @@ class Suite(BaseModel):
     async def _generate_qa_pairs_from_function(
         self,
         model_function: ModelFunctionType,
+        parameter_input: ParameterInputType,
     ) -> list[QuestionAnswerPairInputType]:
         if self.id is None:
             raise Exception(
@@ -489,63 +490,75 @@ class Suite(BaseModel):
         updated_suite = await Suite.from_id(self.id)
         for field in self.__fields__:
             setattr(self, field, getattr(updated_suite, field))
-        # Inspect the model function to determine if it takes 1 or 3 parameters
-        # We dynamically change our call signature based on what the user passes in.
+
+        # Inspect the model function
         sig = inspect.signature(model_function)
         num_params = len(sig.parameters)
         if num_params not in [1, 3]:
             raise ValueError("Model function must accept either 1 or 3 parameters")
         is_simple_model_function = num_params == 1
 
-        qa_pairs: list[QuestionAnswerPairInputType] = []
-        for test in tqdm(self.tests):
-            files = {}
-            for file_id in test._file_ids:
-                _, file_name, _ = parse_file_id(file_id)
-                files[file_name] = read_file(file_id)
-
-            time_start = time()
-            in_tokens_start = patch.in_tokens
-            out_tokens_start = patch.out_tokens
-
-            if is_simple_model_function:
-                casted_model_function = cast(SimpleModelFunctionType, model_function)
-                if inspect.iscoroutinefunction(casted_model_function):
-                    llm_output = await casted_model_function(test.input_under_test)
-                else:
-                    llm_output = casted_model_function(test.input_under_test)
-            else:
-                casted_model_function = cast(
-                    ModelFunctionWithFilesAndContextType, model_function
+        # Process tests in parallel with limited concurrency
+        qa_pairs = []
+        with tqdm(total=len(self.tests), desc="Processing tests") as pbar:
+            # Create chunks of tests to process based on maximum_threads
+            for i in range(0, len(self.tests), parameter_input.maximum_threads):
+                chunk = self.tests[i:i + parameter_input.maximum_threads]
+                # Process each chunk concurrently
+                chunk_results = await asyncio.gather(
+                    *(self._process_single_test(test, model_function, is_simple_model_function) 
+                      for test in chunk)
                 )
-                if inspect.iscoroutinefunction(casted_model_function):
-                    llm_output = await casted_model_function(
-                        test.input_under_test, files, test.context
-                    )
-                else:
-                    llm_output = casted_model_function(
-                        test.input_under_test, files, test.context
-                    )
+                qa_pairs.extend(chunk_results)
+                pbar.update(len(chunk))
 
-            time_end = time()
-            in_tokens_end = patch.in_tokens
-            out_tokens_end = patch.out_tokens
-
-            qa_pairs.append(
-                QuestionAnswerPairInputType(
-                    input_under_test=test.input_under_test,
-                    file_ids=test._file_ids,
-                    context=test.context,
-                    llm_output=llm_output,
-                    metadata=MetadataType(
-                        in_tokens=in_tokens_end - in_tokens_start,
-                        out_tokens=out_tokens_end - out_tokens_start,
-                        duration_seconds=time_end - time_start,
-                    ),
-                    test_id=test._id,
-                )
-            )
         return qa_pairs
+    
+    async def _process_single_test(
+        self,
+        test: Test,
+        model_function: ModelFunctionType,
+        is_simple_model_function: bool,
+    ) -> QuestionAnswerPairInputType:
+        """Process a single test and return its QuestionAnswerPair.
+        Main thing is to handle both the async and sync cases for the custom model functions."""
+        files = {}
+        for file_id in test._file_ids:
+            _, file_name, _ = parse_file_id(file_id)
+            files[file_name] = read_file(file_id)
+
+        time_start = time()
+        in_tokens_start = patch.in_tokens
+        out_tokens_start = patch.out_tokens
+
+        if is_simple_model_function:
+            casted_model_function = cast(SimpleModelFunctionType, model_function)
+            if inspect.iscoroutinefunction(casted_model_function):
+                output = await casted_model_function(test.input_under_test)
+            else:
+                output = casted_model_function(test.input_under_test)
+        else:
+            casted_model_function = cast(
+                ModelFunctionWithFilesAndContextType, model_function
+            )
+            if inspect.iscoroutinefunction(casted_model_function):
+                output = await casted_model_function(
+                    test.input_under_test, files, test.context
+                )
+            else:
+                output = casted_model_function(
+                    test.input_under_test, files, test.context
+                )
+
+        time_end = time()
+        in_tokens_end = patch.in_tokens
+        out_tokens_end = patch.out_tokens
+        
+        return await self._process_model_output(
+            output, test, test._file_ids, time_start, time_end, 
+            in_tokens_start, out_tokens_start,
+            in_tokens_end, out_tokens_end
+        )
 
     async def _create_qa_set(
         self,
@@ -589,3 +602,57 @@ class Suite(BaseModel):
             if response.status_code != 200:
                 raise Exception(f"Failed to upload file {file_path}")
             return response.json()["file_id"]
+
+
+    async def _process_model_output(
+        self,
+        output: str | dict | QuestionAnswerPairInputType,
+        test: Test,
+        file_ids: list[str],
+        time_start: float,
+        time_end: float,
+        in_tokens_start: int,
+        out_tokens_start: int,
+        in_tokens_end: int,
+        out_tokens_end: int,
+    ) -> QuestionAnswerPairInputType:
+        """Helper function to process model output into a QuestionAnswerPairInputType.
+        The output can now be either a string, a dict or a QuestionAnswerPairInputType, so we need to handle all cases."""
+        if isinstance(output, QuestionAnswerPairInputType):
+            return output
+        
+        # If output is just a string, treat it as llm_output
+        if isinstance(output, str):
+            return QuestionAnswerPairInputType(
+                input_under_test=test.input_under_test,
+                file_ids=file_ids,
+                context=test.context,
+                llm_output=output,
+                metadata=MetadataType(
+                    in_tokens=in_tokens_end - in_tokens_start,
+                    out_tokens=out_tokens_end - out_tokens_start,
+                    duration_seconds=time_end - time_start,
+                ),
+                test_id=test._id,
+            )
+        
+        # If output is a dict, use provided values or defaults
+        llm_output = output.get("llm_output", "")
+        metadata = output.get("metadata", {})
+        in_tokens = metadata.get("in_tokens", in_tokens_end - in_tokens_start)
+        out_tokens = metadata.get("out_tokens", out_tokens_end - out_tokens_start)
+        output_context = output.get("output_context", None)
+        
+        return QuestionAnswerPairInputType(
+            input_under_test=test.input_under_test,
+            file_ids=file_ids,
+            context=test.context,
+            llm_output=llm_output,
+            output_context=output_context,
+            metadata=MetadataType(
+                in_tokens=in_tokens,
+                out_tokens=out_tokens,
+                duration_seconds=time_end - time_start,
+            ),
+            test_id=test._id,
+        )
