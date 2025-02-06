@@ -168,7 +168,7 @@ class Suite(BaseModel):
         Converts the test suite to a JSON file.
         """
         with open(file_path, "w") as f:
-            json.dump(self.to_dict(), f, indent=2)
+            f.write(self.to_json_string())
 
     def to_csv_string(self) -> str:
         """
