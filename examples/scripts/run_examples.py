@@ -3,6 +3,7 @@ from io import BytesIO
 from typing import Any
 
 from vals import Check, QuestionAnswerPair, Run, Suite, Test
+from vals.sdk.types import OperatorInput, OperatorOutput
 
 
 async def run_with_model_under_test():
@@ -46,6 +47,49 @@ async def run_with_function():
 
     run = await suite.run(
         model=function, wait_for_completion=True, model_name="my_function_model"
+    )
+
+    print(f"Run URL: {run.url}")
+    print(f"Pass percentage: {run.pass_percentage}")
+
+
+async def custom_operator(input: OperatorInput) -> OperatorOutput:
+    return OperatorOutput(
+        name="my_custom_operator", score=1, explanation="Hello, world!"
+    )
+
+
+async def custom_operator2(input: OperatorInput) -> OperatorOutput:
+    return OperatorOutput(
+        name="my_custom_operator", score=0, explanation="Goodbye, world!"
+    )
+
+
+def custom_model(input: str) -> str:
+    return input + "!!!"
+
+
+async def run_with_local_eval():
+    suite = Suite(
+        title="Test Suite",
+        tests=[
+            Test(
+                input_under_test="What is QSBS?",
+                checks=[Check(operator="equals", criteria="QSBS")],
+            ),
+        ],
+    )
+
+    await suite.create()
+
+    qa_pairs = [QuestionAnswerPair(input_under_test="What is QSBS?", llm_output="QSBS")]
+
+    run = await suite.run(
+        model=qa_pairs,
+        wait_for_completion=True,
+        model_name="my_function_model",
+        push_qa_batch_size=2,
+        custom_operators=[custom_operator, custom_operator2],
     )
 
     print(f"Run URL: {run.url}")
@@ -154,11 +198,12 @@ async def pull_run(run_id: str):
 
 
 async def all():
-    await run_with_model_under_test()
-    await run_with_function()
-    await run_with_function_context_and_files()
-    await run_with_qa_pairs()
-    await run_with_qa_pairs_and_context()
+    await run_with_local_eval()
+    # await run_with_model_under_test()
+    # await run_with_function()
+    # await run_with_function_context_and_files()
+    # await run_with_qa_pairs()
+    # await run_with_qa_pairs_and_context()
     #   await pull_run("19dc86c6-774e-4946-99f4-01ad1bcf4ccf")
 
 
