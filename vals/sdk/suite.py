@@ -585,15 +585,12 @@ class Suite(BaseModel):
 
         # Upload any remaining results
         if last_uploaded_idx < len(operator_results):
-            batch_to_upload = operator_results[
-                last_uploaded_idx : last_uploaded_idx + push_qa_batch_size
-            ]
+            batch_to_upload = operator_results[last_uploaded_idx:]
 
             task = asyncio.create_task(
                 self._client.upload_local_evaluation(qa_set_id, batch_to_upload)
             )
             upload_tasks.append(task)
-            last_uploaded_idx += push_qa_batch_size
 
         # Wait for all uploads to complete
         if upload_tasks:
@@ -634,56 +631,11 @@ class Suite(BaseModel):
 
         return local_eval
 
-    async def _process_single_test(
-        self,
-        test: Test,
-        model_function: ModelFunctionType,
-        is_simple_model_function: bool,
-        files: dict[str, str],
-    ) -> QuestionAnswerPairInputType:
-        """Process a single test and return a QuestionAnswerPair with metadata."""
-        # Add debug delay
-        await asyncio.sleep(1)  # Adds a 1 second delay
-
-        time_start = time()
-        in_tokens_start = patch.in_tokens
-        out_tokens_start = patch.out_tokens
-
-        if is_simple_model_function:
-            casted_model_function = cast(SimpleModelFunctionType, model_function)
-            if inspect.iscoroutinefunction(casted_model_function):
-                llm_output = await casted_model_function(test.input_under_test)
-            else:
-                llm_output = casted_model_function(test.input_under_test)
-        else:
-            casted_model_function = cast(
-                ModelFunctionWithFilesAndContextType, model_function
-            )
-            if inspect.iscoroutinefunction(casted_model_function):
-                llm_output = await casted_model_function(
-                    test.input_under_test, files, test.context
-                )
-            else:
-                llm_output = casted_model_function(
-                    test.input_under_test, files, test.context
-                )
-
-        time_end = time()
-        in_tokens_end = patch.in_tokens
-        out_tokens_end = patch.out_tokens
-
-        return QuestionAnswerPairInputType(
-            input_under_test=test.input_under_test,
-            file_ids=test._file_ids,
-            context=test.context,
-            llm_output=llm_output,
-            metadata=MetadataType(
-                in_tokens=in_tokens_end - in_tokens_start,
-                out_tokens=out_tokens_end - out_tokens_start,
-                duration_seconds=time_end - time_start,
-            ),
-            test_id=test._id,
-        )
+    async def _deserialize_qa_pair_file_ids(self, qa_pair):
+        """Helper method to deserialize file_ids in a QA pair if they're stored as a string."""
+        if hasattr(qa_pair, "file_ids") and isinstance(qa_pair.file_ids, str):
+            qa_pair.file_ids = json.loads(qa_pair.file_ids)
+        return qa_pair
 
     async def _generate_qa_pairs_from_function(
         self,
@@ -755,11 +707,14 @@ class Suite(BaseModel):
         if upload_tasks:
             uploaded_qa_pairs.extend(
                 [
-                    qa_pair
+                    await self._deserialize_qa_pair_file_ids(qa_pair)
                     for result in await asyncio.gather(*upload_tasks)
                     for qa_pair in result.batch_add_question_answer_pairs.question_answer_pairs
                 ]
             )
+
+        print("Uploaded QA pairs", len(uploaded_qa_pairs))
+        print(uploaded_qa_pairs[0].file_ids)
 
         return uploaded_qa_pairs
 
@@ -776,6 +731,8 @@ class Suite(BaseModel):
         for file_id in test._file_ids:
             _, file_name, _ = parse_file_id(file_id)
             files[file_name] = read_file(file_id)
+
+        print("Processing", test.input_under_test, test._file_ids, test.context)
 
         time_start = time()
         in_tokens_start = patch.in_tokens
@@ -803,6 +760,12 @@ class Suite(BaseModel):
         time_end = time()
         in_tokens_end = patch.in_tokens
         out_tokens_end = patch.out_tokens
+
+        print("-----------------------------")
+        print("input_under_test", test.input_under_test)
+        print("_file_ids", test._file_ids)
+        print("_id", test._id)
+        print("-----------------------------")
 
         return await self._process_model_output(
             output,
