@@ -52,7 +52,9 @@ class Suite(BaseModel):
     _client: Client = PrivateAttr(default_factory=get_ariadne_client)
 
     @classmethod
-    async def list_suites(cls, limit=50, offset=0, search="") -> list[TestSuiteMetadata]:
+    async def list_suites(
+        cls, limit=50, offset=0, search=""
+    ) -> list[TestSuiteMetadata]:
         """
         Generate a list of all the test suites on the server.
 
@@ -180,6 +182,24 @@ class Suite(BaseModel):
             url,
             headers={"Authorization": _get_auth_token()},
         )
+        if response.status_code != 200:
+            raise Exception(f"Failed to export tests: {response.text}")
+
+        return response.text
+
+    def to_json_string(self) -> str:
+        """
+        Converts the test suite to a JSON string.
+        """
+        if not self.id:
+            raise Exception("Suite has not been created yet.")
+
+        url = f"{be_host()}/export_tests_to_json/?suite_id={self.id}"
+        response = requests.post(
+            url,
+            headers={"Authorization": _get_auth_token()},
+        )
+
         if response.status_code != 200:
             raise Exception(f"Failed to export tests: {response.text}")
 

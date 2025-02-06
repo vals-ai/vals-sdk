@@ -10,6 +10,7 @@ from vals.sdk.suite import Suite
 from vals.sdk.types import RunParameters, RunStatus
 from tabulate import tabulate
 
+
 @click.group(name="suite")
 def suite_group():
     """
@@ -108,7 +109,7 @@ async def pull_command_async(
     if to_csv:
         file.write(suite.to_csv_string())
     else:
-        file.write(json.dumps(suite.to_dict(), indent=2))
+        file.write(suite.to_json_string())
 
     click.secho("Successfully pulled test suite.", fg="green")
 
