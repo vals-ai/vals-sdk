@@ -18,6 +18,7 @@ from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites_with_count import GetTestSuitesWithCount
 from .input_types import (
     CheckInputType,
+    LocalEvalUploadInputType,
     ParameterInputType,
     QuestionAnswerPairInputType,
     TestMutationInfo,
@@ -30,7 +31,7 @@ from .run_param_info import RunParamInfo
 from .run_status import RunStatus
 from .start_run import StartRun
 from .update_global_checks import UpdateGlobalChecks
-import asyncio
+from .upload_local_evaluation import UploadLocalEvaluation
 
 
 def gql(q: str) -> str:
@@ -92,6 +93,11 @@ class Client(AsyncBaseClient):
               ) {
                 questionAnswerPairs {
                   id
+                  inputUnderTest
+                  llmOutput
+                  fileIds
+                  context
+                  outputContext
                 }
               }
             }
@@ -474,6 +480,42 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return RerunTests.model_validate(data)
+
+    async def upload_local_evaluation(
+        self,
+        question_answer_set_id: str,
+        local_evals: List[LocalEvalUploadInputType],
+        **kwargs: Any
+    ) -> UploadLocalEvaluation:
+        query = gql(
+            """
+            mutation uploadLocalEvaluation($questionAnswerSetId: String!, $localEvals: [LocalEvalUploadInputType!]!) {
+              uploadLocalEvaluation(
+                questionAnswerSetId: $questionAnswerSetId
+                localEvals: $localEvals
+              ) {
+                uploads {
+                  id
+                  score
+                  feedback
+                  createdAt
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {
+            "questionAnswerSetId": question_answer_set_id,
+            "localEvals": local_evals,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="uploadLocalEvaluation",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return UploadLocalEvaluation.model_validate(data)
 
     async def get_test_suite_data(
         self, suite_id: str, **kwargs: Any

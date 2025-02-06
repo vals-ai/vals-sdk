@@ -449,6 +449,8 @@ class OperatorInput(BaseModel):
     output_context: dict[str, str] | None = None
     files: dict[str, BytesIO] | None = None
 
+    model_config = {"arbitrary_types_allowed": True}
+
 
 class OperatorOutput(BaseModel):
     name: str

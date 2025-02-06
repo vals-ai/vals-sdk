@@ -1,9 +1,10 @@
+import asyncio
 import inspect
 import json
 import os
 from time import time
 from typing import Any, Callable, cast, overload
-import asyncio
+
 import requests
 import vals.sdk.patch as patch
 from pydantic import BaseModel, PrivateAttr
@@ -11,6 +12,7 @@ from tqdm import tqdm
 from vals.graphql_client.client import Client
 from vals.graphql_client.get_operators import GetOperatorsOperators
 from vals.graphql_client.input_types import (
+    LocalEvalUploadInputType,
     MetadataType,
     ParameterInputType,
     QuestionAnswerPairInputType,
@@ -38,7 +40,6 @@ from vals.sdk.util import (
     parse_file_id,
     read_file,
 )
-import asyncio
 
 
 class Suite(BaseModel):
@@ -316,7 +317,7 @@ class Suite(BaseModel):
         wait_for_completion: bool = False,
         parameters: RunParameters | None = None,
         push_qa_batch_size: int | None = None,
-        custom_operator: ModelCustomOperatorFunctionType | None = None,
+        custom_operators: list[ModelCustomOperatorFunctionType] = [],
     ) -> Run:
         """
         Base method for running the test suite. See overloads for documentation.
@@ -336,6 +337,11 @@ class Suite(BaseModel):
         if push_qa_batch_size is None:
             push_qa_batch_size = parameters.parallelism
 
+        if type(model) == type("") and len(custom_operators) > 0:
+            raise Exception(
+                "Custom operator functions are not supported when using a model string (e.g. a nonlocal model)."
+            )
+
         parameter_json = parameters.model_dump()
         del parameter_json[
             "parallelism"
@@ -354,14 +360,15 @@ class Suite(BaseModel):
             qa_set_id = await self._create_empty_qa_set(
                 parameter_input.model_dump(), model_name
             )
-            qa_pairs = await self._generate_qa_pairs_from_function(
+            uploaded_qa_pairs = await self._generate_qa_pairs_from_function(
                 model, parameter_input, qa_set_id, push_qa_batch_size
             )
         elif isinstance(model, list):
             # Use the QA pairs we are already provided
             parameter_input.model_under_test = model_name
-            qa_set_id = await self._create_qa_set(
-                [qa_pair.to_graphql() for qa_pair in model],
+            qa_pairs = model
+            qa_set_id, uploaded_qa_pairs = await self._create_qa_set(
+                [qa_pair.to_graphql() for qa_pair in qa_pairs],
                 parameter_input.model_dump(),
                 model_name,
             )
@@ -372,21 +379,22 @@ class Suite(BaseModel):
         else:
             raise Exception(f"Got unexpected type for model: {type(model)}")
 
-        # _create_test_results(qa_set_id)
-
         # Start and pull the run.
-        if custom_operator is None:
-            response = await self._client.start_run(
-                self.id, parameter_input, qa_set_id, run_name
+        if len(custom_operators) > 0:
+            await self._upload_local_eval(
+                custom_operators,
+                parameter_input,
+                qa_set_id,
+                uploaded_qa_pairs,
+                push_qa_batch_size,
             )
-            if response.start_run is None:
-                raise Exception("Unable to start the run.")
-            run_id = response.start_run.run_id
 
-        else:
-            run_id = await self._generate_run_results(
-                custom_operator, parameter_input, qa_pairs, push_qa_batch_size
-            )
+        response = await self._client.start_run(
+            self.id, parameter_input, qa_set_id, run_name
+        )
+        if response.start_run is None:
+            raise Exception("Unable to start the run.")
+        run_id = response.start_run.run_id
 
         run = await Run.from_id(run_id)
 
@@ -530,10 +538,11 @@ class Suite(BaseModel):
 
         return response.create_question_answer_set.question_answer_set.id
 
-    async def _generate_run_results(
+    async def _upload_local_eval(
         self,
-        custom_operator: ModelCustomOperatorFunctionType,
+        custom_operators: list[ModelCustomOperatorFunctionType],
         parameter_input: ParameterInputType,
+        qa_set_id: str,
         qa_pairs: list[QuestionAnswerPairInputType],
         push_qa_batch_size: int,
     ) -> str:
@@ -542,10 +551,6 @@ class Suite(BaseModel):
             raise Exception("This suite has not been created yet.")
 
         # Create a new run
-        response = await self._client.start_run(self.id, parameter_input, None, None)
-        if response.start_run is None:
-            raise Exception("Unable to start the run.")
-        run_id = response.start_run.run_id
 
         operator_results = []
         last_uploaded_idx = 0
@@ -557,7 +562,11 @@ class Suite(BaseModel):
                 chunk = qa_pairs[i : i + parameter_input.maximum_threads]
                 # Process each chunk concurrently
                 chunk_results = await asyncio.gather(
-                    *(self._process_single_qa_pair(custom_operator, qa) for qa in chunk)
+                    *(
+                        self._process_single_local_eval(custom_operator, qa)
+                        for custom_operator in custom_operators
+                        for qa in chunk
+                    )
                 )
                 operator_results.extend(chunk_results)
                 pbar.update(len(chunk))
@@ -567,37 +576,47 @@ class Suite(BaseModel):
                     batch_to_upload = operator_results[
                         last_uploaded_idx : last_uploaded_idx + push_qa_batch_size
                     ]
+
                     task = asyncio.create_task(
-                        self._client.batch_add_operator_results(run_id, batch_to_upload)
+                        self._client.upload_local_evaluation(qa_set_id, batch_to_upload)
                     )
                     upload_tasks.append(task)
                     last_uploaded_idx += push_qa_batch_size
 
         # Upload any remaining results
         if last_uploaded_idx < len(operator_results):
-            remaining_results = operator_results[last_uploaded_idx:]
+            batch_to_upload = operator_results[
+                last_uploaded_idx : last_uploaded_idx + push_qa_batch_size
+            ]
+
             task = asyncio.create_task(
-                self._client.batch_add_operator_results(run_id, remaining_results)
+                self._client.upload_local_evaluation(qa_set_id, batch_to_upload)
             )
             upload_tasks.append(task)
+            last_uploaded_idx += push_qa_batch_size
 
         # Wait for all uploads to complete
         if upload_tasks:
             await asyncio.gather(*upload_tasks)
 
-        return run_id
-
-    async def _process_single_qa_pair(
+    async def _process_single_local_eval(
         self,
         custom_operator: ModelCustomOperatorFunctionType,
         qa_pair: QuestionAnswerPairInputType,
-    ) -> OperatorOutput:
+    ) -> LocalEvalUploadInputType:
         """Process a single QA pair through the custom operator.
         Handles both async and sync custom operator functions."""
+
+        files = {}
+        # TODO: This may result in us reading file ids twice
+        for file_id in qa_pair.file_ids:
+            _, file_name, _ = parse_file_id(file_id)
+            files[file_name] = read_file(file_id)
+
         operator_input = OperatorInput(
             input=qa_pair.input_under_test,
             model_output=qa_pair.llm_output,
-            files=qa_pair.file_ids,
+            files=files,
             context=qa_pair.context,
             output_context=qa_pair.output_context,
         )
@@ -606,7 +625,14 @@ class Suite(BaseModel):
         else:
             result = custom_operator(operator_input)
 
-        return result
+        local_eval = LocalEvalUploadInputType(
+            questionAnswerPairId=qa_pair.id,
+            score=result.score,
+            feedback=result.explanation,
+            name=result.name,
+        )
+
+        return local_eval
 
     async def _process_single_test(
         self,
@@ -725,10 +751,17 @@ class Suite(BaseModel):
             upload_tasks.append(task)
 
         # Wait for all uploads to complete
+        uploaded_qa_pairs = []
         if upload_tasks:
-            await asyncio.gather(*upload_tasks)
+            uploaded_qa_pairs.extend(
+                [
+                    qa_pair
+                    for result in await asyncio.gather(*upload_tasks)
+                    for qa_pair in result.batch_add_question_answer_pairs.question_answer_pairs
+                ]
+            )
 
-        return qa_pairs
+        return uploaded_qa_pairs
 
     async def _process_single_test(
         self,
@@ -807,13 +840,17 @@ class Suite(BaseModel):
         )
         set_id = response.create_question_answer_set.question_answer_set.id
 
+        uploaded_qa_pairs = []
         for i in range(0, len(qa_pairs), batch_size):
             batch = qa_pairs[i : i + batch_size]
-            await self._client.batch_add_question_answer_pairs(set_id, batch)
+            uploaded = await self._client.batch_add_question_answer_pairs(set_id, batch)
+            uploaded_qa_pairs.extend(
+                uploaded.batch_add_question_answer_pairs.question_answer_pairs
+            )
         if response.create_question_answer_set is None:
             raise Exception("Unable to create the question-answer set.")
 
-        return set_id
+        return set_id, uploaded_qa_pairs
 
     def _upload_file(self, suite_id: str, file_path: str) -> str:
         with open(file_path, "rb") as f:

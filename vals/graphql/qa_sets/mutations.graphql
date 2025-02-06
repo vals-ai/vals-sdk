@@ -26,6 +26,11 @@ mutation BatchAddQuestionAnswerPairs(
   ) {
     questionAnswerPairs {
       id
+      inputUnderTest
+      llmOutput
+      fileIds
+      context
+      outputContext
     }
   }
 }

@@ -30,6 +30,18 @@ class TestResultReviewStatusEnum(str, Enum):
     ARCHIVED = "ARCHIVED"
 
 
+class AppPairwiseTestResultReviewWinningRunChoices(str, Enum):
+    A = "A"
+    B = "B"
+    TIE = "TIE"
+
+
+class AppPairwiseRunReviewWinningRunChoices(str, Enum):
+    A = "A"
+    B = "B"
+    TIE = "TIE"
+
+
 class RunReviewTableSortField(str, Enum):
     CREATED_AT = "CREATED_AT"
     COMPLETED_TIME = "COMPLETED_TIME"
@@ -39,6 +51,12 @@ class RunReviewTableSortField(str, Enum):
 class SortOrder(str, Enum):
     ASC = "ASC"
     DESC = "DESC"
+
+
+class TestResultReviewSortField(str, Enum):
+    STARTED_AT = "STARTED_AT"
+    STATUS = "STATUS"
+    COMPLETED_AT = "COMPLETED_AT"
 
 
 class TestSuiteSortField(str, Enum):
@@ -54,13 +72,21 @@ class RunResultSortField(str, Enum):
     PASS_PERCENTAGE = "PASS_PERCENTAGE"
 
 
+class TestResultCheckErrorEnum(str, Enum):
+    ALL = "ALL"
+    SOME_CHECKS_FAILED = "SOME_CHECKS_FAILED"
+    ALL_CHECKS_FAILED = "ALL_CHECKS_FAILED"
+    ALL_CHECKS_PASSED = "ALL_CHECKS_PASSED"
+    TESTS_WITH_OUTPUT_ERRORS = "TESTS_WITH_OUTPUT_ERRORS"
+
+
 class TierEnum(str, Enum):
     FREE = "FREE"
     STARTUP = "STARTUP"
     ENTERPRISE = "ENTERPRISE"
 
 
-class TestResultReviewSortField(str, Enum):
-    STARTED_AT = "STARTED_AT"
-    STATUS = "STATUS"
-    COMPLETED_AT = "COMPLETED_AT"
+class WinningRunEnum(str, Enum):
+    A = "A"
+    B = "B"
+    TIE = "TIE"

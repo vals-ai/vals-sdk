@@ -2,7 +2,7 @@
 # Source: http://localhost:8000/graphql/
 
 from typing import Any, List, Optional
-from io import BytesIO
+
 from pydantic import Field
 
 from .base_model import BaseModel
@@ -12,6 +12,7 @@ from .enums import (
     RunReviewTableSortField,
     RunStatus,
     SortOrder,
+    TestResultCheckErrorEnum,
     TestResultReviewSortField,
     TestResultReviewStatusEnum,
     TestSuiteSortField,
@@ -25,6 +26,15 @@ class RunReviewTableFilterOptionsInput(BaseModel):
     sort_by: Optional[RunReviewTableSortField] = Field(alias="sortBy", default=None)
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
     status: Optional[RunReviewStatusEnum] = None
+
+
+class TestReviewFilterOptionsInput(BaseModel):
+    limit: Optional[int] = None
+    offset: Optional[int] = None
+    search: Optional[str] = None
+    sort_by: Optional[TestResultReviewSortField] = Field(alias="sortBy", default=None)
+    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+    status: Optional[TestResultReviewStatusEnum] = None
 
 
 class FilterOptionsInput(BaseModel):
@@ -60,13 +70,14 @@ class RunResultFilterOptionsInput(BaseModel):
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
 
 
-class TestReviewFilterOptionsInput(BaseModel):
-    limit: Optional[int] = None
-    offset: Optional[int] = None
+class TestResultFilterOptions(BaseModel):
     search: Optional[str] = None
-    sort_by: Optional[TestResultReviewSortField] = Field(alias="sortBy", default=None)
-    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
-    status: Optional[TestResultReviewStatusEnum] = None
+    tags: Optional[List[Optional[str]]] = None
+    check_error: Optional[TestResultCheckErrorEnum] = Field(
+        alias="checkError", default=None
+    )
+    offset: Optional[int] = None
+    limit: Optional[int] = None
 
 
 class CheckInputType(BaseModel):
@@ -120,12 +131,6 @@ class ParameterInputType(BaseModel):
     new_line_stop_option: bool = Field(alias="newLineStopOption")
 
 
-class PerCheckTestReviewInputType(BaseModel):
-    id: int
-    binary_human_eval: Optional[int] = Field(alias="binaryHumanEval", default=None)
-    is_flagged: Optional[bool] = Field(alias="isFlagged", default=None)
-
-
 class FixedOutputInputType(BaseModel):
     label: str
     text: str
@@ -145,6 +150,19 @@ class MetadataType(BaseModel):
     in_tokens: int = Field(alias="inTokens")
     out_tokens: int = Field(alias="outTokens")
     duration_seconds: float = Field(alias="durationSeconds")
+
+
+class PerCheckTestReviewInputType(BaseModel):
+    id: int
+    binary_human_eval: Optional[int] = Field(alias="binaryHumanEval", default=None)
+    is_flagged: Optional[bool] = Field(alias="isFlagged", default=None)
+
+
+class LocalEvalUploadInputType(BaseModel):
+    question_answer_pair_id: str = Field(alias="questionAnswerPairId")
+    name: str
+    score: float
+    feedback: str
 
 
 CheckInputType.model_rebuild()

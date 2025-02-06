@@ -70,3 +70,20 @@ mutation RerunTests($runId: String!) {
     success
   }
 }
+
+mutation uploadLocalEvaluation(
+  $questionAnswerSetId: String!
+  $localEvals: [LocalEvalUploadInputType!]!
+) {
+  uploadLocalEvaluation(
+    questionAnswerSetId: $questionAnswerSetId
+    localEvals: $localEvals
+  ) {
+    uploads {
+      id
+      score
+      feedback
+      createdAt
+    }
+  }
+}

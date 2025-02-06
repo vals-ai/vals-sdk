@@ -31,16 +31,20 @@ from .create_rag_suite import (
 )
 from .delete_test_suite import DeleteTestSuite, DeleteTestSuiteDeleteSuite
 from .enums import (
+    AppPairwiseRunReviewWinningRunChoices,
+    AppPairwiseTestResultReviewWinningRunChoices,
     AppQuestionAnswerSetCreationMethodChoices,
     RunResultSortField,
     RunReviewStatusEnum,
     RunReviewTableSortField,
     RunStatus,
     SortOrder,
+    TestResultCheckErrorEnum,
     TestResultReviewSortField,
     TestResultReviewStatusEnum,
     TestSuiteSortField,
     TierEnum,
+    WinningRunEnum,
 )
 from .exceptions import (
     GraphQLClientError,
@@ -66,6 +70,7 @@ from .input_types import (
     ExampleInputType,
     FilterOptionsInput,
     FixedOutputInputType,
+    LocalEvalUploadInputType,
     MetadataType,
     ParameterInputType,
     PerCheckTestReviewInputType,
@@ -74,6 +79,7 @@ from .input_types import (
     RunReviewTableFilterOptionsInput,
     TestFilterOptions,
     TestMutationInfo,
+    TestResultFilterOptions,
     TestReviewFilterOptionsInput,
 )
 from .list_runs import (
@@ -105,12 +111,19 @@ from .update_global_checks import (
     UpdateGlobalChecks,
     UpdateGlobalChecksUpdateGlobalChecks,
 )
+from .upload_local_evaluation import (
+    UploadLocalEvaluation,
+    UploadLocalEvaluationUploadLocalEvaluation,
+    UploadLocalEvaluationUploadLocalEvaluationUploads,
+)
 
 __all__ = [
     "AddBatchTests",
     "AddBatchTestsBatchUpdateTest",
     "AddBatchTestsBatchUpdateTestTests",
     "AddBatchTestsBatchUpdateTestTestsTestSuite",
+    "AppPairwiseRunReviewWinningRunChoices",
+    "AppPairwiseTestResultReviewWinningRunChoices",
     "AppQuestionAnswerSetCreationMethodChoices",
     "AsyncBaseClient",
     "BaseModel",
@@ -160,6 +173,7 @@ __all__ = [
     "ListRunsRunsWithCountRunResultsSuccessRate",
     "ListRunsRunsWithCountRunResultsTestSuite",
     "ListRunsRunsWithCountRunResultsTypedParameters",
+    "LocalEvalUploadInputType",
     "MetadataType",
     "ParameterInputType",
     "PerCheckTestReviewInputType",
@@ -191,6 +205,8 @@ __all__ = [
     "StartRunStartRun",
     "TestFilterOptions",
     "TestMutationInfo",
+    "TestResultCheckErrorEnum",
+    "TestResultFilterOptions",
     "TestResultReviewSortField",
     "TestResultReviewStatusEnum",
     "TestReviewFilterOptionsInput",
@@ -199,4 +215,8 @@ __all__ = [
     "UpdateGlobalChecks",
     "UpdateGlobalChecksUpdateGlobalChecks",
     "Upload",
+    "UploadLocalEvaluation",
+    "UploadLocalEvaluationUploadLocalEvaluation",
+    "UploadLocalEvaluationUploadLocalEvaluationUploads",
+    "WinningRunEnum",
 ]
