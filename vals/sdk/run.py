@@ -202,6 +202,18 @@ class Run(BaseModel):
 
         return response.text
 
+    async def to_json_string(self) -> str:
+
+        response = requests.post(
+            url=f"{be_host()}/export_run_to_json/?run_id={self.id}",
+            headers={"Authorization": _get_auth_token()},
+        )
+
+        if response.status_code != 200:
+            raise ValsException("Received Error from Vals Servers: " + response.text)
+
+        return response.text
+
     async def to_csv(self, file_path: str) -> None:
         """Get the CSV results of a run, as bytes."""
         with open(file_path, "w") as f:
