@@ -27,14 +27,6 @@ from vals.graphql_client.list_runs import ListRunsRunsWithCountRunResults
 from vals.graphql_client.pull_run import PullRunTestResults
 from vals.sdk.operator_type import OperatorType
 
-SimpleModelFunctionType = Callable[[str], str]
-
-ModelFunctionWithFilesAndContextType = Callable[
-    [str, dict[str, BytesIO], dict[str, Any]], str
-]
-
-ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType
-
 
 class TestSuiteMetadata(BaseModel):
     """
@@ -445,8 +437,8 @@ class QuestionAnswerPair(BaseModel):
 class OperatorInput(BaseModel):
     input: str
     model_output: str
-    context: dict[str, str] | None = None
-    output_context: dict[str, str] | None = None
+    context: dict[str, Any] | None = None
+    output_context: dict[str, Any] | None = None
     files: dict[str, BytesIO] | None = None
 
     model_config = {"arbitrary_types_allowed": True}
@@ -459,3 +451,22 @@ class OperatorOutput(BaseModel):
 
 
 ModelCustomOperatorFunctionType = Callable[[OperatorInput], OperatorOutput]
+
+
+class CustomModelInput(BaseModel):
+    input_under_test: str
+    context: dict[str, Any]
+    files: dict[str, BytesIO]
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
+class CustomModelOutput(BaseModel):
+    model_output: str | dict[str, Any] | QuestionAnswerPair
+
+
+SimpleModelFunctionType = Callable[[str], str]
+
+ModelFunctionWithFilesAndContextType = Callable[[CustomModelInput], CustomModelOutput]
+
+ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType

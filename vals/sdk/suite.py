@@ -23,6 +23,8 @@ from vals.sdk.types import (
     ModelCustomOperatorFunctionType,
     ModelFunctionType,
     ModelFunctionWithFilesAndContextType,
+    CustomModelInput,
+    CustomModelOutput,
     OperatorInput,
     OperatorOutput,
     QuestionAnswerPair,
@@ -157,6 +159,40 @@ class Suite(BaseModel):
         with open(file_path, "r") as f:
             data = json.load(f)
         return await cls.from_dict(data)
+
+    @classmethod
+    async def from_inspect_json_file(
+        cls, file_path: str, suite_title: str, suite_description: str
+    ) -> "Suite":
+        """
+        Imports the test suite from a local JSON file.
+        """
+        with open(file_path, "r") as f:
+            data = json.load(f)
+
+        suite = {"title": suite_title, "description": suite_description, "tests": []}
+
+        for test in data:
+            inspect_context = {
+                "target": test.get("target", ""),
+                "task_state": {
+                    k: v for k, v in test.items() if k != "target" and k != "input"
+                },
+            }
+
+            files_under_test = test.get("metadata", {}).get("documents_to_upload", [])
+            context = {"inspect_context": inspect_context}
+
+            suite["tests"].append(
+                {
+                    "input_under_test": test["input"],
+                    "checks": [],
+                    "files_under_test": files_under_test,
+                    "context": context,
+                }
+            )
+
+        return await cls.from_dict(suite)
 
     @property
     def url(self):
@@ -713,9 +749,6 @@ class Suite(BaseModel):
                 ]
             )
 
-        print("Uploaded QA pairs", len(uploaded_qa_pairs))
-        print(uploaded_qa_pairs[0].file_ids)
-
         return uploaded_qa_pairs
 
     async def _process_single_test(
@@ -731,8 +764,6 @@ class Suite(BaseModel):
         for file_id in test._file_ids:
             _, file_name, _ = parse_file_id(file_id)
             files[file_name] = read_file(file_id)
-
-        print("Processing", test.input_under_test, test._file_ids, test.context)
 
         time_start = time()
         in_tokens_start = patch.in_tokens
@@ -760,12 +791,6 @@ class Suite(BaseModel):
         time_end = time()
         in_tokens_end = patch.in_tokens
         out_tokens_end = patch.out_tokens
-
-        print("-----------------------------")
-        print("input_under_test", test.input_under_test)
-        print("_file_ids", test._file_ids)
-        print("_id", test._id)
-        print("-----------------------------")
 
         return await self._process_model_output(
             output,
