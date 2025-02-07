@@ -613,7 +613,6 @@ class Suite(BaseModel):
 
         files = {}
         # TODO: This may result in us reading file ids twice
-        print(f"Processing file ids: {qa_pair.file_ids}")
         for file_id in qa_pair.file_ids:
             _, file_name, _ = parse_file_id(file_id)
             files[file_name] = read_file(file_id)
@@ -694,7 +693,6 @@ class Suite(BaseModel):
                     batch_to_upload = qa_pairs[
                         last_uploaded_idx : last_uploaded_idx + push_qa_batch_size
                     ]
-                    print("UPLOADING BATCH")
                     task = asyncio.create_task(
                         self._client.batch_add_question_answer_pairs(
                             qa_set_id, batch_to_upload

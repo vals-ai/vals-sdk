@@ -67,21 +67,21 @@ async def custom_operator2(input: OperatorInput) -> OperatorOutput:
 
 
 def custom_model(input: str) -> str:
-    time.sleep(10)
+    # time.sleep(3)
     return input + "!!!"
 
 
 async def run_with_local_eval():
 
-    suite = await Suite.from_id("b7eb4611-b2b4-40d6-ae2b-c693230b4211")
+    suite = await Suite.from_id("b028672c-0366-45e6-82ed-260df9af27b9")
     #  qa_pairs = [QuestionAnswerPair(input_under_test="What is QSBS?", llm_output="QSBS")]
 
     run = await suite.run(
         model=custom_model,
         wait_for_completion=True,
         model_name="my_function_model",
-        push_qa_batch_size=1,
-        parameters=RunParameters(parallelism=1),
+        push_qa_batch_size=10,
+        parameters=RunParameters(parallelism=5),
         custom_operators=[custom_operator, custom_operator2],
     )
 
