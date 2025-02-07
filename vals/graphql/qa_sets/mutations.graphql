@@ -3,16 +3,20 @@ mutation CreateQuestionAnswerSet(
   $questionAnswerPairs: [QuestionAnswerPairInputType!]!
   $parameters: GenericScalar!
   $modelId: String!
+  $runName: String
 ) {
   createQuestionAnswerSet(
     testSuiteId: $testSuiteId
     questionAnswerPairs: $questionAnswerPairs
     parameters: $parameters
     modelId: $modelId
+    runName: $runName
+    createRun: true
   ) {
     questionAnswerSet {
       id
     }
+    runId
   }
 }
 

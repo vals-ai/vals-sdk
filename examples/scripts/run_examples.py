@@ -1,8 +1,9 @@
 import asyncio
+import time
 from io import BytesIO
 from typing import Any
 
-from vals import Check, QuestionAnswerPair, Run, Suite, Test
+from vals import Check, QuestionAnswerPair, Run, RunParameters, Suite, Test
 from vals.sdk.types import OperatorInput, OperatorOutput
 
 
@@ -66,29 +67,21 @@ async def custom_operator2(input: OperatorInput) -> OperatorOutput:
 
 
 def custom_model(input: str) -> str:
+    # time.sleep(3)
     return input + "!!!"
 
 
 async def run_with_local_eval():
-    suite = Suite(
-        title="Test Suite",
-        tests=[
-            Test(
-                input_under_test="What is QSBS?",
-                checks=[Check(operator="equals", criteria="QSBS")],
-            ),
-        ],
-    )
 
-    await suite.create()
-
-    qa_pairs = [QuestionAnswerPair(input_under_test="What is QSBS?", llm_output="QSBS")]
+    suite = await Suite.from_id("b028672c-0366-45e6-82ed-260df9af27b9")
+    #  qa_pairs = [QuestionAnswerPair(input_under_test="What is QSBS?", llm_output="QSBS")]
 
     run = await suite.run(
-        model=qa_pairs,
+        model=custom_model,
         wait_for_completion=True,
         model_name="my_function_model",
-        push_qa_batch_size=2,
+        push_qa_batch_size=10,
+        parameters=RunParameters(parallelism=5),
         custom_operators=[custom_operator, custom_operator2],
     )
 
