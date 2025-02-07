@@ -5,7 +5,7 @@ from typing import Any, Callable, List, Optional, Union
 from inspect_ai import Task
 from inspect_ai.solver import TaskState, Solver, Generate, generate
 from inspect_ai.scorer import Target, Score, Scorer
-from inspect_ai.model import ModelOutput
+from inspect_ai.model import ModelOutput, GenerateConfig, get_model
 from copy import deepcopy
 
 from vals.sdk.types import (
@@ -23,8 +23,36 @@ class InspectWrapper:
 
     model = "vals-sdk"
 
-    def __init__(self, task: Task):
+    def __init__(
+        self,
+        task: Task,
+        model_name: str | None = None,
+        config: dict[str, Any] | GenerateConfig | None = None,
+    ):
         self.task = task
+        self.model_name = model_name
+        self.config = config
+
+        if model_name is None:
+            self.generate = self.get_generate_function(
+                "anthropic/claude-3-5-sonnet-20241022", GenerateConfig(temperature=0)
+            )
+        else:
+            self.generate = self.get_generate_function(model_name, config)
+
+    def get_generate_function(
+        self, model_name: str, config: dict[str, Any] | GenerateConfig
+    ) -> Callable[[TaskState], ModelOutput]:
+        if isinstance(config, dict):
+            config = GenerateConfig(**config)
+
+        generate = get_model(model_name, config).generate
+
+        async def wrapped_generate(state: str, *args, **kwargs) -> ModelOutput:
+            state.output = await generate(state.input)
+            return state
+
+        return wrapped_generate
 
     def custom_model_input_to_task_state(
         self, custom_model_input: CustomModelInput
@@ -73,13 +101,12 @@ class InspectWrapper:
     def operator_input_to_target(self, operator_input: OperatorInput) -> Target:
         return Target(target=operator_input.context["inspect_context"]["target"])
 
-    def to_custom_model(
+    def get_custom_model(
         self, solver: Solver | None = generate(), generate: Generate | None = None
     ) -> Callable[[str], Union[str, dict]]:
         """Convert inspect Solver to Vals CustomModel format."""
         solver = solver if solver is not None else self.task.solver
-        if generate is None:
-            raise ValueError("Generate function is required")
+        generate = generate if generate is not None else self.generate
 
         async def wrapped_custom_model(
             input_under_test: str,
@@ -110,7 +137,7 @@ class InspectWrapper:
 
         return wrapped_custom_model
 
-    def to_single_custom_operator(self, scorer: Scorer):
+    def get_single_custom_operator(self, scorer: Scorer):
         async def wrapped_custom_operator(
             operator_input: OperatorInput,
         ) -> OperatorOutput:
@@ -125,14 +152,14 @@ class InspectWrapper:
 
             output = OperatorOutput(
                 name=scorer.__qualname__.split(".")[0],
-                score=int(score.as_float()),
+                score=int(score.value if score.value in [0, 1] else score.value > 0.5),
                 explanation=explanation,
             )
             return output
 
         return wrapped_custom_operator
 
-    def to_custom_operators(
+    def get_custom_operators(
         self, scorer: Scorer | list[Scorer] | None = None
     ) -> List[ModelCustomOperatorFunctionType]:
         """Convert inspect Scorers to Vals CustomOperator format."""
@@ -140,4 +167,4 @@ class InspectWrapper:
         if not isinstance(scorer, list):
             scorer = [scorer]
 
-        return [self.to_single_custom_operator(r) for r in scorer]
+        return [self.get_single_custom_operator(r) for r in scorer]

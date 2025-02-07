@@ -189,6 +189,7 @@ class Suite(BaseModel):
                     "checks": [],
                     "files_under_test": files_under_test,
                     "context": context,
+                    "tags": test.get("metadata", {}).get("tags", []),
                 }
             )
 
@@ -315,7 +316,7 @@ class Suite(BaseModel):
         run_name: str | None = None,
         wait_for_completion: bool = False,
         parameters: RunParameters | None = None,
-        push_qa_batch_size: int | None = None,
+        upload_concurrency: int | None = None,
     ) -> Run:
         """
         Runs based on a model function. This can either be a simple model function, which just takes
@@ -323,7 +324,7 @@ class Suite(BaseModel):
         a dictionary of filename to file contents, and a context dictionary.
 
         Args:
-            push_qa_batch_size: How frequently to upload QA pairs to the server. Defaults to parameters.parallelism.
+            upload_concurrency: How frequently to upload QA pairs to the server. Defaults to parameters.parallelism.
         """
         pass
 
@@ -352,14 +353,15 @@ class Suite(BaseModel):
         run_name: str | None = None,
         wait_for_completion: bool = False,
         parameters: RunParameters | None = None,
-        push_qa_batch_size: int | None = None,
+        upload_concurrency: int | None = None,
         custom_operators: list[ModelCustomOperatorFunctionType] = [],
+        eval_model_name: str | None = None,
     ) -> Run:
         """
         Base method for running the test suite. See overloads for documentation.
 
         Args:
-            push_qa_batch_size: How frequently to upload QA pairs to the server.
+            upload_concurrency: How frequently to upload QA pairs to the server.
                          Defaults to parameters.parallelism.
             custom_operator: A custom operator function that takes in an OperatorInput and returns an OperatorOutput.
         """
@@ -370,8 +372,11 @@ class Suite(BaseModel):
         if parameters is None:
             parameters = RunParameters()
 
-        if push_qa_batch_size is None:
-            push_qa_batch_size = parameters.parallelism
+        if eval_model_name is not None:
+            parameters.eval_model = eval_model_name
+
+        if upload_concurrency is None:
+            upload_concurrency = parameters.parallelism
 
         if type(model) == type("") and len(custom_operators) > 0:
             raise Exception(
@@ -398,7 +403,7 @@ class Suite(BaseModel):
                 parameter_input.model_dump(), model_name, run_name
             )
             uploaded_qa_pairs = await self._generate_qa_pairs_from_function(
-                model, parameter_input, qa_set_id, push_qa_batch_size
+                model, parameter_input, qa_set_id, upload_concurrency
             )
         elif isinstance(model, list):
             # Use the QA pairs we are already provided
@@ -424,7 +429,7 @@ class Suite(BaseModel):
                 parameter_input,
                 qa_set_id,
                 uploaded_qa_pairs,
-                push_qa_batch_size,
+                upload_concurrency,
             )
 
         response = await self._client.start_run(
@@ -587,49 +592,49 @@ class Suite(BaseModel):
         parameter_input: ParameterInputType,
         qa_set_id: str,
         qa_pairs: list[QuestionAnswerPairInputType],
-        push_qa_batch_size: int,
+        upload_concurrency: int,
     ) -> str:
         """Process QA pairs through custom operator and upload results in batches."""
         if self.id is None:
             raise Exception("This suite has not been created yet.")
 
-        # Create a new run
-
+        # Create a semaphore to limit concurrent processing
+        semaphore = asyncio.Semaphore(parameter_input.maximum_threads)
         operator_results = []
         last_uploaded_idx = 0
         upload_tasks = []
 
-        with tqdm(total=len(qa_pairs), desc="Processing operator evaluations") as pbar:
-            # Create chunks based on maximum_threads
-            for i in range(0, len(qa_pairs), parameter_input.maximum_threads):
-                chunk = qa_pairs[i : i + parameter_input.maximum_threads]
-                # Process each chunk concurrently
-                chunk_results = await asyncio.gather(
+        async def process_and_upload_eval(qa_pair):
+            async with semaphore:
+                # Process through all custom operators
+                results = await asyncio.gather(
                     *(
-                        self._process_single_local_eval(custom_operator, qa)
+                        self._process_single_local_eval(custom_operator, qa_pair)
                         for custom_operator in custom_operators
-                        for qa in chunk
                     )
                 )
-                operator_results.extend(chunk_results)
-                pbar.update(len(chunk))
+                operator_results.extend(results)
+                pbar.update(1)
 
                 # Upload batch when we reach batch_size
-                while len(operator_results) >= last_uploaded_idx + push_qa_batch_size:
+                nonlocal last_uploaded_idx
+                while len(operator_results) >= last_uploaded_idx + upload_concurrency:
                     batch_to_upload = operator_results[
-                        last_uploaded_idx : last_uploaded_idx + push_qa_batch_size
+                        last_uploaded_idx : last_uploaded_idx + upload_concurrency
                     ]
-
                     task = asyncio.create_task(
                         self._client.upload_local_evaluation(qa_set_id, batch_to_upload)
                     )
                     upload_tasks.append(task)
-                    last_uploaded_idx += push_qa_batch_size
+                    last_uploaded_idx += upload_concurrency
+
+        # Process all QA pairs concurrently with limited concurrency
+        with tqdm(total=len(qa_pairs), desc="Processing operator evaluations") as pbar:
+            await asyncio.gather(*(process_and_upload_eval(qa) for qa in qa_pairs))
 
         # Upload any remaining results
         if last_uploaded_idx < len(operator_results):
             batch_to_upload = operator_results[last_uploaded_idx:]
-
             task = asyncio.create_task(
                 self._client.upload_local_evaluation(qa_set_id, batch_to_upload)
             )
@@ -685,7 +690,7 @@ class Suite(BaseModel):
         model_function: ModelFunctionType,
         parameter_input: ParameterInputType,
         qa_set_id: str,
-        push_qa_batch_size: int,
+        upload_concurrency: int,
     ) -> list[QuestionAnswerPairInputType]:
         if self.id is None:
             raise Exception(
@@ -703,31 +708,26 @@ class Suite(BaseModel):
             raise ValueError("Model function must accept either 1 or 3 parameters")
         is_simple_model_function = num_params == 1
 
-        # Process tests in parallel with limited concurrency
+        # Create a semaphore to limit concurrent processing
+        print(parameter_input.maximum_threads)
+        semaphore = asyncio.Semaphore(parameter_input.maximum_threads)
         qa_pairs: list[QuestionAnswerPairInputType] = []
         last_uploaded_idx = 0
         upload_tasks = []
 
-        with tqdm(total=len(self.tests), desc="Processing tests") as pbar:
-            # Create chunks of tests to process based on maximum_threads
-            for i in range(0, len(self.tests), parameter_input.maximum_threads):
-                chunk = self.tests[i : i + parameter_input.maximum_threads]
-                # Process each chunk concurrently
-                chunk_results = await asyncio.gather(
-                    *(
-                        self._process_single_test(
-                            test, model_function, is_simple_model_function
-                        )
-                        for test in chunk
-                    )
+        async def process_and_upload_test(test):
+            async with semaphore:
+                result = await self._process_single_test(
+                    test, model_function, is_simple_model_function
                 )
-                qa_pairs.extend(chunk_results)
-                pbar.update(len(chunk))
+                qa_pairs.append(result)
+                pbar.update(1)
 
                 # Upload batch when we reach batch_size
-                while len(qa_pairs) >= last_uploaded_idx + push_qa_batch_size:
+                nonlocal last_uploaded_idx
+                while len(qa_pairs) >= last_uploaded_idx + upload_concurrency:
                     batch_to_upload = qa_pairs[
-                        last_uploaded_idx : last_uploaded_idx + push_qa_batch_size
+                        last_uploaded_idx : last_uploaded_idx + upload_concurrency
                     ]
                     task = asyncio.create_task(
                         self._client.batch_add_question_answer_pairs(
@@ -735,7 +735,13 @@ class Suite(BaseModel):
                         )
                     )
                     upload_tasks.append(task)
-                    last_uploaded_idx += push_qa_batch_size
+                    last_uploaded_idx += upload_concurrency
+
+        # Process all tests concurrently with limited concurrency
+        with tqdm(total=len(self.tests), desc="Processing tests") as pbar:
+            await asyncio.gather(
+                *(process_and_upload_test(test) for test in self.tests)
+            )
 
         # Upload any remaining pairs
         if last_uploaded_idx < len(qa_pairs):
