@@ -354,11 +354,12 @@ class Suite(BaseModel):
 
         # Collate the local output pairs if we're using a model function.
         qa_set_id = None
+        run_id = None
         if isinstance(model, Callable):
             # Generate the QA pairs from the model function
             parameter_input.model_under_test = model_name
-            qa_set_id = await self._create_empty_qa_set(
-                parameter_input.model_dump(), model_name
+            qa_set_id, run_id = await self._create_empty_qa_set(
+                parameter_input.model_dump(), model_name, run_name
             )
             uploaded_qa_pairs = await self._generate_qa_pairs_from_function(
                 model, parameter_input, qa_set_id, push_qa_batch_size
@@ -371,6 +372,7 @@ class Suite(BaseModel):
                 [qa_pair.to_graphql() for qa_pair in qa_pairs],
                 parameter_input.model_dump(),
                 model_name,
+                run_name,
             )
         elif isinstance(model, str):
             # Just use a model string (e.g. "gpt-4o")
@@ -390,7 +392,7 @@ class Suite(BaseModel):
             )
 
         response = await self._client.start_run(
-            self.id, parameter_input, qa_set_id, run_name
+            self.id, parameter_input, qa_set_id, run_name, run_id
         )
         if response.start_run is None:
             raise Exception("Unable to start the run.")
@@ -519,6 +521,7 @@ class Suite(BaseModel):
         self,
         parameters: dict[str, int | float | str | bool] = {},
         model_under_test: str | None = None,
+        run_name: str | None = None,
     ) -> str:
         """Creates an empty QA set and returns its ID."""
         if self.id is None:
@@ -531,12 +534,16 @@ class Suite(BaseModel):
             [],
             parameters,
             model_under_test or "sdk",
+            run_name,
         )
 
         if response.create_question_answer_set is None:
             raise Exception("Unable to create the question-answer set.")
 
-        return response.create_question_answer_set.question_answer_set.id
+        return (
+            response.create_question_answer_set.question_answer_set.id,
+            response.create_question_answer_set.run_id,
+        )
 
     async def _upload_local_eval(
         self,
@@ -606,6 +613,7 @@ class Suite(BaseModel):
 
         files = {}
         # TODO: This may result in us reading file ids twice
+        print(f"Processing file ids: {qa_pair.file_ids}")
         for file_id in qa_pair.file_ids:
             _, file_name, _ = parse_file_id(file_id)
             files[file_name] = read_file(file_id)
@@ -686,6 +694,7 @@ class Suite(BaseModel):
                     batch_to_upload = qa_pairs[
                         last_uploaded_idx : last_uploaded_idx + push_qa_batch_size
                     ]
+                    print("UPLOADING BATCH")
                     task = asyncio.create_task(
                         self._client.batch_add_question_answer_pairs(
                             qa_set_id, batch_to_upload
@@ -785,6 +794,7 @@ class Suite(BaseModel):
         parameters: dict[str, int | float | str | bool] = {},
         model_under_test: str | None = None,
         batch_size: int = 50,
+        run_name: str | None = None,
     ) -> str | None:
         """
         Helper function to create a question-answer set from a model function.
@@ -796,12 +806,11 @@ class Suite(BaseModel):
             )
 
         response = await self._client.create_question_answer_set(
-            self.id,
-            [],
-            parameters,
-            model_under_test or "sdk",
+            self.id, [], parameters, model_under_test or "sdk", run_name, True
         )
         set_id = response.create_question_answer_set.question_answer_set.id
+        run_id = response.create_question_answer_set.run.run_id
+        print(f"Started Run: {run_id}")
 
         uploaded_qa_pairs = []
         for i in range(0, len(qa_pairs), batch_size):

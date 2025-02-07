@@ -45,20 +45,24 @@ class Client(AsyncBaseClient):
         question_answer_pairs: List[QuestionAnswerPairInputType],
         parameters: Any,
         model_id: str,
+        run_name: Union[Optional[str], UnsetType] = UNSET,
         **kwargs: Any
     ) -> CreateQuestionAnswerSet:
         query = gql(
             """
-            mutation CreateQuestionAnswerSet($testSuiteId: String!, $questionAnswerPairs: [QuestionAnswerPairInputType!]!, $parameters: GenericScalar!, $modelId: String!) {
+            mutation CreateQuestionAnswerSet($testSuiteId: String!, $questionAnswerPairs: [QuestionAnswerPairInputType!]!, $parameters: GenericScalar!, $modelId: String!, $runName: String) {
               createQuestionAnswerSet(
                 testSuiteId: $testSuiteId
                 questionAnswerPairs: $questionAnswerPairs
                 parameters: $parameters
                 modelId: $modelId
+                runName: $runName
+                createRun: true
               ) {
                 questionAnswerSet {
                   id
                 }
+                runId
               }
             }
             """
@@ -68,6 +72,7 @@ class Client(AsyncBaseClient):
             "questionAnswerPairs": question_answer_pairs,
             "parameters": parameters,
             "modelId": model_id,
+            "runName": run_name,
         }
         response = await self.execute(
             query=query,
@@ -122,16 +127,18 @@ class Client(AsyncBaseClient):
         typed_parameters: ParameterInputType,
         qa_set_id: Union[Optional[str], UnsetType] = UNSET,
         run_name: Union[Optional[str], UnsetType] = UNSET,
+        run_id: Union[Optional[str], UnsetType] = UNSET,
         **kwargs: Any
     ) -> StartRun:
         query = gql(
             """
-            mutation startRun($test_suite_id: String!, $typed_parameters: ParameterInputType!, $qa_set_id: String = null, $run_name: String = null) {
+            mutation startRun($test_suite_id: String!, $typed_parameters: ParameterInputType!, $qa_set_id: String = null, $run_name: String = null, $run_id: String = null) {
               startRun(
                 testSuiteId: $test_suite_id
                 typedParameters: $typed_parameters
                 qaSetId: $qa_set_id
                 runName: $run_name
+                runId: $run_id
               ) {
                 runId
               }
@@ -143,6 +150,7 @@ class Client(AsyncBaseClient):
             "typed_parameters": typed_parameters,
             "qa_set_id": qa_set_id,
             "run_name": run_name,
+            "run_id": run_id,
         }
         response = await self.execute(
             query=query, operation_name="startRun", variables=variables, **kwargs

@@ -3,12 +3,14 @@ mutation startRun(
   $typed_parameters: ParameterInputType!
   $qa_set_id: String = null
   $run_name: String = null
+  $run_id: String = null
 ) {
   startRun(
     testSuiteId: $test_suite_id
     typedParameters: $typed_parameters
     qaSetId: $qa_set_id
     runName: $run_name
+    runId: $run_id
   ) {
     runId
   }
