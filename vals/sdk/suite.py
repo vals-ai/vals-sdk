@@ -33,6 +33,7 @@ from vals.sdk.types import (
     Test,
     TestSuiteMetadata,
 )
+from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.util import (
     _get_auth_token,
     be_host,
@@ -346,9 +347,46 @@ class Suite(BaseModel):
         """
         pass
 
+    @overload
     async def run(
         self,
-        model: str | ModelFunctionType | list[QuestionAnswerPair],
+        model: InspectWrapper,
+        model_name: str = "sdk",
+        run_name: str | None = None,
+        wait_for_completion: bool = False,
+        parameters: RunParameters | None = None,
+    ) -> Run:
+        """
+        Runs based on on an InspectWrapper object.
+        """
+        pass
+
+    async def _safe_local_execution(self, coro, run_id: str | None = None):
+        """Wrapper to handle interruptions during local execution"""
+        try:
+            return await coro
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            if run_id:
+                await self._client.update_run_status(
+                    run_id=run_id,
+                    status="error",
+                    error_message="Run interrupted by user during local execution",
+                )
+            raise
+        except Exception as e:
+            print(f"Error during local execution: {str(e)}")
+            if run_id:
+                print(f"Updating run status to error for run {run_id}")
+                await self._client.update_run_status(
+                    run_id=run_id,
+                    status="error",
+                    error_message=f"Error during local execution: {str(e)}",
+                )
+            raise
+
+    async def run(
+        self,
+        model: str | ModelFunctionType | list[QuestionAnswerPair] | InspectWrapper,
         model_name: str = "sdk",
         run_name: str | None = None,
         wait_for_completion: bool = False,
@@ -356,6 +394,10 @@ class Suite(BaseModel):
         upload_concurrency: int | None = None,
         custom_operators: list[ModelCustomOperatorFunctionType] = [],
         eval_model_name: str | None = None,
+        run_id: str | None = None,
+        qa_set_id: str | None = None,
+        remaining_tests: list[Test] = [],
+        uploaded_qa_pairs: list[QuestionAnswerPairInputType] = [],
     ) -> Run:
         """
         Base method for running the test suite. See overloads for documentation.
@@ -365,6 +407,8 @@ class Suite(BaseModel):
                          Defaults to parameters.parallelism.
             custom_operator: A custom operator function that takes in an OperatorInput and returns an OperatorOutput.
         """
+        resuming_run = run_id is not None
+
         if self.id is None:
             raise Exception(
                 "This suite has not been created yet. Call suite.create() before calling suite.run()"
@@ -378,10 +422,16 @@ class Suite(BaseModel):
         if upload_concurrency is None:
             upload_concurrency = parameters.parallelism
 
-        if type(model) == type("") and len(custom_operators) > 0:
+        if isinstance(model, str) and len(custom_operators) > 0:
             raise Exception(
                 "Custom operator functions are not supported when using a model string (e.g. a nonlocal model)."
             )
+
+        if isinstance(model, InspectWrapper):
+            model_name = model.model_name
+            eval_model_name = model.eval_model_name
+            custom_model = model.get_custom_model()
+            custom_operators = model.get_custom_operators()
 
         parameter_json = parameters.model_dump()
         del parameter_json[
@@ -394,16 +444,32 @@ class Suite(BaseModel):
         )
 
         # Collate the local output pairs if we're using a model function.
-        qa_set_id = None
-        run_id = None
-        if isinstance(model, Callable):
+        if isinstance(model, Callable) or isinstance(model, InspectWrapper):
             # Generate the QA pairs from the model function
             parameter_input.model_under_test = model_name
-            qa_set_id, run_id = await self._create_empty_qa_set(
-                parameter_input.model_dump(), model_name, run_name
-            )
-            uploaded_qa_pairs = await self._generate_qa_pairs_from_function(
-                model, parameter_input, qa_set_id, upload_concurrency
+            if run_id is None and qa_set_id is None:
+                qa_set_id, run_id = await self._create_empty_qa_set(
+                    parameter_input.model_dump(), model_name, run_name
+                )
+                print(f"Created run with run id: {run_id}")
+            elif (
+                run_id is None
+                and qa_set_id is not None
+                or run_id is not None
+                and qa_set_id is None
+            ):
+                raise Exception("Must provide both run_id and qa_set_id or neither.")
+
+            # Wrap the QA pair generation with safe execution
+            uploaded_qa_pairs += await self._safe_local_execution(
+                self._generate_qa_pairs_from_function(
+                    model,
+                    parameter_input,
+                    qa_set_id,
+                    upload_concurrency,
+                    remaining_tests,
+                ),
+                run_id,
             )
         elif isinstance(model, list):
             # Use the QA pairs we are already provided
@@ -424,22 +490,31 @@ class Suite(BaseModel):
 
         # Start and pull the run.
         if len(custom_operators) > 0:
-            await self._upload_local_eval(
-                custom_operators,
-                parameter_input,
-                qa_set_id,
-                uploaded_qa_pairs,
-                upload_concurrency,
+            # Wrap the local eval with safe execution
+            await self._safe_local_execution(
+                self._upload_local_eval(
+                    custom_operators,
+                    parameter_input,
+                    qa_set_id,
+                    uploaded_qa_pairs,
+                    upload_concurrency,
+                ),
+                run_id,
             )
 
-        response = await self._client.start_run(
-            self.id, parameter_input, qa_set_id, run_name, run_id
-        )
-        if response.start_run is None:
-            raise Exception("Unable to start the run.")
-        run_id = response.start_run.run_id
+        if resuming_run:
+            run = await Run.from_id(run_id)
+            await run.retry_failing_tests()
 
-        run = await Run.from_id(run_id)
+        else:
+            response = await self._client.start_run(
+                self.id, parameter_input, qa_set_id, run_name, run_id
+            )
+
+            if response.start_run is None:
+                raise Exception("Unable to start the run.")
+
+            run = await Run.from_id(run_id)
 
         if wait_for_completion:
             await run.wait_for_run_completion()
@@ -644,135 +719,13 @@ class Suite(BaseModel):
         if upload_tasks:
             await asyncio.gather(*upload_tasks)
 
-    async def _process_single_local_eval(
-        self,
-        custom_operator: ModelCustomOperatorFunctionType,
-        qa_pair: QuestionAnswerPairInputType,
-    ) -> LocalEvalUploadInputType:
-        """Process a single QA pair through the custom operator.
-        Handles both async and sync custom operator functions."""
-
-        files = {}
-        # TODO: This may result in us reading file ids twice
-        for file_id in qa_pair.file_ids:
-            _, file_name, _ = parse_file_id(file_id)
-            files[file_name] = read_file(file_id)
-
-        operator_input = OperatorInput(
-            input=qa_pair.input_under_test,
-            model_output=qa_pair.llm_output,
-            files=files,
-            context=qa_pair.context,
-            output_context=qa_pair.output_context,
-        )
-        if inspect.iscoroutinefunction(custom_operator):
-            result = await custom_operator(operator_input)
-        else:
-            result = custom_operator(operator_input)
-
-        local_eval = LocalEvalUploadInputType(
-            questionAnswerPairId=qa_pair.id,
-            score=result.score,
-            feedback=result.explanation,
-            name=result.name,
-        )
-
-        return local_eval
-
-    async def _deserialize_qa_pair_file_ids(self, qa_pair):
-        """Helper method to deserialize file_ids in a QA pair if they're stored as a string."""
-        if hasattr(qa_pair, "file_ids") and isinstance(qa_pair.file_ids, str):
-            qa_pair.file_ids = json.loads(qa_pair.file_ids)
-        return qa_pair
-
-    async def _generate_qa_pairs_from_function(
-        self,
-        model_function: ModelFunctionType,
-        parameter_input: ParameterInputType,
-        qa_set_id: str,
-        upload_concurrency: int,
-    ) -> list[QuestionAnswerPairInputType]:
-        if self.id is None:
-            raise Exception(
-                "This suite has not been created yet, so we can't create a QA set from it."
-            )
-        # Pull latest suite data to ensure we're up to date
-        updated_suite = await Suite.from_id(self.id)
-        for field in self.__fields__:
-            setattr(self, field, getattr(updated_suite, field))
-
-        # Inspect the model function
-        sig = inspect.signature(model_function)
-        num_params = len(sig.parameters)
-        if num_params not in [1, 3]:
-            raise ValueError("Model function must accept either 1 or 3 parameters")
-        is_simple_model_function = num_params == 1
-
-        # Create a semaphore to limit concurrent processing
-        print(parameter_input.maximum_threads)
-        semaphore = asyncio.Semaphore(parameter_input.maximum_threads)
-        qa_pairs: list[QuestionAnswerPairInputType] = []
-        last_uploaded_idx = 0
-        upload_tasks = []
-
-        async def process_and_upload_test(test):
-            async with semaphore:
-                result = await self._process_single_test(
-                    test, model_function, is_simple_model_function
-                )
-                qa_pairs.append(result)
-                pbar.update(1)
-
-                # Upload batch when we reach batch_size
-                nonlocal last_uploaded_idx
-                while len(qa_pairs) >= last_uploaded_idx + upload_concurrency:
-                    batch_to_upload = qa_pairs[
-                        last_uploaded_idx : last_uploaded_idx + upload_concurrency
-                    ]
-                    task = asyncio.create_task(
-                        self._client.batch_add_question_answer_pairs(
-                            qa_set_id, batch_to_upload
-                        )
-                    )
-                    upload_tasks.append(task)
-                    last_uploaded_idx += upload_concurrency
-
-        # Process all tests concurrently with limited concurrency
-        with tqdm(total=len(self.tests), desc="Processing tests") as pbar:
-            await asyncio.gather(
-                *(process_and_upload_test(test) for test in self.tests)
-            )
-
-        # Upload any remaining pairs
-        if last_uploaded_idx < len(qa_pairs):
-            remaining_pairs = qa_pairs[last_uploaded_idx:]
-            task = asyncio.create_task(
-                self._client.batch_add_question_answer_pairs(qa_set_id, remaining_pairs)
-            )
-            upload_tasks.append(task)
-
-        # Wait for all uploads to complete
-        uploaded_qa_pairs = []
-        if upload_tasks:
-            uploaded_qa_pairs.extend(
-                [
-                    await self._deserialize_qa_pair_file_ids(qa_pair)
-                    for result in await asyncio.gather(*upload_tasks)
-                    for qa_pair in result.batch_add_question_answer_pairs.question_answer_pairs
-                ]
-            )
-
-        return uploaded_qa_pairs
-
     async def _process_single_test(
         self,
         test: Test,
         model_function: ModelFunctionType,
         is_simple_model_function: bool,
     ) -> QuestionAnswerPairInputType:
-        """Process a single test and return its QuestionAnswerPair.
-        Main thing is to handle both the async and sync cases for the custom model functions.
-        """
+        """Inner implementation of process_single_test"""
         files = {}
         for file_id in test._file_ids:
             _, file_name, _ = parse_file_id(file_id)
@@ -817,41 +770,130 @@ class Suite(BaseModel):
             out_tokens_end,
         )
 
-    async def _create_qa_set(
+    async def _process_single_local_eval(
         self,
-        qa_pairs: list[QuestionAnswerPairInputType],
-        parameters: dict[str, int | float | str | bool] = {},
-        model_under_test: str | None = None,
-        batch_size: int = 50,
-        run_name: str | None = None,
-    ) -> str | None:
-        """
-        Helper function to create a question-answer set from a model function.
-        A question-answer set is just a set of inputs to the LLM, and the LLM's responses.
-        """
+        custom_operator: ModelCustomOperatorFunctionType,
+        qa_pair: QuestionAnswerPairInputType,
+    ) -> LocalEvalUploadInputType:
+        """Inner implementation of process_single_local_eval"""
+        files = {}
+        for file_id in qa_pair.file_ids:
+            _, file_name, _ = parse_file_id(file_id)
+            files[file_name] = read_file(file_id)
+
+        operator_input = OperatorInput(
+            input=qa_pair.input_under_test,
+            model_output=qa_pair.llm_output,
+            files=files,
+            context=qa_pair.context,
+            output_context=qa_pair.output_context,
+        )
+        if inspect.iscoroutinefunction(custom_operator):
+            result = await custom_operator(operator_input)
+        else:
+            result = custom_operator(operator_input)
+
+        return LocalEvalUploadInputType(
+            questionAnswerPairId=qa_pair.id,
+            score=result.score,
+            feedback=result.explanation,
+            name=result.name,
+        )
+
+    async def _deserialize_qa_pair_file_ids(self, qa_pair):
+        """Helper method to deserialize file_ids in a QA pair if they're stored as a string."""
+        if hasattr(qa_pair, "file_ids") and isinstance(qa_pair.file_ids, str):
+            qa_pair.file_ids = json.loads(qa_pair.file_ids)
+        return qa_pair
+
+    async def _generate_qa_pairs_from_function(
+        self,
+        model_function: ModelFunctionType,
+        parameter_input: ParameterInputType,
+        qa_set_id: str,
+        upload_concurrency: int,
+        remaining_tests: list[Test] | None = None,
+    ) -> list[QuestionAnswerPairInputType]:
         if self.id is None:
             raise Exception(
                 "This suite has not been created yet, so we can't create a QA set from it."
             )
+        # Pull latest suite data to ensure we're up to date
+        updated_suite = await Suite.from_id(self.id)
+        for field in self.__fields__:
+            setattr(self, field, getattr(updated_suite, field))
 
-        response = await self._client.create_question_answer_set(
-            self.id, [], parameters, model_under_test or "sdk", run_name, True
-        )
-        set_id = response.create_question_answer_set.question_answer_set.id
-        run_id = response.create_question_answer_set.run.run_id
-        print(f"Started Run: {run_id}")
+        # Inspect the model function
+        sig = inspect.signature(model_function)
+        num_params = len(sig.parameters)
+        if num_params not in [1, 3]:
+            raise ValueError("Model function must accept either 1 or 3 parameters")
+        is_simple_model_function = num_params == 1
 
-        uploaded_qa_pairs = []
-        for i in range(0, len(qa_pairs), batch_size):
-            batch = qa_pairs[i : i + batch_size]
-            uploaded = await self._client.batch_add_question_answer_pairs(set_id, batch)
-            uploaded_qa_pairs.extend(
-                uploaded.batch_add_question_answer_pairs.question_answer_pairs
+        # Create a semaphore to limit concurrent processing
+        semaphore = asyncio.Semaphore(parameter_input.maximum_threads)
+        last_uploaded_idx = 0
+        upload_tasks = []
+        qa_pairs: list[QuestionAnswerPairInputType] = []
+
+        async def process_and_upload_test(test):
+            async with semaphore:
+                result = await self._process_single_test(
+                    test, model_function, is_simple_model_function
+                )
+                qa_pairs.append(result)
+                pbar.update(1)
+
+                # Upload batch when we reach batch_size
+                nonlocal last_uploaded_idx
+                while len(qa_pairs) >= last_uploaded_idx + upload_concurrency:
+                    batch_to_upload = qa_pairs[
+                        last_uploaded_idx : last_uploaded_idx + upload_concurrency
+                    ]
+                    task = asyncio.create_task(
+                        self._client.batch_add_question_answer_pairs(
+                            qa_set_id, batch_to_upload
+                        )
+                    )
+                    upload_tasks.append(task)
+                    last_uploaded_idx += upload_concurrency
+
+        # Process all tests concurrently with limited concurrency
+        with tqdm(
+            total=(
+                len(self.tests) if len(remaining_tests) == 0 else len(remaining_tests)
+            ),
+            desc="Processing tests",
+        ) as pbar:
+            await asyncio.gather(
+                *(
+                    process_and_upload_test(test)
+                    for test in (
+                        self.tests if len(remaining_tests) == 0 else remaining_tests
+                    )
+                )
             )
-        if response.create_question_answer_set is None:
-            raise Exception("Unable to create the question-answer set.")
 
-        return set_id, uploaded_qa_pairs
+        # Upload any remaining pairs
+        if last_uploaded_idx < len(qa_pairs):
+            remaining_pairs = qa_pairs[last_uploaded_idx:]
+            task = asyncio.create_task(
+                self._client.batch_add_question_answer_pairs(qa_set_id, remaining_pairs)
+            )
+            upload_tasks.append(task)
+
+        # Wait for all uploads to complete
+        uploaded_qa_pairs = []
+        if upload_tasks:
+            uploaded_qa_pairs.extend(
+                [
+                    await self._deserialize_qa_pair_file_ids(qa_pair)
+                    for result in await asyncio.gather(*upload_tasks)
+                    for qa_pair in result.batch_add_question_answer_pairs.question_answer_pairs
+                ]
+            )
+
+        return uploaded_qa_pairs
 
     def _upload_file(self, suite_id: str, file_path: str) -> str:
         with open(file_path, "rb") as f:

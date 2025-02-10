@@ -352,6 +352,7 @@ class TestResult(BaseModel):
     """Result of evaluation for a single test."""
 
     _id: str
+    test_id: str
     input_under_test: str
 
     context: dict[str, Any]
@@ -368,6 +369,9 @@ class TestResult(BaseModel):
     pass_percentage: float
     """Percent of passing checks for the test"""
 
+    pass_percentage_with_optional: float
+    """Percent of passing checks including optional checks"""
+
     check_results: list[CheckResult]
     """Results for every check"""
 
@@ -381,13 +385,15 @@ class TestResult(BaseModel):
             if len(context) == 0 and graphql_test_result.test.context is not None:
                 context = json.loads(graphql_test_result.test.context)
 
-        obj = cls(
+        return cls(
             _id=graphql_test_result.id,
+            test_id=graphql_test_result.test.test_id,
             input_under_test=graphql_test_result.test.input_under_test,
             context=context,
             output_context=output_context,
             llm_output=graphql_test_result.llm_output,
             pass_percentage=graphql_test_result.pass_percentage,
+            pass_percentage_with_optional=graphql_test_result.pass_percentage_with_optional,
             check_results=[
                 CheckResult(
                     operator=check_result["operator"],
@@ -408,8 +414,6 @@ class TestResult(BaseModel):
                 else None
             ),
         )
-        obj._id = graphql_test_result.id
-        return obj
 
 
 class QuestionAnswerPair(BaseModel):
@@ -419,6 +423,7 @@ class QuestionAnswerPair(BaseModel):
     context: dict[str, Any] = {}
     output_context: dict[str, Any] = {}
     metadata: Metadata | None = None
+    test_id: str | None = None
 
     def to_graphql(self) -> QuestionAnswerPairInputType:
         return QuestionAnswerPairInputType(
@@ -430,7 +435,7 @@ class QuestionAnswerPair(BaseModel):
             metadata=(
                 MetadataType(**self.metadata.model_dump()) if self.metadata else None
             ),
-            test_id=None,
+            test_id=self.test_id,
         )
 
 

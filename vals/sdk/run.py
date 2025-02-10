@@ -9,13 +9,30 @@ from pydantic import BaseModel, PrivateAttr
 from vals.graphql_client import Client
 from vals.graphql_client.pull_run import PullRun
 from vals.sdk.exceptions import ValsException
-from vals.sdk.types import RunMetadata, RunParameters, RunStatus, TestResult
+from vals.sdk.types import (
+    ModelCustomOperatorFunctionType,
+    RunMetadata,
+    RunParameters,
+    RunStatus,
+    TestResult,
+    QuestionAnswerPair,
+    Metadata,
+    ModelFunctionType,
+)
+from vals.sdk.inspect_wrapper import InspectWrapper
+from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.util import _get_auth_token, be_host, fe_host, get_ariadne_client
 
 
 class Run(BaseModel):
     id: str
     """Unique identifier for the run."""
+
+    name: str
+    """Name of the run."""
+
+    qa_set_id: str
+    """Unique identifier for the QA set run was created with."""
 
     test_suite_id: str
     """Unique identifier for the test suite run was created with."""
@@ -77,6 +94,8 @@ class Run(BaseModel):
 
         return Run(
             id=run_id,
+            name=result.run.name,
+            qa_set_id=result.run.qa_set.id,
             model=model,
             pass_percentage=(
                 result.run.pass_percentage * 100
@@ -211,3 +230,81 @@ class Run(BaseModel):
         """Retry all failing tests in a run."""
 
         await self._client.rerun_tests(run_id=self.id)
+
+    async def resume_run(
+        self,
+        model: str | ModelFunctionType | list[QuestionAnswerPair] | InspectWrapper,
+        wait_for_completion: bool = False,
+        upload_concurrency: int | None = None,
+        custom_operators: list[ModelCustomOperatorFunctionType] = [],
+    ) -> None:
+        """Resume a run that was paused.
+
+        This method will:
+        1. Check for existing QA pairs that haven't been auto-evaluated
+        2. Check for existing completed test results
+        3. Run the remaining tests that haven't been processed yet
+        """
+        # Import Suite here to avoid circular import
+        from vals.sdk.suite import Suite
+
+        # Get the test suite
+        suite = await Suite.from_id(self.test_suite_id)
+
+        tests_dict = {test._id: test for test in suite.tests}
+
+        # Create sets of existing test IDs for both QA pairs and completed results
+        completed_qa_pairs = {}
+        completed_test_results = {}
+
+        print(f"Test results: {self.test_results}")
+
+        for result in self.test_results:
+            if len(result.check_results) > 0:
+                completed_test_results[result.test_id] = result
+            else:
+                completed_qa_pairs[result.test_id] = result
+
+        # Filter suite tests to only include those that haven't been processed
+        remaining_tests = {
+            test._id: test
+            for test in suite.tests
+            if test._id not in completed_qa_pairs
+            and test._id not in completed_test_results
+        }
+
+        print(f"Remaining tests: {len(remaining_tests)}")
+
+        # Convert existing QA pairs to QuestionAnswerPair objects
+        uploaded_qa_pairs = [
+            QuestionAnswerPair(
+                input_under_test=incomplete_test_result.input_under_test,
+                llm_output=incomplete_test_result.llm_output,
+                file_ids=tests_dict[id].files_under_test,
+                context=incomplete_test_result.context,
+                output_context=incomplete_test_result.output_context,
+                metadata=(
+                    Metadata(**incomplete_test_result.metadata.model_dump())
+                    if incomplete_test_result.metadata
+                    else None
+                ),
+                test_id=id,
+            )
+            for id, incomplete_test_result in completed_qa_pairs.items()
+        ]
+
+        # Run the remaining tests, including existing QA pairs
+        await suite.run(
+            model=model,
+            model_name=self.model,
+            run_name=self.name,
+            wait_for_completion=wait_for_completion,
+            parameters=self.parameters,
+            upload_concurrency=upload_concurrency,
+            custom_operators=custom_operators,
+            eval_model_name=self.parameters.eval_model,
+            run_id=self.id,
+            qa_set_id=self.qa_set_id,
+            remaining_tests=list(remaining_tests.values()),
+            uploaded_qa_pairs=uploaded_qa_pairs,
+        )

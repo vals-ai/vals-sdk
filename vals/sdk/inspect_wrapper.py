@@ -28,10 +28,12 @@ class InspectWrapper:
         task: Task,
         model_name: str | None = None,
         config: dict[str, Any] | GenerateConfig | None = None,
+        eval_model_name: str | None = None,
     ):
         self.task = task
         self.model_name = model_name
         self.config = config
+        self.eval_model_name = eval_model_name
 
         if model_name is None:
             self.generate = self.get_generate_function(
