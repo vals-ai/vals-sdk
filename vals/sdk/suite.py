@@ -32,6 +32,7 @@ from vals.sdk.types import (
     SimpleModelFunctionType,
     Test,
     TestSuiteMetadata,
+    RunStatus,
 )
 from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.util import (
@@ -43,6 +44,7 @@ from vals.sdk.util import (
     parse_file_id,
     read_file,
 )
+import concurrent.futures._base
 
 
 class Suite(BaseModel):
@@ -365,23 +367,17 @@ class Suite(BaseModel):
         """Wrapper to handle interruptions during local execution"""
         try:
             return await coro
-        except (KeyboardInterrupt, asyncio.CancelledError):
+        except (
+            KeyboardInterrupt,
+            asyncio.CancelledError,
+            concurrent.futures._base.CancelledError,
+        ):
             if run_id:
-                await self._client.update_run_status(
-                    run_id=run_id,
-                    status="error",
-                    error_message="Run interrupted by user during local execution",
-                )
+                await self._client.update_run_status(run_id=run_id)
             raise
         except Exception as e:
-            print(f"Error during local execution: {str(e)}")
             if run_id:
-                print(f"Updating run status to error for run {run_id}")
-                await self._client.update_run_status(
-                    run_id=run_id,
-                    status="error",
-                    error_message=f"Error during local execution: {str(e)}",
-                )
+                await self._client.update_run_status(run_id=run_id)
             raise
 
     async def run(
@@ -396,7 +392,7 @@ class Suite(BaseModel):
         eval_model_name: str | None = None,
         run_id: str | None = None,
         qa_set_id: str | None = None,
-        remaining_tests: list[Test] = [],
+        remaining_tests: list[Test] | None = None,
         uploaded_qa_pairs: list[QuestionAnswerPairInputType] = [],
     ) -> Run:
         """
@@ -407,8 +403,6 @@ class Suite(BaseModel):
                          Defaults to parameters.parallelism.
             custom_operator: A custom operator function that takes in an OperatorInput and returns an OperatorOutput.
         """
-        resuming_run = run_id is not None
-
         if self.id is None:
             raise Exception(
                 "This suite has not been created yet. Call suite.create() before calling suite.run()"
@@ -502,19 +496,16 @@ class Suite(BaseModel):
                 run_id,
             )
 
-        if resuming_run:
-            run = await Run.from_id(run_id)
-            await run.retry_failing_tests()
+        run = await Run.from_id(run_id)
 
-        else:
-            response = await self._client.start_run(
-                self.id, parameter_input, qa_set_id, run_name, run_id
-            )
+        response = await self._client.start_run(
+            self.id, parameter_input, qa_set_id, run_name, run_id
+        )
 
-            if response.start_run is None:
-                raise Exception("Unable to start the run.")
+        if response.start_run is None:
+            raise Exception("Unable to start the run.")
 
-            run = await Run.from_id(run_id)
+        run = await Run.from_id(run_id)
 
         if wait_for_completion:
             await run.wait_for_run_completion()
@@ -694,6 +685,9 @@ class Suite(BaseModel):
                 # Upload batch when we reach batch_size
                 nonlocal last_uploaded_idx
                 while len(operator_results) >= last_uploaded_idx + upload_concurrency:
+                    print(
+                        f"Uploading batch {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency}"
+                    )
                     batch_to_upload = operator_results[
                         last_uploaded_idx : last_uploaded_idx + upload_concurrency
                     ]
@@ -847,6 +841,9 @@ class Suite(BaseModel):
                 # Upload batch when we reach batch_size
                 nonlocal last_uploaded_idx
                 while len(qa_pairs) >= last_uploaded_idx + upload_concurrency:
+                    print(
+                        f"Uploading batch {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency}"
+                    )
                     batch_to_upload = qa_pairs[
                         last_uploaded_idx : last_uploaded_idx + upload_concurrency
                     ]
@@ -861,7 +858,7 @@ class Suite(BaseModel):
         # Process all tests concurrently with limited concurrency
         with tqdm(
             total=(
-                len(self.tests) if len(remaining_tests) == 0 else len(remaining_tests)
+                len(self.tests) if remaining_tests is None else len(remaining_tests)
             ),
             desc="Processing tests",
         ) as pbar:
@@ -869,7 +866,7 @@ class Suite(BaseModel):
                 *(
                     process_and_upload_test(test)
                     for test in (
-                        self.tests if len(remaining_tests) == 0 else remaining_tests
+                        self.tests if remaining_tests is None else remaining_tests
                     )
                 )
             )

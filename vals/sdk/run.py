@@ -176,12 +176,20 @@ class Run(BaseModel):
         for field in updated.__fields__:
             setattr(self, field, getattr(updated, field))
 
+    async def get_qa_pairs(self) -> list[QuestionAnswerPair]:
+        """Get all QA pairs for a run."""
+        result = await self._client.list_question_answer_pairs(qa_set_id=self.qa_set_id)
+        return [
+            QuestionAnswerPair.from_graphql(graphql_qa_pair)
+            for graphql_qa_pair in result.question_answer_pairs_with_count.question_answer_pairs
+        ]
+
     async def run_status(self) -> RunStatus:
         """Get the status of a run"""
-
         result = await self._client.run_status(run_id=self.id)
-        self.status = result.run.status
-        return RunStatus(result.run.status)
+        status = result.run.status
+        self.status = RunStatus(status)
+        return self.status
 
     async def wait_for_run_completion(
         self,
@@ -251,19 +259,17 @@ class Run(BaseModel):
         # Get the test suite
         suite = await Suite.from_id(self.test_suite_id)
 
-        tests_dict = {test._id: test for test in suite.tests}
-
         # Create sets of existing test IDs for both QA pairs and completed results
         completed_qa_pairs = {}
         completed_test_results = {}
 
-        print(f"Test results: {self.test_results}")
+        qa_pairs = await self.get_qa_pairs()
 
-        for result in self.test_results:
-            if len(result.check_results) > 0:
-                completed_test_results[result.test_id] = result
+        for qa_pair in qa_pairs:
+            if len(qa_pair.local_evals) > 0:
+                completed_test_results[qa_pair.test_id] = qa_pair
             else:
-                completed_qa_pairs[result.test_id] = result
+                completed_qa_pairs[qa_pair.test_id] = qa_pair
 
         # Filter suite tests to only include those that haven't been processed
         remaining_tests = {
@@ -273,25 +279,15 @@ class Run(BaseModel):
             and test._id not in completed_test_results
         }
 
+        uploaded_qa_pairs = [
+            qa_pair for qa_pair in qa_pairs if qa_pair.test_id in completed_qa_pairs
+        ]
+
         print(f"Remaining tests: {len(remaining_tests)}")
 
-        # Convert existing QA pairs to QuestionAnswerPair objects
-        uploaded_qa_pairs = [
-            QuestionAnswerPair(
-                input_under_test=incomplete_test_result.input_under_test,
-                llm_output=incomplete_test_result.llm_output,
-                file_ids=tests_dict[id].files_under_test,
-                context=incomplete_test_result.context,
-                output_context=incomplete_test_result.output_context,
-                metadata=(
-                    Metadata(**incomplete_test_result.metadata.model_dump())
-                    if incomplete_test_result.metadata
-                    else None
-                ),
-                test_id=id,
-            )
-            for id, incomplete_test_result in completed_qa_pairs.items()
-        ]
+        print(
+            "Remaining custom evals: ", len(suite.tests) - len(completed_test_results)
+        )
 
         # Run the remaining tests, including existing QA pairs
         await suite.run(

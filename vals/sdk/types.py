@@ -22,8 +22,12 @@ from vals.graphql_client.input_types import (
     MetadataType,
     QuestionAnswerPairInputType,
     TestMutationInfo,
+    LocalEvalUploadInputType,
 )
 from vals.graphql_client.list_runs import ListRunsRunsWithCountRunResults
+from vals.graphql_client.list_question_answer_pairs import (
+    ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs,
+)
 from vals.graphql_client.pull_run import PullRunTestResults
 from vals.sdk.operator_type import OperatorType
 
@@ -417,6 +421,7 @@ class TestResult(BaseModel):
 
 
 class QuestionAnswerPair(BaseModel):
+    id: str
     input_under_test: str
     llm_output: str
     file_ids: list[str] | None = None
@@ -424,6 +429,44 @@ class QuestionAnswerPair(BaseModel):
     output_context: dict[str, Any] = {}
     metadata: Metadata | None = None
     test_id: str | None = None
+    local_evals: list[LocalEvalUploadInputType] | None = None
+
+    @classmethod
+    def from_graphql(
+        cls,
+        graphql_qa_pair: ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs,
+    ) -> "QuestionAnswerPair":
+        metadata = None
+        if graphql_qa_pair.typed_metadata:
+            metadata = Metadata(
+                in_tokens=graphql_qa_pair.typed_metadata.in_tokens,
+                out_tokens=graphql_qa_pair.typed_metadata.out_tokens,
+                duration_seconds=graphql_qa_pair.typed_metadata.duration_seconds,
+            )
+
+        return cls(
+            id=graphql_qa_pair.id,
+            input_under_test=graphql_qa_pair.input_under_test,
+            llm_output=graphql_qa_pair.llm_output,
+            file_ids=graphql_qa_pair.typed_file_ids,
+            context=graphql_qa_pair.context or {},
+            output_context=graphql_qa_pair.output_context or {},
+            metadata=metadata,
+            test_id=graphql_qa_pair.test.test_id if graphql_qa_pair.test else None,
+            local_evals=(
+                [
+                    LocalEvalUploadInputType(
+                        question_answer_pair_id=graphql_qa_pair.id,
+                        score=eval.score,
+                        feedback=eval.feedback,
+                        name="local_eval",
+                    )
+                    for eval in graphql_qa_pair.local_evals
+                ]
+                if graphql_qa_pair.local_evals
+                else []
+            ),
+        )
 
     def to_graphql(self) -> QuestionAnswerPairInputType:
         return QuestionAnswerPairInputType(
