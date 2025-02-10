@@ -32,6 +32,7 @@ from .run_param_info import RunParamInfo
 from .run_status import RunStatus
 from .start_run import StartRun
 from .update_global_checks import UpdateGlobalChecks
+from .update_run_status import UpdateRunStatus
 from .upload_local_evaluation import UploadLocalEvaluation
 
 
@@ -213,6 +214,26 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return StartRun.model_validate(data)
+
+    async def update_run_status(self, run_id: str, **kwargs: Any) -> UpdateRunStatus:
+        query = gql(
+            """
+            mutation updateRunStatus($run_id: String!) {
+              updateRunStatus(runId: $run_id, status: ERROR) {
+                run {
+                  runId
+                  status
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"run_id": run_id}
+        response = await self.execute(
+            query=query, operation_name="updateRunStatus", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return UpdateRunStatus.model_validate(data)
 
     async def run_param_info(self, **kwargs: Any) -> RunParamInfo:
         query = gql(

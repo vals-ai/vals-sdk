@@ -15,3 +15,12 @@ mutation startRun(
     runId
   }
 }
+
+mutation updateRunStatus($run_id: String!) {
+  updateRunStatus(runId: $run_id, status: ERROR) {
+    run {
+      runId
+      status
+    }
+  }
+}
