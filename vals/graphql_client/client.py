@@ -124,14 +124,18 @@ class Client(AsyncBaseClient):
 
     async def list_question_answer_pairs(
         self,
+        qa_set_id: str,
         offset: Union[Optional[int], UnsetType] = UNSET,
         limit: Union[Optional[int], UnsetType] = UNSET,
         **kwargs: Any
     ) -> ListQuestionAnswerPairs:
         query = gql(
             """
-            query ListQuestionAnswerPairs($offset: Int, $limit: Int) {
-              questionAnswerPairsWithCount(filterOptions: {offset: $offset, limit: $limit}) {
+            query ListQuestionAnswerPairs($qaSetId: String!, $offset: Int, $limit: Int) {
+              questionAnswerPairsWithCount(
+                qaSetId: $qaSetId
+                filterOptions: {offset: $offset, limit: $limit}
+              ) {
                 questionAnswerPairs {
                   id
                   inputUnderTest
@@ -159,7 +163,11 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"offset": offset, "limit": limit}
+        variables: Dict[str, object] = {
+            "qaSetId": qa_set_id,
+            "offset": offset,
+            "limit": limit,
+        }
         response = await self.execute(
             query=query,
             operation_name="ListQuestionAnswerPairs",

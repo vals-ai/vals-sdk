@@ -1,5 +1,6 @@
-query ListQuestionAnswerPairs($offset: Int, $limit: Int) {
+query ListQuestionAnswerPairs($qaSetId: String!, $offset: Int, $limit: Int) {
   questionAnswerPairsWithCount(
+    qaSetId: $qaSetId
     filterOptions: { offset: $offset, limit: $limit }
   ) {
     questionAnswerPairs {
