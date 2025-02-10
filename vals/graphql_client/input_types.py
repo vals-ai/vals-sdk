@@ -80,6 +80,13 @@ class TestResultFilterOptions(BaseModel):
     limit: Optional[int] = None
 
 
+class QuestionAnswerPairsFilterOptions(BaseModel):
+    search: Optional[str] = None
+    tags: Optional[List[Optional[str]]] = None
+    offset: Optional[int] = None
+    limit: Optional[int] = None
+
+
 class CheckInputType(BaseModel):
     operator: str
     criteria: Optional[str] = None

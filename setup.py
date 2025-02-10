@@ -24,6 +24,7 @@ setup(
         "dev": ["ariadne-codegen"],
         # Requirements for parsing utilities we provide
         "parsing": ["pypdf", "pypandoc-binary"],
+        "inspect": ["inspect-ai"],
     },
     entry_points={
         "console_scripts": [

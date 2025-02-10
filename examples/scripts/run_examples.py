@@ -73,14 +73,14 @@ def custom_model(input: str) -> str:
 
 async def run_with_local_eval():
 
-    suite = await Suite.from_id("b028672c-0366-45e6-82ed-260df9af27b9")
+    suite = await Suite.from_id("e79f12d8-eaba-44a3-a4be-660b97551055")
     #  qa_pairs = [QuestionAnswerPair(input_under_test="What is QSBS?", llm_output="QSBS")]
 
     run = await suite.run(
         model=custom_model,
         wait_for_completion=True,
         model_name="my_function_model",
-        push_qa_batch_size=10,
+        #  push_qa_batch_size=10,
         parameters=RunParameters(parallelism=5),
         custom_operators=[custom_operator, custom_operator2],
     )
