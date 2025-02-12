@@ -38,3 +38,11 @@ mutation BatchAddQuestionAnswerPairs(
     }
   }
 }
+
+mutation MarkQuestionAnswerSetAsComplete($questionAnswerSetId: String!) {
+  markQuestionAnswerSetAsComplete(questionAnswerSetId: $questionAnswerSetId) {
+    questionAnswerSet {
+      id
+    }
+  }
+}

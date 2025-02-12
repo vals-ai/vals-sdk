@@ -25,6 +25,7 @@ from .input_types import (
 )
 from .list_question_answer_pairs import ListQuestionAnswerPairs
 from .list_runs import ListRuns
+from .mark_question_answer_set_as_complete import MarkQuestionAnswerSetAsComplete
 from .pull_run import PullRun
 from .remove_old_tests import RemoveOldTests
 from .rerun_tests import RerunTests
@@ -122,6 +123,30 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return BatchAddQuestionAnswerPairs.model_validate(data)
+
+    async def mark_question_answer_set_as_complete(
+        self, question_answer_set_id: str, **kwargs: Any
+    ) -> MarkQuestionAnswerSetAsComplete:
+        query = gql(
+            """
+            mutation MarkQuestionAnswerSetAsComplete($questionAnswerSetId: String!) {
+              markQuestionAnswerSetAsComplete(questionAnswerSetId: $questionAnswerSetId) {
+                questionAnswerSet {
+                  id
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"questionAnswerSetId": question_answer_set_id}
+        response = await self.execute(
+            query=query,
+            operation_name="MarkQuestionAnswerSetAsComplete",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return MarkQuestionAnswerSetAsComplete.model_validate(data)
 
     async def list_question_answer_pairs(
         self,

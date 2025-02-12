@@ -1,4 +1,5 @@
 import asyncio
+import concurrent.futures._base
 import inspect
 import json
 import os
@@ -17,24 +18,24 @@ from vals.graphql_client.input_types import (
     ParameterInputType,
     QuestionAnswerPairInputType,
 )
+from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.run import Run
 from vals.sdk.types import (
     Check,
+    CustomModelInput,
+    CustomModelOutput,
     ModelCustomOperatorFunctionType,
     ModelFunctionType,
     ModelFunctionWithFilesAndContextType,
-    CustomModelInput,
-    CustomModelOutput,
     OperatorInput,
     OperatorOutput,
     QuestionAnswerPair,
     RunParameters,
+    RunStatus,
     SimpleModelFunctionType,
     Test,
     TestSuiteMetadata,
-    RunStatus,
 )
-from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.util import (
     _get_auth_token,
     be_host,
@@ -44,7 +45,6 @@ from vals.sdk.util import (
     parse_file_id,
     read_file,
 )
-import concurrent.futures._base
 
 
 class Suite(BaseModel):
@@ -889,6 +889,8 @@ class Suite(BaseModel):
                     for qa_pair in result.batch_add_question_answer_pairs.question_answer_pairs
                 ]
             )
+
+        await self._client.mark_question_answer_set_as_complete(qa_set_id)
 
         return uploaded_qa_pairs
 
