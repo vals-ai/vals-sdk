@@ -245,6 +245,7 @@ class Run(BaseModel):
         wait_for_completion: bool = False,
         upload_concurrency: int | None = None,
         custom_operators: list[ModelCustomOperatorFunctionType] = [],
+        parallelism: int | None = None,
     ) -> None:
         """Resume a run that was paused.
 
@@ -253,6 +254,8 @@ class Run(BaseModel):
         2. Check for existing completed test results
         3. Run the remaining tests that haven't been processed yet
         """
+        if parallelism is not None:
+            self.parameters.parallelism = parallelism
         # Import Suite here to avoid circular import
         from vals.sdk.suite import Suite
 
@@ -262,9 +265,10 @@ class Run(BaseModel):
         # Create sets of existing test IDs for both QA pairs and completed results
         completed_qa_pairs = {}
         completed_test_results = {}
+        print(len(suite.tests))
 
         qa_pairs = await self.get_qa_pairs()
-
+        print(len(qa_pairs))
         for qa_pair in qa_pairs:
             if len(qa_pair.local_evals) > 0:
                 completed_test_results[qa_pair.test_id] = qa_pair

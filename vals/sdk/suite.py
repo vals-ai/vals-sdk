@@ -428,8 +428,9 @@ class Suite(BaseModel):
         if isinstance(model, InspectWrapper):
             model_name = model.model_name
             eval_model_name = model.eval_model_name
-            model = model.get_custom_model()
+            inspect_wrapper = model
             custom_operators = model.get_custom_operators()
+            model = model.get_custom_model()
 
         parameter_json = parameters.model_dump()
         del parameter_json[
@@ -689,8 +690,8 @@ class Suite(BaseModel):
                 # Upload batch when we reach batch_size
                 nonlocal last_uploaded_idx
                 while len(operator_results) >= last_uploaded_idx + upload_concurrency:
-                    print(
-                        f"Uploading batch {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency}"
+                    pbar.set_description(
+                        f"Processing operator evaluations (uploading batch {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency})"
                     )
                     batch_to_upload = operator_results[
                         last_uploaded_idx : last_uploaded_idx + upload_concurrency
@@ -845,8 +846,8 @@ class Suite(BaseModel):
                 # Upload batch when we reach batch_size
                 nonlocal last_uploaded_idx
                 while len(qa_pairs) >= last_uploaded_idx + upload_concurrency:
-                    print(
-                        f"Uploading batch {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency}"
+                    pbar.set_description(
+                        f"Processing tests (uploading batch {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency})"
                     )
                     batch_to_upload = qa_pairs[
                         last_uploaded_idx : last_uploaded_idx + upload_concurrency
