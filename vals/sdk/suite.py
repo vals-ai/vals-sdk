@@ -10,7 +10,7 @@ import requests
 import vals.sdk.patch as patch
 from pydantic import BaseModel, PrivateAttr
 from tqdm import tqdm
-from vals.graphql_client.client import Client
+from vals.graphql_client.client import Client, UNSET
 from vals.graphql_client.get_operators import GetOperatorsOperators
 from vals.graphql_client.input_types import (
     LocalEvalUploadInputType,
@@ -507,14 +507,14 @@ class Suite(BaseModel):
                 run_id,
             )
 
-        run = await Run.from_id(run_id)
-
         response = await self._client.start_run(
             self.id, parameter_input, qa_set_id, run_name, run_id
         )
 
         if response.start_run is None:
             raise Exception("Unable to start the run.")
+
+        run_id = response.start_run.run_id
 
         run = await Run.from_id(run_id)
 
