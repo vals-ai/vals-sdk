@@ -143,7 +143,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="MarkQuestionAnswerSetAsComplete",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return MarkQuestionAnswerSetAsComplete.model_validate(data)
@@ -604,8 +604,7 @@ class Client(AsyncBaseClient):
         **kwargs: Any,
     ) -> UploadLocalEvaluation:
         query = gql(
-            """
-            mutation uploadLocalEvaluation($questionAnswerSetId: String!, $localEvals: [LocalEvalUploadInputType!]!) {
+            """mutation uploadLocalEvaluation($questionAnswerSetId: String!, $localEvals: [LocalEvalUploadInputType!]!) {
               uploadLocalEvaluation(
                 questionAnswerSetId: $questionAnswerSetId
                 localEvals: $localEvals
@@ -617,8 +616,7 @@ class Client(AsyncBaseClient):
                   createdAt
                 }
               }
-            }
-            """
+            }"""
         )
         variables: Dict[str, object] = {
             "questionAnswerSetId": question_answer_set_id,

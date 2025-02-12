@@ -5,7 +5,7 @@ from typing import Any, Callable, List, Optional, Union
 from inspect_ai import Task
 from inspect_ai.solver import TaskState, Solver, Generate, generate
 from inspect_ai.scorer import Target, Score, Scorer
-from inspect_ai.model import ModelOutput, GenerateConfig, get_model
+from inspect_ai.model import ModelOutput, GenerateConfig, get_model, ChatMessageUser
 from copy import deepcopy
 
 from vals.sdk.types import (
@@ -68,12 +68,19 @@ class InspectWrapper:
         if "uploaded_files" in custom_model_input.context:
             metadata["uploaded_files"] = custom_model_input.context["uploaded_files"]
 
+        if "messages" in custom_model_input.context.get("inspect_context", {}):
+            messages = custom_model_input.context["inspect_context"]["messages"]
+        else:
+            messages = [
+                ChatMessageUser(content=custom_model_input.input_under_test),
+            ]
+
         return TaskState(
             model=self.model,
             sample_id=0,
             epoch=0,
-            input=custom_model_input.input_under_test,
-            messages=[],
+            input=messages,
+            messages=messages,
             metadata=metadata,
         )
 
@@ -104,7 +111,7 @@ class InspectWrapper:
         return Target(target=operator_input.context["inspect_context"]["target"])
 
     def get_custom_model(
-        self, solver: Solver | None = generate(), generate: Generate | None = None
+        self, solver: Solver | None = None, generate: Generate | None = None
     ) -> Callable[[str], Union[str, dict]]:
         """Convert inspect Solver to Vals CustomModel format."""
         solver = solver if solver is not None else self.task.solver

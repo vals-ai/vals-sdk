@@ -691,7 +691,7 @@ class Suite(BaseModel):
                 nonlocal last_uploaded_idx
                 while len(operator_results) >= last_uploaded_idx + upload_concurrency:
                     pbar.set_description(
-                        f"Processing operator evaluations (uploading batch {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency})"
+                        f"Processing operator evaluations (uploading evaluations {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency})"
                     )
                     batch_to_upload = operator_results[
                         last_uploaded_idx : last_uploaded_idx + upload_concurrency
@@ -847,7 +847,7 @@ class Suite(BaseModel):
                 nonlocal last_uploaded_idx
                 while len(qa_pairs) >= last_uploaded_idx + upload_concurrency:
                     pbar.set_description(
-                        f"Processing tests (uploading batch {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency})"
+                        f"Processing tests (uploading outputs {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency})"
                     )
                     batch_to_upload = qa_pairs[
                         last_uploaded_idx : last_uploaded_idx + upload_concurrency
