@@ -49,7 +49,7 @@ class Client(AsyncBaseClient):
         parameters: Any,
         model_id: str,
         run_name: Union[Optional[str], UnsetType] = UNSET,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> CreateQuestionAnswerSet:
         query = gql(
             """
@@ -81,7 +81,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="CreateQuestionAnswerSet",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return CreateQuestionAnswerSet.model_validate(data)
@@ -90,7 +90,7 @@ class Client(AsyncBaseClient):
         self,
         question_answer_set_id: str,
         question_answer_pairs: List[QuestionAnswerPairInputType],
-        **kwargs: Any
+        **kwargs: Any,
     ) -> BatchAddQuestionAnswerPairs:
         query = gql(
             """
@@ -119,7 +119,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="BatchAddQuestionAnswerPairs",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return BatchAddQuestionAnswerPairs.model_validate(data)
@@ -153,7 +153,7 @@ class Client(AsyncBaseClient):
         qa_set_id: str,
         offset: Union[Optional[int], UnsetType] = UNSET,
         limit: Union[Optional[int], UnsetType] = UNSET,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> ListQuestionAnswerPairs:
         query = gql(
             """
@@ -198,7 +198,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="ListQuestionAnswerPairs",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return ListQuestionAnswerPairs.model_validate(data)
@@ -210,7 +210,7 @@ class Client(AsyncBaseClient):
         qa_set_id: Union[Optional[str], UnsetType] = UNSET,
         run_name: Union[Optional[str], UnsetType] = UNSET,
         run_id: Union[Optional[str], UnsetType] = UNSET,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> StartRun:
         query = gql(
             """
@@ -240,11 +240,13 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return StartRun.model_validate(data)
 
-    async def update_run_status(self, run_id: str, **kwargs: Any) -> UpdateRunStatus:
+    async def update_run_status(
+        self, run_id: str, status: RunStatus, **kwargs: Any
+    ) -> UpdateRunStatus:
         query = gql(
             """
-            mutation updateRunStatus($run_id: String!) {
-              updateRunStatus(runId: $run_id, status: ERROR) {
+            mutation updateRunStatus($run_id: String!, $status: RunStatus!) {
+              updateRunStatus(runId: $run_id, status: $status) {
                 run {
                   runId
                   status
@@ -253,7 +255,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"run_id": run_id}
+        variables: Dict[str, object] = {"run_id": run_id, "status": status}
         response = await self.execute(
             query=query, operation_name="updateRunStatus", variables=variables, **kwargs
         )
@@ -368,7 +370,7 @@ class Client(AsyncBaseClient):
         limit: Union[Optional[int], UnsetType] = UNSET,
         offset: Union[Optional[int], UnsetType] = UNSET,
         search: Union[Optional[str], UnsetType] = UNSET,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> ListRuns:
         query = gql(
             """
@@ -457,7 +459,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="createOrUpdateTestSuite",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return CreateOrUpdateTestSuite.model_validate(data)
@@ -529,7 +531,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="updateGlobalChecks",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return UpdateGlobalChecks.model_validate(data)
@@ -599,7 +601,7 @@ class Client(AsyncBaseClient):
         self,
         question_answer_set_id: str,
         local_evals: List[LocalEvalUploadInputType],
-        **kwargs: Any
+        **kwargs: Any,
     ) -> UploadLocalEvaluation:
         query = gql(
             """
@@ -626,7 +628,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="uploadLocalEvaluation",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return UploadLocalEvaluation.model_validate(data)
@@ -653,7 +655,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="getTestSuiteData",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetTestSuiteData.model_validate(data)
@@ -690,7 +692,7 @@ class Client(AsyncBaseClient):
         offset: Union[Optional[int], UnsetType] = UNSET,
         limit: Union[Optional[int], UnsetType] = UNSET,
         search: Union[Optional[str], UnsetType] = UNSET,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> GetTestSuitesWithCount:
         query = gql(
             """
@@ -724,7 +726,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="getTestSuitesWithCount",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetTestSuitesWithCount.model_validate(data)
