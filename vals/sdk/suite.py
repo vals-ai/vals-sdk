@@ -392,12 +392,12 @@ class Suite(BaseModel):
         wait_for_completion: bool = False,
         parameters: RunParameters | None = None,
         upload_concurrency: int | None = None,
-        custom_operators: list[ModelCustomOperatorFunctionType] = [],
+        custom_operators: list[ModelCustomOperatorFunctionType] | None = None,
         eval_model_name: str | None = None,
         run_id: str | None = None,
         qa_set_id: str | None = None,
         remaining_tests: list[Test] | None = None,
-        uploaded_qa_pairs: list[QuestionAnswerPairInputType] = [],
+        uploaded_qa_pairs: list[QuestionAnswerPairInputType] | None = None,
     ) -> Run:
         """
         Base method for running the test suite. See overloads for documentation.
@@ -414,11 +414,17 @@ class Suite(BaseModel):
         if parameters is None:
             parameters = RunParameters()
 
+        if custom_operators is None:
+            custom_operators = []
+
         if eval_model_name is not None:
             parameters.eval_model = eval_model_name
 
         if upload_concurrency is None:
             upload_concurrency = parameters.parallelism
+
+        if uploaded_qa_pairs is None:
+            uploaded_qa_pairs = []
 
         if isinstance(model, str) and len(custom_operators) > 0:
             raise Exception(
@@ -861,6 +867,7 @@ class Suite(BaseModel):
                     last_uploaded_idx += upload_concurrency
 
         # Process all tests concurrently with limited concurrency
+
         with tqdm(
             total=(
                 len(self.tests) if remaining_tests is None else len(remaining_tests)

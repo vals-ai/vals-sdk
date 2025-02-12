@@ -176,9 +176,13 @@ class Run(BaseModel):
         for field in updated.__fields__:
             setattr(self, field, getattr(updated, field))
 
-    async def get_qa_pairs(self) -> list[QuestionAnswerPair]:
+    async def get_qa_pairs(
+        self, offset: int = 0, limit: int = 1000
+    ) -> list[QuestionAnswerPair]:
         """Get all QA pairs for a run."""
-        result = await self._client.list_question_answer_pairs(qa_set_id=self.qa_set_id)
+        result = await self._client.list_question_answer_pairs(
+            qa_set_id=self.qa_set_id, offset=offset, limit=limit
+        )
         return [
             QuestionAnswerPair.from_graphql(graphql_qa_pair)
             for graphql_qa_pair in result.question_answer_pairs_with_count.question_answer_pairs
@@ -244,7 +248,7 @@ class Run(BaseModel):
         model: str | ModelFunctionType | list[QuestionAnswerPair] | InspectWrapper,
         wait_for_completion: bool = False,
         upload_concurrency: int | None = None,
-        custom_operators: list[ModelCustomOperatorFunctionType] = [],
+        custom_operators: list[ModelCustomOperatorFunctionType] | None = None,
         parallelism: int | None = None,
     ) -> None:
         """Resume a run that was paused.
@@ -254,6 +258,9 @@ class Run(BaseModel):
         2. Check for existing completed test results
         3. Run the remaining tests that haven't been processed yet
         """
+        if custom_operators is None:
+            custom_operators = []
+
         if parallelism is not None:
             self.parameters.parallelism = parallelism
         # Import Suite here to avoid circular import
@@ -265,10 +272,9 @@ class Run(BaseModel):
         # Create sets of existing test IDs for both QA pairs and completed results
         completed_qa_pairs = {}
         completed_test_results = {}
-        print(len(suite.tests))
 
-        qa_pairs = await self.get_qa_pairs()
-        print(len(qa_pairs))
+        qa_pairs = await self.get_qa_pairs(offset=0, limit=len(suite.tests))
+
         for qa_pair in qa_pairs:
             if len(qa_pair.local_evals) > 0:
                 completed_test_results[qa_pair.test_id] = qa_pair
@@ -287,10 +293,11 @@ class Run(BaseModel):
             qa_pair for qa_pair in qa_pairs if qa_pair.test_id in completed_qa_pairs
         ]
 
-        print(f"Remaining tests: {len(remaining_tests)}")
+        print(f"Remaining model outputs to generate: {len(remaining_tests)}")
 
         print(
-            "Remaining custom evals: ", len(suite.tests) - len(completed_test_results)
+            "Remaining model outputs to evaluate: ",
+            len(suite.tests) - len(completed_test_results),
         )
 
         # Run the remaining tests, including existing QA pairs
