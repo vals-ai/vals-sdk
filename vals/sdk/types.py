@@ -19,15 +19,15 @@ from vals.graphql_client.get_test_suites_with_count import (
 from vals.graphql_client.input_types import (
     CheckInputType,
     CheckModifiersInputType,
+    LocalEvalUploadInputType,
     MetadataType,
     QuestionAnswerPairInputType,
     TestMutationInfo,
-    LocalEvalUploadInputType,
 )
-from vals.graphql_client.list_runs import ListRunsRunsWithCountRunResults
 from vals.graphql_client.list_question_answer_pairs import (
     ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs,
 )
+from vals.graphql_client.list_runs import ListRunsRunsWithCountRunResults
 from vals.graphql_client.pull_run import PullRunTestResults
 from vals.sdk.operator_type import OperatorType
 
@@ -494,7 +494,7 @@ class OperatorInput(BaseModel):
 
 class OperatorOutput(BaseModel):
     name: str
-    score: int
+    score: float
     explanation: str
 
 
