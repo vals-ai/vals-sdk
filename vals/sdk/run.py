@@ -112,7 +112,7 @@ class Run(BaseModel):
             success_rate_error=(
                 result.run.success_rate.error if result.run.success_rate else None
             ),
-            status=RunStatus(result.run.status),
+            status=RunStatus(result.run.status.upper()),
             archived=result.run.archived,
             text_summary=result.run.text_summary,
             timestamp=result.run.timestamp,
@@ -188,7 +188,7 @@ class Run(BaseModel):
         """Get the status of a run"""
         result = await self._client.run_status(run_id=self.id)
         status = result.run.status
-        self.status = RunStatus(status)
+        self.status = RunStatus(status.upper())
         return self.status
 
     async def wait_for_run_completion(
@@ -215,7 +215,7 @@ class Run(BaseModel):
 
             await asyncio.sleep(sleep_time)
 
-        return RunStatus(status)
+        return RunStatus(status.upper())
 
     async def to_csv_string(self) -> str:
         """Same as to_csv, but returns a string instead of writing to a file."""
@@ -290,6 +290,9 @@ class Run(BaseModel):
         )
 
         # Run the remaining tests, including existing QA pairs
+        await self._client.update_run_status(
+            run_id=self.id, status=RunStatus.IN_PROGRESS
+        )
         await suite.run(
             model=model,
             model_name=self.model,

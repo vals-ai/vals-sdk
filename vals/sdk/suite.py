@@ -373,11 +373,15 @@ class Suite(BaseModel):
             concurrent.futures._base.CancelledError,
         ):
             if run_id:
-                await self._client.update_run_status(run_id=run_id)
+                await self._client.update_run_status(
+                    run_id=run_id, status=RunStatus.ERROR
+                )
             raise
         except Exception as e:
             if run_id:
-                await self._client.update_run_status(run_id=run_id)
+                await self._client.update_run_status(
+                    run_id=run_id, status=RunStatus.ERROR
+                )
             raise
 
     async def run(
@@ -424,7 +428,7 @@ class Suite(BaseModel):
         if isinstance(model, InspectWrapper):
             model_name = model.model_name
             eval_model_name = model.eval_model_name
-            custom_model = model.get_custom_model()
+            model = model.get_custom_model()
             custom_operators = model.get_custom_operators()
 
         parameter_json = parameters.model_dump()

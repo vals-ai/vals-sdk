@@ -10,6 +10,7 @@ from vals.sdk.suite import Suite
 from vals.sdk.types import RunParameters, RunStatus
 from tabulate import tabulate
 
+
 @click.group(name="suite")
 def suite_group():
     """
