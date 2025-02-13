@@ -31,7 +31,7 @@ class Run(BaseModel):
     name: str
     """Name of the run."""
 
-    qa_set_id: str
+    qa_set_id: str | None
     """Unique identifier for the QA set run was created with."""
 
     test_suite_id: str
@@ -95,7 +95,7 @@ class Run(BaseModel):
         return Run(
             id=run_id,
             name=result.run.name,
-            qa_set_id=result.run.qa_set.id,
+            qa_set_id=result.run.qa_set.id if result.run.qa_set else None,
             model=model,
             pass_percentage=(
                 result.run.pass_percentage * 100
@@ -204,9 +204,9 @@ class Run(BaseModel):
         Returns the status of the run after completion.
         """
         await asyncio.sleep(1)
-        status = "in_progress"
+        status = RunStatus.IN_PROGRESS
         start_time = time.time()
-        while status == "in_progress":
+        while status == RunStatus.IN_PROGRESS:
             status = await self.run_status()
 
             # Sleep longer between polls, the longer the run goes.
@@ -219,7 +219,7 @@ class Run(BaseModel):
 
             await asyncio.sleep(sleep_time)
 
-        return RunStatus(status.upper())
+        return status
 
     async def to_csv_string(self) -> str:
         """Same as to_csv, but returns a string instead of writing to a file."""

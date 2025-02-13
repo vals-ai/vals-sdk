@@ -508,7 +508,7 @@ class Suite(BaseModel):
             )
 
         response = await self._client.start_run(
-            self.id, parameter_input, qa_set_id, run_name, run_id
+            self.id, parameter_input, qa_set_id or UNSET, run_name or UNSET, run_id or UNSET
         )
 
         if response.start_run is None:
