@@ -191,7 +191,7 @@ class Run(BaseModel):
         """Get the status of a run"""
         result = await self._client.run_status(run_id=self.id)
         status = result.run.status
-        self.status = RunStatus(status.upper())
+        self.status = RunStatus(status.lower())
         return self.status
 
     async def wait_for_run_completion(
