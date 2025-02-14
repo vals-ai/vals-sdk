@@ -83,7 +83,7 @@ class ConditionalCheck(BaseModel):
     Predicate / conditional check modifier.
     """
 
-    operator: OperatorType
+    operator: OperatorType | str
     criteria: str = ""
 
 
@@ -131,7 +131,7 @@ class CheckModifiers(BaseModel):
 
 
 class Check(BaseModel):
-    operator: OperatorType
+    operator: OperatorType | str
     """Operator - see documentation for the full list."""
 
     criteria: str = ""
@@ -343,7 +343,7 @@ class CheckResult(BaseModel):
     modifiers: CheckModifiers
     is_global: bool
 
-    auto_eval: int
+    auto_eval: float
     """Binary pass / fail of the check, 0 for fail, 1 for pass"""
 
     feedback: str

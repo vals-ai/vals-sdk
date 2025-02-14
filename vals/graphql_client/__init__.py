@@ -53,6 +53,10 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQLClientInvalidResponseError,
 )
+from .get_active_custom_operators import (
+    GetActiveCustomOperators,
+    GetActiveCustomOperatorsCustomOperators,
+)
 from .get_operators import GetOperators, GetOperatorsOperators
 from .get_rag_suites import GetRagSuites, GetRagSuitesRagSuites
 from .get_test_data import GetTestData, GetTestDataTests, GetTestDataTestsTestSuite
@@ -168,6 +172,8 @@ __all__ = [
     "ExampleInputType",
     "FilterOptionsInput",
     "FixedOutputInputType",
+    "GetActiveCustomOperators",
+    "GetActiveCustomOperatorsCustomOperators",
     "GetOperators",
     "GetOperatorsOperators",
     "GetRagSuites",

@@ -12,6 +12,7 @@ from .create_question_answer_set import CreateQuestionAnswerSet
 from .create_rag_suite import CreateRagSuite
 from .delete_test_suite import DeleteTestSuite
 from .enums import RunStatus
+from .get_active_custom_operators import GetActiveCustomOperators
 from .get_operators import GetOperators
 from .get_rag_suites import GetRagSuites
 from .get_test_data import GetTestData
@@ -750,6 +751,34 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return GetOperators.model_validate(data)
+
+    async def get_active_custom_operators(
+        self, **kwargs: Any
+    ) -> GetActiveCustomOperators:
+        query = gql(
+            """
+            query GetActiveCustomOperators {
+              customOperators(archived: false) {
+                id
+                name
+                prompt
+                isUnary
+                createdBy
+                createdAt
+                archived
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {}
+        response = await self.execute(
+            query=query,
+            operation_name="GetActiveCustomOperators",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return GetActiveCustomOperators.model_validate(data)
 
     async def get_rag_suites(self, **kwargs: Any) -> GetRagSuites:
         query = gql(

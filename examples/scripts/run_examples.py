@@ -67,11 +67,11 @@ async def custom_operator2(input: OperatorInput) -> OperatorOutput:
 
 
 async def custom_model(input: str) -> str:
-    return input + "!!!" + str(count)
+    return input + "!!!"
 
 
 async def run_with_local_eval():
-    suite = await Suite.from_id("957fa5a0-73eb-43b8-a229-88ec498f01f7")
+    suite = await Suite.from_id("859e5df9-05c8-4e83-9794-921cd6d94dd9")
 
     run = await suite.run(
         model=custom_model,
@@ -193,7 +193,7 @@ async def all():
     await run_with_function_context_and_files()
     await run_with_qa_pairs()
     await run_with_qa_pairs_and_context()
-    await pull_run("19dc86c6-774e-4946-99f4-01ad1bcf4ccf")
+    await pull_run("ee42eedf-8fe1-4149-a980-58faa4dae1b7")
 
 
 if __name__ == "__main__":

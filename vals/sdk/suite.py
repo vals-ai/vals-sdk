@@ -630,7 +630,12 @@ class Suite(BaseModel):
         """Helper method to ensure that all operator strings are correct. Most of the validation is done by Pydantic
         but this handles things Pydantic can't check for, like whether a file exists."""
         operators = (await self._client.get_operators()).operators
-        operators_dict = {op.name_in_doc: op for op in operators}
+        base_operators_dict = {op.name_in_doc: op for op in operators}
+        custom_operators = (
+            await self._client.get_active_custom_operators()
+        ).custom_operators
+        custom_operators_dict = {op.name: op for op in custom_operators}
+        operators_dict = {**base_operators_dict, **custom_operators_dict}
 
         for test in self.tests:
             for check in test.checks:
