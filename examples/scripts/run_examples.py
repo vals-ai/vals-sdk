@@ -62,7 +62,7 @@ async def custom_operator(input: OperatorInput) -> OperatorOutput:
 
 async def custom_operator2(input: OperatorInput) -> OperatorOutput:
     return OperatorOutput(
-        name="my_custom_operator", score=0, explanation="Goodbye, world!"
+        name="my_custom_operator", score=0.5, explanation="Goodbye, world!"
     )
 
 
@@ -70,16 +70,12 @@ count = 0
 
 
 async def custom_model(input: str) -> str:
-    await asyncio.sleep(5)
-    global count
-    count += 1
-
     return input + "!!!" + str(count)
 
 
 async def run_with_local_eval():
 
-    suite = await Suite.from_id("a56c6c76-6e16-458e-a8fb-bb6c8ce025fb")
+    suite = await Suite.from_id("957fa5a0-73eb-43b8-a229-88ec498f01f7")
     #  qa_pairs = [QuestionAnswerPair(input_under_test="What is QSBS?", llm_output="QSBS")]
 
     run = await suite.run(
