@@ -11,6 +11,7 @@ from .create_or_update_test_suite import CreateOrUpdateTestSuite
 from .create_question_answer_set import CreateQuestionAnswerSet
 from .create_rag_suite import CreateRagSuite
 from .delete_test_suite import DeleteTestSuite
+from .enums import RunStatus
 from .get_operators import GetOperators
 from .get_rag_suites import GetRagSuites
 from .get_test_data import GetTestData
@@ -49,7 +50,7 @@ class Client(AsyncBaseClient):
         parameters: Any,
         model_id: str,
         run_name: Union[Optional[str], UnsetType] = UNSET,
-        **kwargs: Any,
+        **kwargs: Any
     ) -> CreateQuestionAnswerSet:
         query = gql(
             """
@@ -81,7 +82,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="CreateQuestionAnswerSet",
             variables=variables,
-            **kwargs,
+            **kwargs
         )
         data = self.get_data(response)
         return CreateQuestionAnswerSet.model_validate(data)
@@ -90,7 +91,7 @@ class Client(AsyncBaseClient):
         self,
         question_answer_set_id: str,
         question_answer_pairs: List[QuestionAnswerPairInputType],
-        **kwargs: Any,
+        **kwargs: Any
     ) -> BatchAddQuestionAnswerPairs:
         query = gql(
             """
@@ -119,7 +120,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="BatchAddQuestionAnswerPairs",
             variables=variables,
-            **kwargs,
+            **kwargs
         )
         data = self.get_data(response)
         return BatchAddQuestionAnswerPairs.model_validate(data)
@@ -143,7 +144,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="MarkQuestionAnswerSetAsComplete",
             variables=variables,
-            **kwargs,
+            **kwargs
         )
         data = self.get_data(response)
         return MarkQuestionAnswerSetAsComplete.model_validate(data)
@@ -153,7 +154,7 @@ class Client(AsyncBaseClient):
         qa_set_id: str,
         offset: Union[Optional[int], UnsetType] = UNSET,
         limit: Union[Optional[int], UnsetType] = UNSET,
-        **kwargs: Any,
+        **kwargs: Any
     ) -> ListQuestionAnswerPairs:
         query = gql(
             """
@@ -198,7 +199,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="ListQuestionAnswerPairs",
             variables=variables,
-            **kwargs,
+            **kwargs
         )
         data = self.get_data(response)
         return ListQuestionAnswerPairs.model_validate(data)
@@ -210,7 +211,7 @@ class Client(AsyncBaseClient):
         qa_set_id: Union[Optional[str], UnsetType] = UNSET,
         run_name: Union[Optional[str], UnsetType] = UNSET,
         run_id: Union[Optional[str], UnsetType] = UNSET,
-        **kwargs: Any,
+        **kwargs: Any
     ) -> StartRun:
         query = gql(
             """
@@ -345,6 +346,7 @@ class Client(AsyncBaseClient):
                 qaPair {
                   context
                   outputContext
+                  errorMessage
                 }
                 test {
                   testId
@@ -370,7 +372,7 @@ class Client(AsyncBaseClient):
         limit: Union[Optional[int], UnsetType] = UNSET,
         offset: Union[Optional[int], UnsetType] = UNSET,
         search: Union[Optional[str], UnsetType] = UNSET,
-        **kwargs: Any,
+        **kwargs: Any
     ) -> ListRuns:
         query = gql(
             """
@@ -459,7 +461,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="createOrUpdateTestSuite",
             variables=variables,
-            **kwargs,
+            **kwargs
         )
         data = self.get_data(response)
         return CreateOrUpdateTestSuite.model_validate(data)
@@ -531,7 +533,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="updateGlobalChecks",
             variables=variables,
-            **kwargs,
+            **kwargs
         )
         data = self.get_data(response)
         return UpdateGlobalChecks.model_validate(data)
@@ -601,10 +603,11 @@ class Client(AsyncBaseClient):
         self,
         question_answer_set_id: str,
         local_evals: List[LocalEvalUploadInputType],
-        **kwargs: Any,
+        **kwargs: Any
     ) -> UploadLocalEvaluation:
         query = gql(
-            """mutation uploadLocalEvaluation($questionAnswerSetId: String!, $localEvals: [LocalEvalUploadInputType!]!) {
+            """
+            mutation uploadLocalEvaluation($questionAnswerSetId: String!, $localEvals: [LocalEvalUploadInputType!]!) {
               uploadLocalEvaluation(
                 questionAnswerSetId: $questionAnswerSetId
                 localEvals: $localEvals
@@ -616,7 +619,8 @@ class Client(AsyncBaseClient):
                   createdAt
                 }
               }
-            }"""
+            }
+            """
         )
         variables: Dict[str, object] = {
             "questionAnswerSetId": question_answer_set_id,
@@ -626,7 +630,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="uploadLocalEvaluation",
             variables=variables,
-            **kwargs,
+            **kwargs
         )
         data = self.get_data(response)
         return UploadLocalEvaluation.model_validate(data)
@@ -653,7 +657,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="getTestSuiteData",
             variables=variables,
-            **kwargs,
+            **kwargs
         )
         data = self.get_data(response)
         return GetTestSuiteData.model_validate(data)
@@ -690,7 +694,7 @@ class Client(AsyncBaseClient):
         offset: Union[Optional[int], UnsetType] = UNSET,
         limit: Union[Optional[int], UnsetType] = UNSET,
         search: Union[Optional[str], UnsetType] = UNSET,
-        **kwargs: Any,
+        **kwargs: Any
     ) -> GetTestSuitesWithCount:
         query = gql(
             """
@@ -724,7 +728,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="getTestSuitesWithCount",
             variables=variables,
-            **kwargs,
+            **kwargs
         )
         data = self.get_data(response)
         return GetTestSuitesWithCount.model_validate(data)

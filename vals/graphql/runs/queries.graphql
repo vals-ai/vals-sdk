@@ -57,6 +57,7 @@ query PullRun($runId: String!) {
     qaPair {
       context
       outputContext
+      errorMessage
     }
     test {
       testId

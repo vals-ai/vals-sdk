@@ -20,7 +20,7 @@ async def pull_async(run_id: str, file: TextIOWrapper, csv: bool, _json: bool):
     if csv:
         file.write(await run.to_csv_string())
     else:
-        file.write(json.dumps(run.to_dict(), indent=2))
+        file.write(await run.to_json_string())
 
     click.secho("Successfully pulled run results.", fg="green")
 
@@ -65,7 +65,7 @@ async def list_async(
                 date_str,
             ]
         )
-    
+
     table = tabulate(rows, headers=column_names, tablefmt="rounded_grid")
     click.echo(table)
 
@@ -92,8 +92,15 @@ async def list_async(
     default=False,
     help="When enabled, archived runs are displayed in the output",
 )
-@click.option("--search", type=click.STRING, default="", help="Search for a run based off its name, model or test suite title")
-def list(limit: int, offset: int, suite_id: str | None, show_archived: bool, search: str):
+@click.option(
+    "--search",
+    type=click.STRING,
+    default="",
+    help="Search for a run based off its name, model or test suite title",
+)
+def list(
+    limit: int, offset: int, suite_id: str | None, show_archived: bool, search: str
+):
     """
     List runs associated with this organization
     """

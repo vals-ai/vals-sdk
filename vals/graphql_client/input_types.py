@@ -159,17 +159,17 @@ class MetadataType(BaseModel):
     duration_seconds: float = Field(alias="durationSeconds")
 
 
-class PerCheckTestReviewInputType(BaseModel):
-    id: int
-    binary_human_eval: Optional[int] = Field(alias="binaryHumanEval", default=None)
-    is_flagged: Optional[bool] = Field(alias="isFlagged", default=None)
-
-
 class LocalEvalUploadInputType(BaseModel):
     question_answer_pair_id: str = Field(alias="questionAnswerPairId")
     name: str
     score: float
     feedback: str
+
+
+class PerCheckTestReviewInputType(BaseModel):
+    id: int
+    binary_human_eval: Optional[int] = Field(alias="binaryHumanEval", default=None)
+    is_flagged: Optional[bool] = Field(alias="isFlagged", default=None)
 
 
 CheckInputType.model_rebuild()

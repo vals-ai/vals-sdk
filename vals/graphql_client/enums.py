@@ -42,6 +42,12 @@ class AppPairwiseRunReviewWinningRunChoices(str, Enum):
     TIE = "TIE"
 
 
+class TierEnum(str, Enum):
+    FREE = "FREE"
+    STARTUP = "STARTUP"
+    ENTERPRISE = "ENTERPRISE"
+
+
 class RunReviewTableSortField(str, Enum):
     CREATED_AT = "CREATED_AT"
     COMPLETED_TIME = "COMPLETED_TIME"
@@ -78,12 +84,6 @@ class TestResultCheckErrorEnum(str, Enum):
     ALL_CHECKS_FAILED = "ALL_CHECKS_FAILED"
     ALL_CHECKS_PASSED = "ALL_CHECKS_PASSED"
     TESTS_WITH_OUTPUT_ERRORS = "TESTS_WITH_OUTPUT_ERRORS"
-
-
-class TierEnum(str, Enum):
-    FREE = "FREE"
-    STARTUP = "STARTUP"
-    ENTERPRISE = "ENTERPRISE"
 
 
 class WinningRunEnum(str, Enum):

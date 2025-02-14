@@ -165,7 +165,7 @@ class Run(BaseModel):
     def to_json_file(self, file_path: str) -> None:
         """Converts the run to a JSON file."""
         with open(file_path, "w") as f:
-            json.dump(self.to_dict(), f, indent=2)
+            f.write(self.to_json_string())
 
     async def pull(self) -> None:
         """Update this Run instance with latest data from vals servers."""
@@ -224,6 +224,18 @@ class Run(BaseModel):
         """Same as to_csv, but returns a string instead of writing to a file."""
         response = requests.post(
             url=f"{be_host()}/export_results_to_file/?run_id={self.id}",
+            headers={"Authorization": _get_auth_token()},
+        )
+
+        if response.status_code != 200:
+            raise ValsException("Received Error from Vals Servers: " + response.text)
+
+        return response.text
+
+    async def to_json_string(self) -> str:
+
+        response = requests.post(
+            url=f"{be_host()}/export_run_to_json/?run_id={self.id}",
             headers={"Authorization": _get_auth_token()},
         )
 
