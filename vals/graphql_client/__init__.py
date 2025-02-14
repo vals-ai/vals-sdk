@@ -53,6 +53,10 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQLClientInvalidResponseError,
 )
+from .get_active_custom_operators import (
+    GetActiveCustomOperators,
+    GetActiveCustomOperatorsCustomOperators,
+)
 from .get_operators import GetOperators, GetOperatorsOperators
 from .get_rag_suites import GetRagSuites, GetRagSuitesRagSuites
 from .get_test_data import GetTestData, GetTestDataTests, GetTestDataTestsTestSuite
@@ -70,16 +74,26 @@ from .input_types import (
     ExampleInputType,
     FilterOptionsInput,
     FixedOutputInputType,
+    LocalEvalUploadInputType,
     MetadataType,
     ParameterInputType,
     PerCheckTestReviewInputType,
     QuestionAnswerPairInputType,
+    QuestionAnswerPairsFilterOptions,
     RunResultFilterOptionsInput,
     RunReviewTableFilterOptionsInput,
     TestFilterOptions,
     TestMutationInfo,
     TestResultFilterOptions,
     TestReviewFilterOptionsInput,
+)
+from .list_question_answer_pairs import (
+    ListQuestionAnswerPairs,
+    ListQuestionAnswerPairsQuestionAnswerPairsWithCount,
+    ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs,
+    ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsLocalEvals,
+    ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTest,
+    ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTypedMetadata,
 )
 from .list_runs import (
     ListRuns,
@@ -90,10 +104,16 @@ from .list_runs import (
     ListRunsRunsWithCountRunResultsTestSuite,
     ListRunsRunsWithCountRunResultsTypedParameters,
 )
+from .mark_question_answer_set_as_complete import (
+    MarkQuestionAnswerSetAsComplete,
+    MarkQuestionAnswerSetAsCompleteMarkQuestionAnswerSetAsComplete,
+    MarkQuestionAnswerSetAsCompleteMarkQuestionAnswerSetAsCompleteQuestionAnswerSet,
+)
 from .pull_run import (
     PullRun,
     PullRunRun,
     PullRunRunPassRate,
+    PullRunRunQaSet,
     PullRunRunSuccessRate,
     PullRunRunTestSuite,
     PullRunRunTypedParameters,
@@ -109,6 +129,16 @@ from .start_run import StartRun, StartRunStartRun
 from .update_global_checks import (
     UpdateGlobalChecks,
     UpdateGlobalChecksUpdateGlobalChecks,
+)
+from .update_run_status import (
+    UpdateRunStatus,
+    UpdateRunStatusUpdateRunStatus,
+    UpdateRunStatusUpdateRunStatusRun,
+)
+from .upload_local_evaluation import (
+    UploadLocalEvaluation,
+    UploadLocalEvaluationUploadLocalEvaluation,
+    UploadLocalEvaluationUploadLocalEvaluationUploads,
 )
 
 __all__ = [
@@ -142,6 +172,8 @@ __all__ = [
     "ExampleInputType",
     "FilterOptionsInput",
     "FixedOutputInputType",
+    "GetActiveCustomOperators",
+    "GetActiveCustomOperatorsCustomOperators",
     "GetOperators",
     "GetOperatorsOperators",
     "GetRagSuites",
@@ -160,6 +192,12 @@ __all__ = [
     "GraphQLClientGraphQLMultiError",
     "GraphQLClientHttpError",
     "GraphQLClientInvalidResponseError",
+    "ListQuestionAnswerPairs",
+    "ListQuestionAnswerPairsQuestionAnswerPairsWithCount",
+    "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs",
+    "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsLocalEvals",
+    "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTest",
+    "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTypedMetadata",
     "ListRuns",
     "ListRunsRunsWithCount",
     "ListRunsRunsWithCountRunResults",
@@ -167,12 +205,17 @@ __all__ = [
     "ListRunsRunsWithCountRunResultsSuccessRate",
     "ListRunsRunsWithCountRunResultsTestSuite",
     "ListRunsRunsWithCountRunResultsTypedParameters",
+    "LocalEvalUploadInputType",
+    "MarkQuestionAnswerSetAsComplete",
+    "MarkQuestionAnswerSetAsCompleteMarkQuestionAnswerSetAsComplete",
+    "MarkQuestionAnswerSetAsCompleteMarkQuestionAnswerSetAsCompleteQuestionAnswerSet",
     "MetadataType",
     "ParameterInputType",
     "PerCheckTestReviewInputType",
     "PullRun",
     "PullRunRun",
     "PullRunRunPassRate",
+    "PullRunRunQaSet",
     "PullRunRunSuccessRate",
     "PullRunRunTestSuite",
     "PullRunRunTypedParameters",
@@ -180,6 +223,7 @@ __all__ = [
     "PullRunTestResultsQaPair",
     "PullRunTestResultsTest",
     "QuestionAnswerPairInputType",
+    "QuestionAnswerPairsFilterOptions",
     "RemoveOldTests",
     "RemoveOldTestsRemoveUnusedTests",
     "RerunTests",
@@ -207,6 +251,12 @@ __all__ = [
     "TierEnum",
     "UpdateGlobalChecks",
     "UpdateGlobalChecksUpdateGlobalChecks",
+    "UpdateRunStatus",
+    "UpdateRunStatusUpdateRunStatus",
+    "UpdateRunStatusUpdateRunStatusRun",
     "Upload",
+    "UploadLocalEvaluation",
+    "UploadLocalEvaluationUploadLocalEvaluation",
+    "UploadLocalEvaluationUploadLocalEvaluationUploads",
     "WinningRunEnum",
 ]

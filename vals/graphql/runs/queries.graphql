@@ -10,6 +10,9 @@ query RunStatus($runId: String!) {
 
 query PullRun($runId: String!) {
   run(runId: $runId) {
+    qaSet {
+      id
+    }
     runId
     passPercentage
     status
@@ -17,6 +20,7 @@ query PullRun($runId: String!) {
     timestamp
     completedAt
     archived
+    name
     typedParameters {
       evalModel
       maximumThreads

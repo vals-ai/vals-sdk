@@ -3,16 +3,20 @@ mutation CreateQuestionAnswerSet(
   $questionAnswerPairs: [QuestionAnswerPairInputType!]!
   $parameters: GenericScalar!
   $modelId: String!
+  $runName: String
 ) {
   createQuestionAnswerSet(
     testSuiteId: $testSuiteId
     questionAnswerPairs: $questionAnswerPairs
     parameters: $parameters
     modelId: $modelId
+    runName: $runName
+    createRun: true
   ) {
     questionAnswerSet {
       id
     }
+    runId
   }
 }
 
@@ -25,6 +29,19 @@ mutation BatchAddQuestionAnswerPairs(
     questionAnswerPairs: $questionAnswerPairs
   ) {
     questionAnswerPairs {
+      id
+      inputUnderTest
+      llmOutput
+      fileIds
+      context
+      outputContext
+    }
+  }
+}
+
+mutation MarkQuestionAnswerSetAsComplete($questionAnswerSetId: String!) {
+  markQuestionAnswerSetAsComplete(questionAnswerSetId: $questionAnswerSetId) {
+    questionAnswerSet {
       id
     }
   }

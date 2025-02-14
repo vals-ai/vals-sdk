@@ -80,6 +80,13 @@ class TestResultFilterOptions(BaseModel):
     limit: Optional[int] = None
 
 
+class QuestionAnswerPairsFilterOptions(BaseModel):
+    search: Optional[str] = None
+    tags: Optional[List[Optional[str]]] = None
+    offset: Optional[int] = None
+    limit: Optional[int] = None
+
+
 class CheckInputType(BaseModel):
     operator: str
     criteria: Optional[str] = None
@@ -150,6 +157,13 @@ class MetadataType(BaseModel):
     in_tokens: int = Field(alias="inTokens")
     out_tokens: int = Field(alias="outTokens")
     duration_seconds: float = Field(alias="durationSeconds")
+
+
+class LocalEvalUploadInputType(BaseModel):
+    question_answer_pair_id: str = Field(alias="questionAnswerPairId")
+    name: str
+    score: float
+    feedback: str
 
 
 class PerCheckTestReviewInputType(BaseModel):

@@ -52,6 +52,18 @@ query getOperators {
   }
 }
 
+query GetActiveCustomOperators {
+  customOperators(archived: false) {
+    id
+    name
+    prompt
+    isUnary
+    createdBy
+    createdAt
+    archived
+  }
+}
+
 query getRagSuites {
   ragSuites {
     id

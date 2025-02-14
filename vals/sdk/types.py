@@ -19,21 +19,17 @@ from vals.graphql_client.get_test_suites_with_count import (
 from vals.graphql_client.input_types import (
     CheckInputType,
     CheckModifiersInputType,
+    LocalEvalUploadInputType,
     MetadataType,
     QuestionAnswerPairInputType,
     TestMutationInfo,
 )
+from vals.graphql_client.list_question_answer_pairs import (
+    ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs,
+)
 from vals.graphql_client.list_runs import ListRunsRunsWithCountRunResults
 from vals.graphql_client.pull_run import PullRunTestResults
 from vals.sdk.operator_type import OperatorType
-
-SimpleModelFunctionType = Callable[[str], str]
-
-ModelFunctionWithFilesAndContextType = Callable[
-    [str, dict[str, BytesIO], dict[str, Any]], str
-]
-
-ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType
 
 
 class TestSuiteMetadata(BaseModel):
@@ -87,7 +83,7 @@ class ConditionalCheck(BaseModel):
     Predicate / conditional check modifier.
     """
 
-    operator: OperatorType
+    operator: OperatorType | str
     criteria: str = ""
 
 
@@ -135,7 +131,7 @@ class CheckModifiers(BaseModel):
 
 
 class Check(BaseModel):
-    operator: OperatorType
+    operator: OperatorType | str
     """Operator - see documentation for the full list."""
 
     criteria: str = ""
@@ -347,7 +343,7 @@ class CheckResult(BaseModel):
     modifiers: CheckModifiers
     is_global: bool
 
-    auto_eval: int
+    auto_eval: float
     """Binary pass / fail of the check, 0 for fail, 1 for pass"""
 
     feedback: str
@@ -360,6 +356,7 @@ class TestResult(BaseModel):
     """Result of evaluation for a single test."""
 
     _id: str
+    test_id: str
     input_under_test: str
 
     context: dict[str, Any]
@@ -376,6 +373,9 @@ class TestResult(BaseModel):
     pass_percentage: float
     """Percent of passing checks for the test"""
 
+    pass_percentage_with_optional: float
+    """Percent of passing checks including optional checks"""
+
     check_results: list[CheckResult]
     """Results for every check"""
 
@@ -391,13 +391,15 @@ class TestResult(BaseModel):
             if len(context) == 0 and graphql_test_result.test.context is not None:
                 context = json.loads(graphql_test_result.test.context)
 
-        obj = cls(
+        return cls(
             _id=graphql_test_result.id,
+            test_id=graphql_test_result.test.test_id,
             input_under_test=graphql_test_result.test.input_under_test,
             context=context,
             output_context=output_context,
             llm_output=graphql_test_result.llm_output,
             pass_percentage=graphql_test_result.pass_percentage,
+            pass_percentage_with_optional=graphql_test_result.pass_percentage_with_optional,
             error_message=graphql_test_result.qa_pair.error_message,
             check_results=[
                 CheckResult(
@@ -419,17 +421,55 @@ class TestResult(BaseModel):
                 else None
             ),
         )
-        obj._id = graphql_test_result.id
-        return obj
 
 
 class QuestionAnswerPair(BaseModel):
+    id: str
     input_under_test: str
     llm_output: str
     file_ids: list[str] | None = None
     context: dict[str, Any] = {}
     output_context: dict[str, Any] = {}
     metadata: Metadata | None = None
+    test_id: str | None = None
+    local_evals: list[LocalEvalUploadInputType] | None = None
+
+    @classmethod
+    def from_graphql(
+        cls,
+        graphql_qa_pair: ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs,
+    ) -> "QuestionAnswerPair":
+        metadata = None
+        if graphql_qa_pair.typed_metadata:
+            metadata = Metadata(
+                in_tokens=graphql_qa_pair.typed_metadata.in_tokens,
+                out_tokens=graphql_qa_pair.typed_metadata.out_tokens,
+                duration_seconds=graphql_qa_pair.typed_metadata.duration_seconds,
+            )
+
+        return cls(
+            id=graphql_qa_pair.id,
+            input_under_test=graphql_qa_pair.input_under_test,
+            llm_output=graphql_qa_pair.llm_output,
+            file_ids=graphql_qa_pair.typed_file_ids,
+            context=graphql_qa_pair.context or {},
+            output_context=graphql_qa_pair.output_context or {},
+            metadata=metadata,
+            test_id=graphql_qa_pair.test.test_id if graphql_qa_pair.test else None,
+            local_evals=(
+                [
+                    LocalEvalUploadInputType(
+                        question_answer_pair_id=graphql_qa_pair.id,
+                        score=eval.score,
+                        feedback=eval.feedback,
+                        name="local_eval",
+                    )
+                    for eval in graphql_qa_pair.local_evals
+                ]
+                if graphql_qa_pair.local_evals
+                else []
+            ),
+        )
 
     def to_graphql(self) -> QuestionAnswerPairInputType:
         return QuestionAnswerPairInputType(
@@ -441,5 +481,43 @@ class QuestionAnswerPair(BaseModel):
             metadata=(
                 MetadataType(**self.metadata.model_dump()) if self.metadata else None
             ),
-            test_id=None,
+            test_id=self.test_id,
         )
+
+
+class OperatorInput(BaseModel):
+    input: str
+    model_output: str
+    context: dict[str, Any] | None = None
+    output_context: dict[str, Any] | None = None
+    files: dict[str, BytesIO] | None = None
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
+class OperatorOutput(BaseModel):
+    name: str
+    score: float
+    explanation: str
+
+
+ModelCustomOperatorFunctionType = Callable[[OperatorInput], OperatorOutput]
+
+
+class CustomModelInput(BaseModel):
+    input_under_test: str
+    context: dict[str, Any]
+    files: dict[str, BytesIO]
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
+class CustomModelOutput(BaseModel):
+    model_output: str | dict[str, Any] | QuestionAnswerPair
+
+
+SimpleModelFunctionType = Callable[[str], str]
+
+ModelFunctionWithFilesAndContextType = Callable[[CustomModelInput], CustomModelOutput]
+
+ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType

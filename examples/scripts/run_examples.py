@@ -1,8 +1,10 @@
 import asyncio
+import time
 from io import BytesIO
 from typing import Any
 
-from vals import Check, QuestionAnswerPair, Run, Suite, Test
+from vals import Check, QuestionAnswerPair, Run, RunParameters, Suite, Test
+from vals.sdk.types import OperatorInput, OperatorOutput
 
 
 async def run_with_model_under_test():
@@ -46,6 +48,37 @@ async def run_with_function():
 
     run = await suite.run(
         model=function, wait_for_completion=True, model_name="my_function_model"
+    )
+
+    print(f"Run URL: {run.url}")
+    print(f"Pass percentage: {run.pass_percentage}")
+
+
+async def custom_operator(input: OperatorInput) -> OperatorOutput:
+    return OperatorOutput(
+        name="my_custom_operator", score=1, explanation="Hello, world!"
+    )
+
+
+async def custom_operator2(input: OperatorInput) -> OperatorOutput:
+    return OperatorOutput(
+        name="my_custom_operator", score=0.5, explanation="Goodbye, world!"
+    )
+
+
+async def custom_model(input: str) -> str:
+    return input + "!!!"
+
+
+async def run_with_local_eval():
+    suite = await Suite.from_id("859e5df9-05c8-4e83-9794-921cd6d94dd9")
+
+    run = await suite.run(
+        model=custom_model,
+        wait_for_completion=True,
+        model_name="my_function_model",
+        parameters=RunParameters(parallelism=3),
+        custom_operators=[custom_operator, custom_operator2],
     )
 
     print(f"Run URL: {run.url}")
@@ -154,12 +187,13 @@ async def pull_run(run_id: str):
 
 
 async def all():
+    await run_with_local_eval()
     await run_with_model_under_test()
     await run_with_function()
     await run_with_function_context_and_files()
     await run_with_qa_pairs()
     await run_with_qa_pairs_and_context()
-    #   await pull_run("19dc86c6-774e-4946-99f4-01ad1bcf4ccf")
+    await pull_run("ee42eedf-8fe1-4149-a980-58faa4dae1b7")
 
 
 if __name__ == "__main__":

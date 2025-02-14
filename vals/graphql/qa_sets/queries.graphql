@@ -1,0 +1,30 @@
+query ListQuestionAnswerPairs($qaSetId: String!, $offset: Int, $limit: Int) {
+  questionAnswerPairsWithCount(
+    qaSetId: $qaSetId
+    filterOptions: { offset: $offset, limit: $limit }
+  ) {
+    questionAnswerPairs {
+      id
+      inputUnderTest
+      llmOutput
+      context
+      outputContext
+      typedMetadata {
+        inTokens
+        outTokens
+        durationSeconds
+      }
+      typedFileIds
+      localEvals {
+        id
+        score
+        feedback
+        createdAt
+      }
+      test {
+        testId
+      }
+    }
+    count
+  }
+}

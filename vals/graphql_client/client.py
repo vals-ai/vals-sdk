@@ -11,6 +11,8 @@ from .create_or_update_test_suite import CreateOrUpdateTestSuite
 from .create_question_answer_set import CreateQuestionAnswerSet
 from .create_rag_suite import CreateRagSuite
 from .delete_test_suite import DeleteTestSuite
+from .enums import RunStatus
+from .get_active_custom_operators import GetActiveCustomOperators
 from .get_operators import GetOperators
 from .get_rag_suites import GetRagSuites
 from .get_test_data import GetTestData
@@ -18,11 +20,14 @@ from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites_with_count import GetTestSuitesWithCount
 from .input_types import (
     CheckInputType,
+    LocalEvalUploadInputType,
     ParameterInputType,
     QuestionAnswerPairInputType,
     TestMutationInfo,
 )
+from .list_question_answer_pairs import ListQuestionAnswerPairs
 from .list_runs import ListRuns
+from .mark_question_answer_set_as_complete import MarkQuestionAnswerSetAsComplete
 from .pull_run import PullRun
 from .remove_old_tests import RemoveOldTests
 from .rerun_tests import RerunTests
@@ -30,6 +35,8 @@ from .run_param_info import RunParamInfo
 from .run_status import RunStatus
 from .start_run import StartRun
 from .update_global_checks import UpdateGlobalChecks
+from .update_run_status import UpdateRunStatus
+from .upload_local_evaluation import UploadLocalEvaluation
 
 
 def gql(q: str) -> str:
@@ -43,20 +50,24 @@ class Client(AsyncBaseClient):
         question_answer_pairs: List[QuestionAnswerPairInputType],
         parameters: Any,
         model_id: str,
+        run_name: Union[Optional[str], UnsetType] = UNSET,
         **kwargs: Any
     ) -> CreateQuestionAnswerSet:
         query = gql(
             """
-            mutation CreateQuestionAnswerSet($testSuiteId: String!, $questionAnswerPairs: [QuestionAnswerPairInputType!]!, $parameters: GenericScalar!, $modelId: String!) {
+            mutation CreateQuestionAnswerSet($testSuiteId: String!, $questionAnswerPairs: [QuestionAnswerPairInputType!]!, $parameters: GenericScalar!, $modelId: String!, $runName: String) {
               createQuestionAnswerSet(
                 testSuiteId: $testSuiteId
                 questionAnswerPairs: $questionAnswerPairs
                 parameters: $parameters
                 modelId: $modelId
+                runName: $runName
+                createRun: true
               ) {
                 questionAnswerSet {
                   id
                 }
+                runId
               }
             }
             """
@@ -66,6 +77,7 @@ class Client(AsyncBaseClient):
             "questionAnswerPairs": question_answer_pairs,
             "parameters": parameters,
             "modelId": model_id,
+            "runName": run_name,
         }
         response = await self.execute(
             query=query,
@@ -91,6 +103,11 @@ class Client(AsyncBaseClient):
               ) {
                 questionAnswerPairs {
                   id
+                  inputUnderTest
+                  llmOutput
+                  fileIds
+                  context
+                  outputContext
                 }
               }
             }
@@ -109,22 +126,103 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return BatchAddQuestionAnswerPairs.model_validate(data)
 
+    async def mark_question_answer_set_as_complete(
+        self, question_answer_set_id: str, **kwargs: Any
+    ) -> MarkQuestionAnswerSetAsComplete:
+        query = gql(
+            """
+            mutation MarkQuestionAnswerSetAsComplete($questionAnswerSetId: String!) {
+              markQuestionAnswerSetAsComplete(questionAnswerSetId: $questionAnswerSetId) {
+                questionAnswerSet {
+                  id
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"questionAnswerSetId": question_answer_set_id}
+        response = await self.execute(
+            query=query,
+            operation_name="MarkQuestionAnswerSetAsComplete",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return MarkQuestionAnswerSetAsComplete.model_validate(data)
+
+    async def list_question_answer_pairs(
+        self,
+        qa_set_id: str,
+        offset: Union[Optional[int], UnsetType] = UNSET,
+        limit: Union[Optional[int], UnsetType] = UNSET,
+        **kwargs: Any
+    ) -> ListQuestionAnswerPairs:
+        query = gql(
+            """
+            query ListQuestionAnswerPairs($qaSetId: String!, $offset: Int, $limit: Int) {
+              questionAnswerPairsWithCount(
+                qaSetId: $qaSetId
+                filterOptions: {offset: $offset, limit: $limit}
+              ) {
+                questionAnswerPairs {
+                  id
+                  inputUnderTest
+                  llmOutput
+                  context
+                  outputContext
+                  typedMetadata {
+                    inTokens
+                    outTokens
+                    durationSeconds
+                  }
+                  typedFileIds
+                  localEvals {
+                    id
+                    score
+                    feedback
+                    createdAt
+                  }
+                  test {
+                    testId
+                  }
+                }
+                count
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {
+            "qaSetId": qa_set_id,
+            "offset": offset,
+            "limit": limit,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="ListQuestionAnswerPairs",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return ListQuestionAnswerPairs.model_validate(data)
+
     async def start_run(
         self,
         test_suite_id: str,
         typed_parameters: ParameterInputType,
         qa_set_id: Union[Optional[str], UnsetType] = UNSET,
         run_name: Union[Optional[str], UnsetType] = UNSET,
+        run_id: Union[Optional[str], UnsetType] = UNSET,
         **kwargs: Any
     ) -> StartRun:
         query = gql(
             """
-            mutation startRun($test_suite_id: String!, $typed_parameters: ParameterInputType!, $qa_set_id: String = null, $run_name: String = null) {
+            mutation startRun($test_suite_id: String!, $typed_parameters: ParameterInputType!, $qa_set_id: String = null, $run_name: String = null, $run_id: String = null) {
               startRun(
                 testSuiteId: $test_suite_id
                 typedParameters: $typed_parameters
                 qaSetId: $qa_set_id
                 runName: $run_name
+                runId: $run_id
               ) {
                 runId
               }
@@ -136,12 +234,35 @@ class Client(AsyncBaseClient):
             "typed_parameters": typed_parameters,
             "qa_set_id": qa_set_id,
             "run_name": run_name,
+            "run_id": run_id,
         }
         response = await self.execute(
             query=query, operation_name="startRun", variables=variables, **kwargs
         )
         data = self.get_data(response)
         return StartRun.model_validate(data)
+
+    async def update_run_status(
+        self, run_id: str, status: RunStatus, **kwargs: Any
+    ) -> UpdateRunStatus:
+        query = gql(
+            """
+            mutation updateRunStatus($run_id: String!, $status: RunStatus!) {
+              updateRunStatus(runId: $run_id, status: $status) {
+                run {
+                  runId
+                  status
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"run_id": run_id, "status": status}
+        response = await self.execute(
+            query=query, operation_name="updateRunStatus", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return UpdateRunStatus.model_validate(data)
 
     async def run_param_info(self, **kwargs: Any) -> RunParamInfo:
         query = gql(
@@ -180,6 +301,9 @@ class Client(AsyncBaseClient):
             """
             query PullRun($runId: String!) {
               run(runId: $runId) {
+                qaSet {
+                  id
+                }
                 runId
                 passPercentage
                 status
@@ -187,6 +311,7 @@ class Client(AsyncBaseClient):
                 timestamp
                 completedAt
                 archived
+                name
                 typedParameters {
                   evalModel
                   maximumThreads
@@ -475,6 +600,42 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return RerunTests.model_validate(data)
 
+    async def upload_local_evaluation(
+        self,
+        question_answer_set_id: str,
+        local_evals: List[LocalEvalUploadInputType],
+        **kwargs: Any
+    ) -> UploadLocalEvaluation:
+        query = gql(
+            """
+            mutation uploadLocalEvaluation($questionAnswerSetId: String!, $localEvals: [LocalEvalUploadInputType!]!) {
+              uploadLocalEvaluation(
+                questionAnswerSetId: $questionAnswerSetId
+                localEvals: $localEvals
+              ) {
+                uploads {
+                  id
+                  score
+                  feedback
+                  createdAt
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {
+            "questionAnswerSetId": question_answer_set_id,
+            "localEvals": local_evals,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="uploadLocalEvaluation",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return UploadLocalEvaluation.model_validate(data)
+
     async def get_test_suite_data(
         self, suite_id: str, **kwargs: Any
     ) -> GetTestSuiteData:
@@ -590,6 +751,34 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return GetOperators.model_validate(data)
+
+    async def get_active_custom_operators(
+        self, **kwargs: Any
+    ) -> GetActiveCustomOperators:
+        query = gql(
+            """
+            query GetActiveCustomOperators {
+              customOperators(archived: false) {
+                id
+                name
+                prompt
+                isUnary
+                createdBy
+                createdAt
+                archived
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {}
+        response = await self.execute(
+            query=query,
+            operation_name="GetActiveCustomOperators",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return GetActiveCustomOperators.model_validate(data)
 
     async def get_rag_suites(self, **kwargs: Any) -> GetRagSuites:
         query = gql(

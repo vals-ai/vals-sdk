@@ -4,11 +4,11 @@ from io import TextIOWrapper
 from typing import Any
 
 import click
+from tabulate import tabulate
 from vals.cli.util import display_error_and_exit
 from vals.sdk.exceptions import ValsException
 from vals.sdk.suite import Suite
 from vals.sdk.types import RunParameters, RunStatus
-from tabulate import tabulate
 
 
 @click.group(name="suite")
@@ -59,8 +59,8 @@ async def update_command_async(file: TextIOWrapper, suite_id: str):
 
 @click.command(name="update")
 @click.argument("file", type=click.File("r"))
-@click.argument("suite_id", type=click.File("r"))
-async def update_command(file: TextIOWrapper, suite_id: str):
+@click.argument("suite_id", type=str)
+def update_command(file: TextIOWrapper, suite_id: str):
     """
     Update the test and checks of an already existing suite
     """

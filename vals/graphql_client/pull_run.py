@@ -15,6 +15,7 @@ class PullRun(BaseModel):
 
 
 class PullRunRun(BaseModel):
+    qa_set: Optional["PullRunRunQaSet"] = Field(alias="qaSet")
     run_id: str = Field(alias="runId")
     pass_percentage: Optional[float] = Field(alias="passPercentage")
     status: str
@@ -22,10 +23,15 @@ class PullRunRun(BaseModel):
     timestamp: datetime
     completed_at: Optional[datetime] = Field(alias="completedAt")
     archived: bool
+    name: str
     typed_parameters: "PullRunRunTypedParameters" = Field(alias="typedParameters")
     pass_rate: Optional["PullRunRunPassRate"] = Field(alias="passRate")
     success_rate: Optional["PullRunRunSuccessRate"] = Field(alias="successRate")
     test_suite: "PullRunRunTestSuite" = Field(alias="testSuite")
+
+
+class PullRunRunQaSet(BaseModel):
+    id: Any
 
 
 class PullRunRunTypedParameters(BaseModel):

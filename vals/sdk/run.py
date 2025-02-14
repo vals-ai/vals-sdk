@@ -9,13 +9,29 @@ from pydantic import BaseModel, PrivateAttr
 from vals.graphql_client import Client
 from vals.graphql_client.pull_run import PullRun
 from vals.sdk.exceptions import ValsException
-from vals.sdk.types import RunMetadata, RunParameters, RunStatus, TestResult
+from vals.sdk.inspect_wrapper import InspectWrapper
+from vals.sdk.types import (
+    Metadata,
+    ModelCustomOperatorFunctionType,
+    ModelFunctionType,
+    QuestionAnswerPair,
+    RunMetadata,
+    RunParameters,
+    RunStatus,
+    TestResult,
+)
 from vals.sdk.util import _get_auth_token, be_host, fe_host, get_ariadne_client
 
 
 class Run(BaseModel):
     id: str
     """Unique identifier for the run."""
+
+    name: str
+    """Name of the run."""
+
+    qa_set_id: str | None
+    """Unique identifier for the QA set run was created with."""
 
     test_suite_id: str
     """Unique identifier for the test suite run was created with."""
@@ -77,6 +93,8 @@ class Run(BaseModel):
 
         return Run(
             id=run_id,
+            name=result.run.name,
+            qa_set_id=result.run.qa_set.id if result.run.qa_set else None,
             model=model,
             pass_percentage=(
                 result.run.pass_percentage * 100
@@ -157,12 +175,24 @@ class Run(BaseModel):
         for field in updated.__fields__:
             setattr(self, field, getattr(updated, field))
 
+    async def get_qa_pairs(
+        self, offset: int = 0, limit: int = 1000
+    ) -> list[QuestionAnswerPair]:
+        """Get all QA pairs for a run."""
+        result = await self._client.list_question_answer_pairs(
+            qa_set_id=self.qa_set_id, offset=offset, limit=limit
+        )
+        return [
+            QuestionAnswerPair.from_graphql(graphql_qa_pair)
+            for graphql_qa_pair in result.question_answer_pairs_with_count.question_answer_pairs
+        ]
+
     async def run_status(self) -> RunStatus:
         """Get the status of a run"""
-
         result = await self._client.run_status(run_id=self.id)
-        self.status = result.run.status
-        return RunStatus(result.run.status)
+        status = result.run.status
+        self.status = RunStatus(status.lower())
+        return self.status
 
     async def wait_for_run_completion(
         self,
@@ -173,9 +203,9 @@ class Run(BaseModel):
         Returns the status of the run after completion.
         """
         await asyncio.sleep(1)
-        status = "in_progress"
+        status = RunStatus.IN_PROGRESS
         start_time = time.time()
-        while status == "in_progress":
+        while status == RunStatus.IN_PROGRESS:
             status = await self.run_status()
 
             # Sleep longer between polls, the longer the run goes.
@@ -188,7 +218,7 @@ class Run(BaseModel):
 
             await asyncio.sleep(sleep_time)
 
-        return RunStatus(status)
+        return status
 
     async def to_csv_string(self) -> str:
         """Same as to_csv, but returns a string instead of writing to a file."""
@@ -223,3 +253,79 @@ class Run(BaseModel):
         """Retry all failing tests in a run."""
 
         await self._client.rerun_tests(run_id=self.id)
+
+    async def resume_run(
+        self,
+        model: str | ModelFunctionType | list[QuestionAnswerPair] | InspectWrapper,
+        wait_for_completion: bool = False,
+        upload_concurrency: int | None = None,
+        custom_operators: list[ModelCustomOperatorFunctionType] | None = None,
+        parallelism: int | None = None,
+    ) -> None:
+        """Resume a run that was paused.
+
+        This method will:
+        1. Check for existing QA pairs that haven't been auto-evaluated
+        2. Check for existing completed test results
+        3. Run the remaining tests that haven't been processed yet
+        """
+        if custom_operators is None:
+            custom_operators = []
+
+        if parallelism is not None:
+            self.parameters.parallelism = parallelism
+        # Import Suite here to avoid circular import
+        from vals.sdk.suite import Suite
+
+        # Get the test suite
+        suite = await Suite.from_id(self.test_suite_id)
+
+        # Create sets of existing test IDs for both QA pairs and completed results
+        completed_qa_pairs = {}
+        completed_test_results = {}
+
+        qa_pairs = await self.get_qa_pairs(offset=0, limit=len(suite.tests))
+
+        for qa_pair in qa_pairs:
+            if len(qa_pair.local_evals) > 0:
+                completed_test_results[qa_pair.test_id] = qa_pair
+            else:
+                completed_qa_pairs[qa_pair.test_id] = qa_pair
+
+        # Filter suite tests to only include those that haven't been processed
+        remaining_tests = {
+            test._id: test
+            for test in suite.tests
+            if test._id not in completed_qa_pairs
+            and test._id not in completed_test_results
+        }
+
+        uploaded_qa_pairs = [
+            qa_pair for qa_pair in qa_pairs if qa_pair.test_id in completed_qa_pairs
+        ]
+
+        print(f"Remaining model outputs to generate: {len(remaining_tests)}")
+
+        print(
+            "Remaining model outputs to evaluate: ",
+            len(suite.tests) - len(completed_test_results),
+        )
+
+        # Run the remaining tests, including existing QA pairs
+        await self._client.update_run_status(
+            run_id=self.id, status=RunStatus.IN_PROGRESS
+        )
+        await suite.run(
+            model=model,
+            model_name=self.model,
+            run_name=self.name,
+            wait_for_completion=wait_for_completion,
+            parameters=self.parameters,
+            upload_concurrency=upload_concurrency,
+            custom_operators=custom_operators,
+            eval_model_name=self.parameters.eval_model,
+            run_id=self.id,
+            qa_set_id=self.qa_set_id,
+            remaining_tests=list(remaining_tests.values()),
+            uploaded_qa_pairs=uploaded_qa_pairs,
+        )
