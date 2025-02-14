@@ -9,18 +9,17 @@ from pydantic import BaseModel, PrivateAttr
 from vals.graphql_client import Client
 from vals.graphql_client.pull_run import PullRun
 from vals.sdk.exceptions import ValsException
+from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.types import (
+    Metadata,
     ModelCustomOperatorFunctionType,
+    ModelFunctionType,
+    QuestionAnswerPair,
     RunMetadata,
     RunParameters,
     RunStatus,
     TestResult,
-    QuestionAnswerPair,
-    Metadata,
-    ModelFunctionType,
 )
-from vals.sdk.inspect_wrapper import InspectWrapper
-from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.util import _get_auth_token, be_host, fe_host, get_ariadne_client
 
 
@@ -112,7 +111,7 @@ class Run(BaseModel):
             success_rate_error=(
                 result.run.success_rate.error if result.run.success_rate else None
             ),
-            status=RunStatus(result.run.status.upper()),
+            status=RunStatus(result.run.status),
             archived=result.run.archived,
             text_summary=result.run.text_summary,
             timestamp=result.run.timestamp,
