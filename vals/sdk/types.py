@@ -424,7 +424,7 @@ class TestResult(BaseModel):
 
 
 class QuestionAnswerPair(BaseModel):
-    id: str
+    id: str | None = None
     input_under_test: str
     llm_output: str
     file_ids: list[str] | None = None
