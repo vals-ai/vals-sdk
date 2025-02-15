@@ -496,14 +496,26 @@ class Suite(BaseModel):
             )
         elif isinstance(model, list):
             # Use the QA pairs we are already provided
+
             parameter_input.model_under_test = model_name
             qa_pairs = model
-            qa_set_id, uploaded_qa_pairs = await self._create_qa_set(
-                [qa_pair.to_graphql() for qa_pair in qa_pairs],
-                parameter_input.model_dump(),
-                model_name,
-                run_name,
+            uploadable_qa_pairs = [qa_pair.to_graphql() for qa_pair in qa_pairs]
+            qa_set_id, run_id = await self._create_empty_qa_set(
+                parameter_input.model_dump(), model_name, run_name
             )
+            uploaded_qa_pairs = []
+            for i in range(0, len(uploadable_qa_pairs), upload_concurrency):
+                batch_to_upload = uploadable_qa_pairs[i : i + upload_concurrency]
+                response = await self._client.batch_add_question_answer_pairs(
+                    qa_set_id, batch_to_upload
+                )
+                uploaded_qa_pairs.extend(
+                    [
+                        await self._deserialize_qa_pair_file_ids(qa_pair)
+                        for qa_pair in response.batch_add_question_answer_pairs.question_answer_pairs
+                    ]
+                )
+
         elif isinstance(model, str):
             # Just use a model string (e.g. "gpt-4o")
             parameter_input.model_under_test = model
