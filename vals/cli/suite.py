@@ -76,7 +76,7 @@ async def list_command_async(limit: int, offset: int, search: str):
         date_str = suite.last_modified_at.strftime("%Y/%m/%d %H:%M")
         rows.append([i, truncated_title, suite.id, date_str])
 
-    table = tabulate(rows, headers=headers, tablefmt="rounded_grid")
+    table = tabulate(rows, headers=headers, tablefmt="tsv")
     click.echo(table)
 
 

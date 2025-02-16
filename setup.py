@@ -16,6 +16,7 @@ setup(
         "pydantic",
         "httpx",
         "tabulate",
+        "inspect-ai",
     ],
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
@@ -24,7 +25,6 @@ setup(
         "dev": ["ariadne-codegen"],
         # Requirements for parsing utilities we provide
         "parsing": ["pypdf", "pypandoc-binary"],
-        "inspect": ["inspect-ai"],
     },
     entry_points={
         "console_scripts": [
