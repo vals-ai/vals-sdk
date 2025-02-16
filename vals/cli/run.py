@@ -1,5 +1,4 @@
 import asyncio
-import json
 from io import TextIOWrapper
 from tabulate import tabulate
 import click
@@ -66,7 +65,7 @@ async def list_async(
             ]
         )
 
-    table = tabulate(rows, headers=column_names, tablefmt="rounded_grid")
+    table = tabulate(rows, headers=column_names, tablefmt="tsv")
     click.echo(table)
 
 
