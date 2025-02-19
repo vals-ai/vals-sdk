@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import os
 from io import BytesIO
@@ -117,3 +118,26 @@ def read_file(file_id: str) -> BytesIO:
         headers={"Authorization": _get_auth_token()},
     )
     return BytesIO(response.content)
+
+
+def download_files_bulk(file_ids: list[str], download_path: str):
+    if file_ids:
+        response = requests.get(
+            f"{be_host()}/download_files_bulk/?file_ids={','.join(file_ids)}",
+            headers={"Authorization": _get_auth_token()},
+        )
+
+        if response.status_code != 200:
+            raise Exception(f"Failed to download files: {response.text}")
+
+        files_data = response.json()["files"]
+
+        os.makedirs(download_path, exist_ok=True)
+
+        for file_data in files_data:
+            filename = file_data["filename"]
+            content = base64.b64decode(file_data["content"])
+
+            file_path = os.path.join(download_path, filename)
+            with open(file_path, "wb") as f:
+                f.write(content)

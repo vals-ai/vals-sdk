@@ -39,12 +39,14 @@ from vals.sdk.types import (
 from vals.sdk.util import (
     _get_auth_token,
     be_host,
+    download_files_bulk,
     fe_host,
     get_ariadne_client,
     md5_hash,
     parse_file_id,
     read_file,
 )
+import base64
 
 
 class Suite(BaseModel):
@@ -81,9 +83,18 @@ class Suite(BaseModel):
         return [TestSuiteMetadata.from_graphql(gql_suite) for gql_suite in gql_suites]
 
     @classmethod
-    async def from_id(cls, suite_id: str) -> "Suite":
+    async def from_id(
+        cls,
+        suite_id: str,
+        download_files: bool = False,
+    ) -> "Suite":
         """
         Create a new local test suite based on the data from the server.
+
+        Args:
+            suite_id: The ID of the suite to load
+            download_files: Whether to download the files associated with the suite
+            download_path: Path to download files to. If None, uses current directory
         """
         client = get_ariadne_client()
         suites_list = await client.get_test_suite_data(suite_id)
@@ -115,6 +126,11 @@ class Suite(BaseModel):
             global_checks=global_checks,
             tests=tests,
         )
+
+        if download_files:
+            all_file_ids = [file_id for test in tests for file_id in test._file_ids]
+            download_files_bulk(all_file_ids, suite.title)
+
         return suite
 
     @classmethod
