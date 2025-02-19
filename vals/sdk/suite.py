@@ -90,11 +90,6 @@ class Suite(BaseModel):
     ) -> "Suite":
         """
         Create a new local test suite based on the data from the server.
-
-        Args:
-            suite_id: The ID of the suite to load
-            download_files: Whether to download the files associated with the suite
-            download_path: Path to download files to. If None, uses current directory
         """
         client = get_ariadne_client()
         suites_list = await client.get_test_suite_data(suite_id)
