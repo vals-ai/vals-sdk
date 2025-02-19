@@ -203,7 +203,7 @@ class Test(BaseModel):
                 Check.from_graphql(check) for check in json.loads(graphql_test.checks)
             ],
             files_under_test=[
-                file.split("-")[-1] for file in json.loads(graphql_test.file_ids)
+                file.split("-", 1)[-1] for file in json.loads(graphql_test.file_ids)
             ],
         )
         test._file_ids = json.loads(graphql_test.file_ids)

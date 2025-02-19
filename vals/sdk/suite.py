@@ -600,6 +600,7 @@ class Suite(BaseModel):
                     with open(file_path, "rb") as f:
                         file_hash = md5_hash(f)
                     filename = os.path.basename(file_path)
+                    
                     name_hash_tuple = (filename, file_hash)
 
                     # If the file hasn't been uploaded yet, we upload it
