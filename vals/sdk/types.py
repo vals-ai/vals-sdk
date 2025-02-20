@@ -204,6 +204,9 @@ class Test(BaseModel):
             ],
         )
         test._file_ids = json.loads(graphql_test.file_ids)
+        test.files_under_test = [
+            "-".join(file_id.split("-")[1:]) for file_id in test._file_ids
+        ]
         test._id = graphql_test.test_id
         test._cross_version_id = graphql_test.cross_version_id
         test._test_suite_id = graphql_test.test_suite.id
@@ -245,6 +248,9 @@ class RunParameters(BaseModel):
     create_text_summary: bool = True
     """If false, will not generate a text summary of the run"""
 
+    retry_failed_calls_indefinitely: bool = False
+    """If true, will retry failed calls to the APIs indefinitely"""
+
     temperature: float = 0
     """ Temperature for model being tested"""
 
@@ -277,6 +283,7 @@ class RunMetadata(BaseModel):
     success_rate_error: float | None
     status: RunStatus
     text_summary: str
+    retry_failed_calls_indefinitely: bool
     timestamp: datetime.datetime
     completed_at: datetime.datetime | None
     archived: bool
@@ -306,6 +313,7 @@ class RunMetadata(BaseModel):
             ),
             status=RunStatus(graphql_run.status),
             text_summary=graphql_run.text_summary,
+            retry_failed_calls_indefinitely=graphql_run.retry_failed_calls_indefinitely,
             timestamp=graphql_run.timestamp,
             completed_at=graphql_run.completed_at,
             archived=graphql_run.archived,
