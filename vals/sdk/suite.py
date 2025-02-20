@@ -994,6 +994,7 @@ class Suite(BaseModel):
         metadata = output.get("metadata", {})
         in_tokens = metadata.get("in_tokens", in_tokens_end - in_tokens_start)
         out_tokens = metadata.get("out_tokens", out_tokens_end - out_tokens_start)
+        duration_seconds = metadata.get("duration_seconds", time_end - time_start)
         output_context = output.get("output_context", None)
 
         return QuestionAnswerPairInputType(
@@ -1005,7 +1006,7 @@ class Suite(BaseModel):
             metadata=MetadataType(
                 in_tokens=in_tokens,
                 out_tokens=out_tokens,
-                duration_seconds=time_end - time_start,
+                duration_seconds=duration_seconds,
             ),
             test_id=test._id,
         )

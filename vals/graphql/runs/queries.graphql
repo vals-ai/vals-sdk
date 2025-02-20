@@ -28,6 +28,7 @@ query PullRun($runId: String!) {
       runConfidenceEvaluation
       heavyweightFactor
       createTextSummary
+      retryFailedCallsIndefinitely
       modelUnderTest
       temperature
       maxOutputTokens
@@ -109,6 +110,7 @@ query ListRuns(
         runConfidenceEvaluation
         heavyweightFactor
         createTextSummary
+        retryFailedCallsIndefinitely
         modelUnderTest
         temperature
         maxOutputTokens
