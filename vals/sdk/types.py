@@ -11,7 +11,7 @@ from enum import Enum
 from io import BytesIO
 from typing import Any, Callable, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from vals.graphql_client.get_test_data import GetTestDataTests
 from vals.graphql_client.get_test_suites_with_count import (
     GetTestSuitesWithCountTestSuitesWithCountTestSuites,
@@ -160,6 +160,17 @@ class Check(BaseModel):
         )
 
 
+class File(BaseModel):
+    file_name: str
+
+    file_id: str | None = None
+
+    path: str | None = None
+
+    def __str__(self) -> str:
+        return f"{self.file_name}"
+
+
 class Test(BaseModel):
     _id: str = "0"
     """Internal id of the test. 0 signifies it hasn't been created yet."""
@@ -185,7 +196,7 @@ class Test(BaseModel):
     context: dict[str, Any] = {}
     """Arbitrary additional context to be used as input for the test."""
 
-    files_under_test: list[str] = []
+    files_under_test: list[File] = []
     """Local file paths to upload as part of the test input - i.e. documents, etc."""
 
     _file_ids: list[str] = []
@@ -203,7 +214,12 @@ class Test(BaseModel):
                 Check.from_graphql(check) for check in json.loads(graphql_test.checks)
             ],
             files_under_test=[
-                file.split("-", 1)[-1] for file in json.loads(graphql_test.file_ids)
+                File(
+                    file_name=file.split("-", 1)[-1],
+                    file_id=file,
+                    path=None,
+                )
+                for file in json.loads(graphql_test.file_ids)
             ],
         )
         test._file_ids = json.loads(graphql_test.file_ids)
@@ -214,6 +230,9 @@ class Test(BaseModel):
 
     def to_test_mutation_info(self, test_suite_id: str) -> TestMutationInfo:
         """Internal method to translate from the Test class to the TestMutationInfo class."""
+
+        file_ids = [file.file_id for file in self.files_under_test]
+
         return TestMutationInfo(
             test_suite_id=test_suite_id,
             # If we're moving the test to a new test suite, we always need to create it
@@ -223,7 +242,7 @@ class Test(BaseModel):
             tags=self.tags,
             context=json.dumps(self.context),
             golden_output=self.golden_output,
-            file_ids=self._file_ids,
+            file_ids=file_ids,
         )
 
 
