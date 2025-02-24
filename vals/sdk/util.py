@@ -153,7 +153,7 @@ def download_files_bulk(file_ids: list[str], download_path: str):
         for file_data in files_data:
             filename = file_data["filename"]
             hash = file_data["hash"]
-            print(f"Downloading {filename} to {hash}")
+
             content = base64.b64decode(file_data["content"])
 
             if filename in duplicate_files:
