@@ -3,7 +3,7 @@ import hashlib
 import os
 from io import BytesIO
 from collections import defaultdict
-
+import urllib.parse
 import httpx
 import requests
 from vals.graphql_client.client import Client as AriadneClient
@@ -122,7 +122,25 @@ def read_file(file_id: str) -> BytesIO:
 
 
 def download_files_bulk(file_ids: list[str], download_path: str):
+
+    if len(file_ids) == 0:
+        raise Exception("No files to download")
+
+    encoded_file_ids = [urllib.parse.quote(file_id) for file_id in file_ids]
+    response = requests.get(
+        f"{be_host()}/download_files_bulk/?file_ids={','.join(encoded_file_ids)}",
+        headers={"Authorization": _get_auth_token()},
+    )
+
+    if response.status_code != 200:
+        raise Exception(f"Failed to download files: {response.text}")
+
+    files_data = response.json()["files"]
+
+    os.makedirs(download_path, exist_ok=True)
+
     filename_groups = defaultdict(set)
+
     for file_id in file_ids:
         id, filename = file_id.split("-", 1)
         hash = id.split("/", 1)[-1]
@@ -132,38 +150,25 @@ def download_files_bulk(file_ids: list[str], download_path: str):
         filename: ids for filename, ids in filename_groups.items() if len(ids) > 1
     }
 
-    if file_ids:
-        response = requests.get(
-            f"{be_host()}/download_files_bulk/?file_ids={','.join(file_ids)}",
-            headers={"Authorization": _get_auth_token()},
-        )
+    for filename, hashes in duplicate_files.items():
+        for hash in hashes:
+            download_dir = os.path.join(download_path, hash)
+            os.makedirs(download_dir, exist_ok=True)
 
-        if response.status_code != 200:
-            raise Exception(f"Failed to download files: {response.text}")
+    for file_data in files_data:
+        filename = file_data["filename"]
+        hash = file_data["hash"]
 
-        files_data = response.json()["files"]
+        content = base64.b64decode(file_data["content"])
 
-        os.makedirs(download_path, exist_ok=True)
+        if filename in duplicate_files:
+            download_dir = os.path.join(download_path, hash)
+            file_path = os.path.join(download_dir, filename)
 
-        for filename, hashes in duplicate_files.items():
-            for hash in hashes:
-                download_dir = os.path.join(download_path, hash)
-                os.makedirs(download_dir, exist_ok=True)
+            with open(file_path, "wb") as f:
+                f.write(content)
+        else:
+            file_path = os.path.join(download_path, filename)
 
-        for file_data in files_data:
-            filename = file_data["filename"]
-            hash = file_data["hash"]
-
-            content = base64.b64decode(file_data["content"])
-
-            if filename in duplicate_files:
-                download_dir = os.path.join(download_path, hash)
-                file_path = os.path.join(download_dir, filename)
-
-                with open(file_path, "wb") as f:
-                    f.write(content)
-            else:
-                file_path = os.path.join(download_path, filename)
-
-                with open(file_path, "wb") as f:
-                    f.write(content)
+            with open(file_path, "wb") as f:
+                f.write(content)

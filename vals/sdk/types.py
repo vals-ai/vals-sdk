@@ -11,7 +11,7 @@ from enum import Enum
 from io import BytesIO
 from typing import Any, Callable, Literal
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 from vals.graphql_client.get_test_data import GetTestDataTests
 from vals.graphql_client.get_test_suites_with_count import (
     GetTestSuitesWithCountTestSuitesWithCountTestSuites,
@@ -167,8 +167,7 @@ class File(BaseModel):
 
     path: str | None = None
 
-    def __str__(self) -> str:
-        return f"{self.file_name}"
+    hash: str | None = None
 
 
 class Test(BaseModel):
@@ -217,6 +216,7 @@ class Test(BaseModel):
                 File(
                     file_name=file.split("-", 1)[-1],
                     file_id=file,
+                    hash=file.split("-", 1)[0].split("/", 1)[-1],
                     path=None,
                 )
                 for file in json.loads(graphql_test.file_ids)

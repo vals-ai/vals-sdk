@@ -591,33 +591,44 @@ class Suite(BaseModel):
         if self.id is None:
             raise Exception("This suite has not been created yet.")
 
-        # Covers the case where the user has added a new file path via a test
         for test in self.tests:
+            for file in test.files_under_test:
+                if file.path is None:
+                    path = os.path.join(upload_files_path, file.file_name)
 
-            # Files with no path are ones that are already uploaded to the server.
-            new_files = [
-                file for file in test.files_under_test if file.path is not None
-            ]
-            existing_files = [
-                file for file in test.files_under_test if file.path is None
-            ]
+                    # Case if its in a sub directory
+                    duplicated_file_path = os.path.join(
+                        upload_files_path, file.hash, file.file_name
+                    )
 
-            if len(existing_files) > 0 and os.path.exists(upload_files_path):
-                existing_file_names = [file.file_name for file in existing_files]
-                for file in os.listdir(upload_files_path):
-                    if file in existing_file_names:
-                        path = os.path.join(upload_files_path, file)
+                    if os.path.exists(duplicated_file_path):
+                        path = duplicated_file_path
 
-                        if os.path.isfile(path):
-                            id = self._upload_file(self.id, path)
-                            existing_files[existing_file_names.index(file)].file_id = id
+                if os.path.exists(path):
+                    # If file exists and hash is different
+                    with open(path, "rb") as f:
+                        hash_check = md5_hash(f)
 
-            if len(new_files) > 0:
-                for file in new_files:
-                    if not os.path.exists(file.path):
-                        raise Exception(f"File does not exist: {file.path}")
+                    if hash_check != file.hash:
+                        print(f"Uploading existing file {file.file_name} from {path}")
+                        file.file_id = self._upload_file(self.id, path)
+                        file.hash = hash_check
 
+                # If file is new and it exists
+                if file.path is not None and os.path.exists(file.path):
+                    # Check if it already exists inside of the test
+                    with open(file.path, "rb") as f:
+                        file_hash = md5_hash(f)
+
+                    if file_hash in [f.hash for f in test.files_under_test]:
+                        print(
+                            f"File {file.file_name} already exists in the test suite."
+                        )
+                        continue
+
+                    print(f"Uploading new file {file.file_name} from {file.path}")
                     file.file_id = self._upload_file(self.id, file.path)
+                    file.hash = file_hash
 
             test._file_ids = [file.file_id for file in test.files_under_test]
 
