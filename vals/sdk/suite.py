@@ -24,6 +24,7 @@ from vals.sdk.types import (
     Check,
     CustomModelInput,
     CustomModelOutput,
+    File,
     ModelCustomOperatorFunctionType,
     ModelFunctionType,
     ModelFunctionWithFilesAndContextType,
@@ -39,12 +40,14 @@ from vals.sdk.types import (
 from vals.sdk.util import (
     _get_auth_token,
     be_host,
+    download_files_bulk,
     fe_host,
     get_ariadne_client,
     md5_hash,
     parse_file_id,
     read_file,
 )
+import base64
 
 
 class Suite(BaseModel):
@@ -81,7 +84,12 @@ class Suite(BaseModel):
         return [TestSuiteMetadata.from_graphql(gql_suite) for gql_suite in gql_suites]
 
     @classmethod
-    async def from_id(cls, suite_id: str) -> "Suite":
+    async def from_id(
+        cls,
+        suite_id: str,
+        download_files: bool = False,
+        download_path: str | None = None,
+    ) -> "Suite":
         """
         Create a new local test suite based on the data from the server.
         """
@@ -115,6 +123,20 @@ class Suite(BaseModel):
             global_checks=global_checks,
             tests=tests,
         )
+
+        if download_files:
+            file_ids = []
+            path = suite.title if download_path is None else download_path
+
+            for test in tests:
+                file_ids.extend([file.file_id for file in test.files_under_test])
+                test.files_under_test = [
+                    File(file_name=file.file_name, file_id=file.file_id, path=path)
+                    for file in test.files_under_test
+                ]
+
+            download_files_bulk(file_ids, path)
+
         return suite
 
     @classmethod
@@ -295,7 +317,7 @@ class Suite(BaseModel):
 
         await self._client.delete_test_suite(self.id)
 
-    async def update(self) -> None:
+    async def update(self, upload_files_path: str | None = None) -> None:
         """
         Pushes any local changes to the the test suite object to the server.
         """
@@ -308,7 +330,9 @@ class Suite(BaseModel):
             self.id, self.title, self.description
         )
 
-        await self._upload_files()
+        path = self.title if upload_files_path is None else upload_files_path
+
+        await self._upload_files(path)
         await self._upload_global_checks()
         await self._upload_tests(create_only=False)
 
@@ -559,7 +583,7 @@ class Suite(BaseModel):
 
         return run
 
-    async def _upload_files(self):
+    async def _upload_files(self, upload_files_path: str | None = None):
         """
         Helper method to upload the files to the server.
         Uploads any tests.files_under_test that haven't been uploaded yet.
@@ -567,41 +591,46 @@ class Suite(BaseModel):
         if self.id is None:
             raise Exception("This suite has not been created yet.")
 
-        file_name_and_hash_to_file_id = {}
-
-        # First, we populate the dictionary of files that have already been uploaded
-        # for this test suite.
         for test in self.tests:
-            for file_id in test._file_ids:
-                _, name, _hash = parse_file_id(file_id)
-                file_name_and_hash_to_file_id[(name, _hash)] = file_id
+            for file in test.files_under_test:
+                if file.path is None:
+                    path = os.path.join(upload_files_path, file.file_name)
 
-        # Next, for files we haven't uploaded yet, we upload them
-        # and add them to the dictionary
-        for test in self.tests:
-            if len(test.files_under_test) != 0:
-                file_ids = []
-                for file_path in test.files_under_test:
-                    if not os.path.exists(file_path):
-                        raise Exception(f"File does not exist: {file_path}")
+                    # Case if its in a sub directory
+                    duplicated_file_path = os.path.join(
+                        upload_files_path, file.hash, file.file_name
+                    )
 
-                    # First, we compute the filename and the hash of its contents
-                    with open(file_path, "rb") as f:
+                    if os.path.exists(duplicated_file_path):
+                        path = duplicated_file_path
+
+                if os.path.exists(path):
+                    # If file exists and hash is different
+                    with open(path, "rb") as f:
+                        hash_check = md5_hash(f)
+
+                    if hash_check != file.hash:
+                        print(f"Uploading existing file {file.file_name} from {path}")
+                        file.file_id = self._upload_file(self.id, path)
+                        file.hash = hash_check
+
+                # If file is new and it exists
+                if file.path is not None and os.path.exists(file.path):
+                    # Check if it already exists inside of the test
+                    with open(file.path, "rb") as f:
                         file_hash = md5_hash(f)
-                    filename = os.path.basename(file_path)
-                    name_hash_tuple = (filename, file_hash)
 
-                    # If the file hasn't been uploaded yet, we upload it
-                    if name_hash_tuple not in file_name_and_hash_to_file_id:
-                        file_id = self._upload_file(self.id, file_path)
-                        file_name_and_hash_to_file_id[name_hash_tuple] = file_id
+                    if file_hash in [f.hash for f in test.files_under_test]:
+                        print(
+                            f"File {file.file_name} already exists in the test suite."
+                        )
+                        continue
 
-                    # Either way, we add the file id to the test.
-                    file_ids.append(file_name_and_hash_to_file_id[name_hash_tuple])
+                    print(f"Uploading new file {file.file_name} from {file.path}")
+                    file.file_id = self._upload_file(self.id, file.path)
+                    file.hash = file_hash
 
-                # Main downside of this approach is that we can only overwrite files
-                # we can't add or remove just one file.
-                test._file_ids = file_ids
+            test._file_ids = [file.file_id for file in test.files_under_test]
 
     async def _upload_tests(self, create_only: bool = True) -> None:
         """

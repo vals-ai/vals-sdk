@@ -9,6 +9,7 @@ from vals.cli.util import display_error_and_exit
 from vals.sdk.exceptions import ValsException
 from vals.sdk.suite import Suite
 from vals.sdk.types import RunParameters, RunStatus
+from vals.sdk.util import download_files_bulk
 
 
 @click.group(name="suite")
@@ -98,7 +99,12 @@ def list_command(
 
 
 async def pull_command_async(
-    file: TextIOWrapper, suite_id: str, to_csv: bool, to_json: bool
+    file: TextIOWrapper,
+    suite_id: str,
+    to_csv: bool,
+    to_json: bool,
+    download_files: bool,
+    download_path: str | None,
 ):
     if to_csv and to_json:
         display_error_and_exit(
@@ -110,6 +116,17 @@ async def pull_command_async(
         file.write(suite.to_csv_string())
     else:
         file.write(suite.to_json_string())
+
+    if download_files:
+        file_ids = []
+        for test in suite.tests:
+            file_ids.extend(
+                [file_id for file_id in test._file_ids if file_id is not None]
+            )
+
+        path = suite.title if download_path is None else download_path
+
+        download_files_bulk(file_ids, path)
 
     click.secho("Successfully pulled test suite.", fg="green")
 
@@ -123,11 +140,24 @@ async def pull_command_async(
 @click.argument("suite_id", type=str, required=True)
 @click.option("--csv", is_flag=True, help="Output in CSV format")
 @click.option("--json", is_flag=True, help="Output in JSON format")
-def pull_command(file: TextIOWrapper, suite_id: str, csv: bool, json: bool):
+@click.option("--download-files", is_flag=True, help="Download files from the suite")
+@click.option(
+    "--download-path", type=str, default=None, help="Path to download the files to"
+)
+def pull_command(
+    file: TextIOWrapper,
+    suite_id: str,
+    csv: bool,
+    json: bool,
+    download_files: bool,
+    download_path: str,
+):
     """
     Read a suite from the PRL server to a local JSON file.
     """
-    asyncio.run(pull_command_async(file, suite_id, csv, json))
+    asyncio.run(
+        pull_command_async(file, suite_id, csv, json, download_files, download_path)
+    )
 
 
 async def run_command_async(
