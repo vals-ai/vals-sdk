@@ -1,6 +1,5 @@
-import sys
-
 import click
+import sys
 
 
 def prompt_user_for_rag_suite():
@@ -17,6 +16,6 @@ def prompt_user_for_rag_suite():
     return suite_id
 
 
-def display_error_and_exit(error_msg: str):
-    click.secho("ERROR: " + error_msg, fg="red")
+def pretty_print_error(message: str):
+    click.secho(message, fg="red")
     sys.exit(1)
