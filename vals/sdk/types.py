@@ -514,7 +514,10 @@ class OperatorInput(BaseModel):
     output_context: dict[str, Any] | None = None
     files: dict[str, BytesIO] | None = None
 
-    model_config = {"arbitrary_types_allowed": True}
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "protected_namespaces": (),
+    }
 
 
 class OperatorOutput(BaseModel):
@@ -536,6 +539,11 @@ class CustomModelInput(BaseModel):
 
 class CustomModelOutput(BaseModel):
     model_output: str | dict[str, Any] | QuestionAnswerPair
+
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "protected_namespaces": (),
+    }
 
 
 SimpleModelFunctionType = Callable[[str], str]

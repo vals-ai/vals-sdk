@@ -5,7 +5,7 @@ from typing import Any
 
 import click
 from tabulate import tabulate
-from vals.cli.util import display_error_and_exit
+from vals.cli.util import pretty_print_error
 from vals.sdk.exceptions import ValsException
 from vals.sdk.suite import Suite
 from vals.sdk.types import RunParameters, RunStatus
@@ -21,15 +21,13 @@ def suite_group():
 
 
 async def create_commmand_async(file: TextIOWrapper):
-    try:
-        suite = await Suite.from_dict(json.loads(file.read()))
-        await suite.create()
-        click.secho("Successfully created test suite.", fg="green")
-        click.secho(f"ID: {suite.id}")
-        click.secho(suite.url, bold=True)
 
-    except ValsException as e:
-        display_error_and_exit(e.message)
+    suite = await Suite.from_dict(json.loads(file.read()))
+    await suite.create()
+
+    click.secho("Successfully created test suite.", fg="green")
+    click.secho(f"ID: {suite.id}")
+    click.secho(suite.url, bold=True)
 
 
 @click.command(name="create")
@@ -107,7 +105,7 @@ async def pull_command_async(
     download_path: str | None,
 ):
     if to_csv and to_json:
-        display_error_and_exit(
+        pretty_print_error(
             "Cannot specify both --csv and --json - they are mutually exclusive."
         )
 
