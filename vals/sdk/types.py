@@ -195,7 +195,7 @@ class Test(BaseModel):
     context: dict[str, Any] = {}
     """Arbitrary additional context to be used as input for the test."""
 
-    files_under_test: list[File] = []
+    files_under_test: list[File] | list[dict[str, Any]] | list[str] = []
     """Local file paths to upload as part of the test input - i.e. documents, etc."""
 
     _file_ids: list[str] = []
