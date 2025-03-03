@@ -131,6 +131,7 @@ class ParameterInputType(BaseModel):
     run_confidence_evaluation: bool = Field(alias="runConfidenceEvaluation")
     heavyweight_factor: int = Field(alias="heavyweightFactor")
     create_text_summary: bool = Field(alias="createTextSummary")
+    retry_failed_calls_indefinitely: bool = Field(alias="retryFailedCallsIndefinitely")
     model_under_test: str = Field(alias="modelUnderTest")
     temperature: float
     max_output_tokens: int = Field(alias="maxOutputTokens")

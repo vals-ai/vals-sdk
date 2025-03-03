@@ -422,7 +422,7 @@ class TestResult(BaseModel):
             llm_output=graphql_test_result.llm_output,
             pass_percentage=graphql_test_result.pass_percentage,
             pass_percentage_with_optional=graphql_test_result.pass_percentage_with_optional,
-            error_message=graphql_test_result.qa_pair.error_message,
+            error_message=graphql_test_result.qa_pair.error_message if graphql_test_result.qa_pair else "",
             check_results=[
                 CheckResult(
                     operator=check_result["operator"],
@@ -433,7 +433,7 @@ class TestResult(BaseModel):
                     is_global=check_result.get("is_global", False),
                     auto_eval=check_result.get("auto_eval", 0),
                     feedback=check_result.get("feedback", ""),
-                    confidence=Confidence(check_result.get("eval_cont", 0.5)),
+                    confidence=Confidence(check_result.get("eval_cont", 0.5) if check_result.get("eval_cont", 0.5) in [0, 0.5, 1] else 0.5),
                 )
                 for check_result in json.loads(graphql_test_result.result_json)
             ],
