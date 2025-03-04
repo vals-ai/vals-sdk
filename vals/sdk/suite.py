@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import concurrent.futures._base
 import inspect
 import json
@@ -47,7 +48,6 @@ from vals.sdk.util import (
     parse_file_id,
     read_file,
 )
-import base64
 
 
 class Suite(BaseModel):

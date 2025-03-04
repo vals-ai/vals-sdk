@@ -123,7 +123,6 @@ from .pull_run import (
 )
 from .remove_old_tests import RemoveOldTests, RemoveOldTestsRemoveUnusedTests
 from .rerun_tests import RerunTests, RerunTestsRerunFailingTests
-from .run_param_info import RunParamInfo
 from .run_status import RunStatus, RunStatusRun
 from .start_run import StartRun, StartRunStartRun
 from .update_global_checks import (
@@ -228,7 +227,6 @@ __all__ = [
     "RemoveOldTestsRemoveUnusedTests",
     "RerunTests",
     "RerunTestsRerunFailingTests",
-    "RunParamInfo",
     "RunResultFilterOptionsInput",
     "RunResultSortField",
     "RunReviewStatusEnum",
