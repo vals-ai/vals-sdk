@@ -279,6 +279,9 @@ class RunParameters(BaseModel):
     new_line_stop_option: bool = False
     """If true, will stop generation at a new line"""
 
+    retry_failed_calls_indefinitely: bool = False
+    """ If true, when receiving an error from the model, will retry indefinitely until it receives a success."""
+
 
 class RunStatus(str, Enum):
     """Status of a run: 'in_progress', 'error', or 'success'."""
