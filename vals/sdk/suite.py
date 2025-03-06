@@ -598,16 +598,20 @@ class Suite(BaseModel):
             for file_item in test.files_under_test:
                 if isinstance(file_item, str):
                     # Handle string path
-                    normalized_files.append(File(file_name=os.path.basename(file_item), path=file_item))
+                    normalized_files.append(
+                        File(file_name=os.path.basename(file_item), path=file_item)
+                    )
                 elif isinstance(file_item, dict):
                     # Handle dictionary representation
-                    file_name = file_item.get("file_name") or os.path.basename(file_item.get("path", ""))
+                    file_name = file_item.get("file_name") or os.path.basename(
+                        file_item.get("path", "")
+                    )
                     normalized_files.append(
                         File(
                             file_name=file_name,
                             file_id=file_item.get("file_id"),
                             path=file_item.get("path"),
-                            hash=file_item.get("hash")
+                            hash=file_item.get("hash"),
                         )
                     )
                 elif isinstance(file_item, File):
@@ -615,15 +619,15 @@ class Suite(BaseModel):
                     normalized_files.append(file_item)
                 else:
                     raise ValueError(f"Unexpected file type: {type(file_item)}")
-            
+
             # Replace the original files_under_test with normalized File objects
             test.files_under_test = normalized_files
-            
+
             # Process each file
             for file in test.files_under_test:
                 # Determine the file path
                 file_path = None
-                
+
                 # Case 1: File has a path
                 if file.path is not None and os.path.exists(file.path):
                     file_path = file.path
@@ -635,31 +639,42 @@ class Suite(BaseModel):
                         file_path = potential_path
                     # Try hash subdirectory path if hash exists
                     elif file.hash is not None:
-                        hash_path = os.path.join(upload_files_path, file.hash, file.file_name)
+                        hash_path = os.path.join(
+                            upload_files_path, file.hash, file.file_name
+                        )
                         if os.path.exists(hash_path):
                             file_path = hash_path
-                
+
                 # Skip if we couldn't find the file
                 if file_path is None:
                     continue
-                    
+
                 # Calculate file hash
                 with open(file_path, "rb") as f:
                     file_hash = md5_hash(f)
-                
+
                 # Case: File is new or hash has changed
                 if file.file_id is None or file.hash != file_hash:
                     # Check if this hash already exists in another file in the test
-                    if file_hash in [f.hash for f in test.files_under_test if f != file and f.hash is not None]:
-                        print(f"File {file.file_name} with same hash already exists in the test suite.")
+                    if file_hash in [
+                        f.hash
+                        for f in test.files_under_test
+                        if f != file and f.hash is not None
+                    ]:
+                        print(
+                            f"File {file.file_name} with same hash already exists in the test suite."
+                        )
                         continue
-                    
 
                     file.file_id = self._upload_file(self.id, file_path)
                     file.hash = file_hash
-            
+
             # Update file IDs for the test
-            test._file_ids = [file.file_id for file in test.files_under_test if file.file_id is not None]
+            test._file_ids = [
+                file.file_id
+                for file in test.files_under_test
+                if file.file_id is not None
+            ]
 
     async def _upload_tests(self, create_only: bool = True) -> None:
         """
@@ -671,8 +686,8 @@ class Suite(BaseModel):
         # Upload tests in batches of 100
         created_tests = []
         test_mutations = [test.to_test_mutation_info(self.id) for test in self.tests]
-        for i in range(0, len(test_mutations), 5):
-            batch = test_mutations[i : i + 5]
+        for i in range(0, len(test_mutations), 25):
+            batch = test_mutations[i : i + 25]
             batch_result = await self._client.add_batch_tests(
                 tests=batch,
                 create_only=create_only,
