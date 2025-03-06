@@ -4,21 +4,20 @@ import sys
 from .rag import rag_group
 from .run import run_group
 from .suite import suite_group
-from .util import pretty_print_error
+from .util import display_error_and_exit
 
 
-class ValsException(click.Group):
+class ExceptionHandlingWrapper(click.Group):
     """Custom class that overrides the default error handling for click"""
 
     def __call__(self, *args, **kwargs):
         try:
             return super().__call__(*args, **kwargs)
         except Exception as e:
-            pretty_print_error(e)
-            sys.exit(1)
+            display_error_and_exit(e)
 
 
-@click.group(cls=ValsException)
+@click.group(cls=ExceptionHandlingWrapper)
 def cli():
     pass
 

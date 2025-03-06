@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 import click
 import requests
-from vals.cli.util import pretty_print_error
+from vals.cli.util import display_error_and_exit
 from vals.sdk.auth import _get_auth_token
 from vals.sdk.util import be_host, get_ariadne_client
 
@@ -60,7 +60,7 @@ async def upload_command_async(file: str, query: str):
             headers={"Authorization": _get_auth_token()},
         )
         if response.status_code != 200:
-            pretty_print_error(f"Failed to upload file {file}")
+            display_error_and_exit(f"Failed to upload file {file}")
 
     suite_id = await create_rag_suite(
         {"id": response.json()["file_id"], "query": query}
@@ -127,7 +127,7 @@ async def rerank_command_async(
     )
 
     if response.status_code != 200:
-        pretty_print_error(f"Failed to run reranking: {file_id}")
+        display_error_and_exit(f"Failed to run reranking: {file_id}")
 
     scores = response.json()
     scores["query"] = query

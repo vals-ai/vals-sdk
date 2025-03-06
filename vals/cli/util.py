@@ -16,6 +16,6 @@ def prompt_user_for_rag_suite():
     return suite_id
 
 
-def pretty_print_error(message: str):
+def display_error_and_exit(message: str):
     click.secho(message, fg="red")
     sys.exit(1)

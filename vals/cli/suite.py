@@ -5,7 +5,7 @@ from typing import Any
 
 import click
 from tabulate import tabulate
-from vals.cli.util import pretty_print_error
+from vals.cli.util import display_error_and_exit
 from vals.sdk.exceptions import ValsException
 from vals.sdk.suite import Suite
 from vals.sdk.types import RunParameters, RunStatus
@@ -105,7 +105,7 @@ async def pull_command_async(
     download_path: str | None,
 ):
     if to_csv and to_json:
-        pretty_print_error(
+        display_error_and_exit(
             "Cannot specify both --csv and --json - they are mutually exclusive."
         )
 

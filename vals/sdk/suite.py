@@ -593,7 +593,7 @@ class Suite(BaseModel):
 
         for test in self.tests:
             for file in test.files_under_test:
-                if file.path is None:
+                if file.path is None and upload_files_path is not None:
                     path = os.path.join(upload_files_path, file.file_name)
 
                     # Case if its in a sub directory
@@ -604,15 +604,17 @@ class Suite(BaseModel):
                     if os.path.exists(duplicated_file_path):
                         path = duplicated_file_path
 
-                if os.path.exists(path):
-                    # If file exists and hash is different
-                    with open(path, "rb") as f:
-                        hash_check = md5_hash(f)
+                    if os.path.exists(path):
+                        # If file exists and hash is different
+                        with open(path, "rb") as f:
+                            hash_check = md5_hash(f)
 
-                    if hash_check != file.hash:
-                        print(f"Uploading existing file {file.file_name} from {path}")
-                        file.file_id = self._upload_file(self.id, path)
-                        file.hash = hash_check
+                        if hash_check != file.hash:
+                            print(
+                                f"Uploading existing file {file.file_name} from {path}"
+                            )
+                            file.file_id = self._upload_file(self.id, path)
+                            file.hash = hash_check
 
                 # If file is new and it exists
                 if file.path is not None and os.path.exists(file.path):
@@ -683,10 +685,10 @@ class Suite(BaseModel):
                 await self._validate_checks(check, operators_dict)
 
             for file_path in test.files_under_test:
-                if not os.path.exists(file_path):
-                    raise ValueError(f"File does not exist: {file_path}")
-                if not os.path.isfile(file_path):
-                    raise ValueError(f"Path is a directory: {file_path}")
+                if file_path.path is not None and not os.path.exists(file_path.path):
+                    raise ValueError(f"File does not exist: {file_path.path}")
+                if file_path.path is not None and not os.path.isfile(file_path.path):
+                    raise ValueError(f"Path is a directory: {file_path.path}")
 
         for check in self.global_checks:
             await self._validate_checks(check, operators_dict)
