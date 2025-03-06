@@ -90,6 +90,7 @@ class Suite(BaseModel):
         suite_id: str,
         download_files: bool = False,
         download_path: str | None = None,
+        max_concurrent_downloads: int = 50,
     ) -> "Suite":
         """
         Create a new local test suite based on the data from the server.
@@ -136,7 +137,9 @@ class Suite(BaseModel):
                     for file in test.files_under_test
                 ]
 
-            download_files_bulk(file_ids, path)
+            await download_files_bulk(
+                file_ids, path, max_concurrent_downloads=max_concurrent_downloads
+            )
 
         return suite
 

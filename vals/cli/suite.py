@@ -105,6 +105,7 @@ async def pull_command_async(
     to_json: bool,
     download_files: bool,
     download_path: str | None,
+    max_concurrent_downloads: int = 50,
 ):
     if to_csv and to_json:
         display_error_and_exit(
@@ -126,7 +127,9 @@ async def pull_command_async(
 
         path = suite.title if download_path is None else download_path
 
-        download_files_bulk(file_ids, path)
+        await download_files_bulk(
+            file_ids, path, max_concurrent_downloads=max_concurrent_downloads
+        )
 
     click.secho("Successfully pulled test suite.", fg="green")
 
@@ -144,6 +147,12 @@ async def pull_command_async(
 @click.option(
     "--download-path", type=str, default=None, help="Path to download the files to"
 )
+@click.option(
+    "--max-concurrent-downloads",
+    type=int,
+    default=50,
+    help="Maximum number of concurrent downloads",
+)
 def pull_command(
     file: TextIOWrapper,
     suite_id: str,
@@ -151,12 +160,21 @@ def pull_command(
     json: bool,
     download_files: bool,
     download_path: str,
+    max_concurrent_downloads: int = 50,
 ):
     """
     Read a suite from the PRL server to a local JSON file.
     """
     asyncio.run(
-        pull_command_async(file, suite_id, csv, json, download_files, download_path)
+        pull_command_async(
+            file,
+            suite_id,
+            csv,
+            json,
+            download_files,
+            download_path,
+            max_concurrent_downloads,
+        )
     )
 
 
