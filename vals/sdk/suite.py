@@ -671,8 +671,8 @@ class Suite(BaseModel):
         # Upload tests in batches of 100
         created_tests = []
         test_mutations = [test.to_test_mutation_info(self.id) for test in self.tests]
-        for i in range(0, len(test_mutations), 100):
-            batch = test_mutations[i : i + 100]
+        for i in range(0, len(test_mutations), 5):
+            batch = test_mutations[i : i + 5]
             batch_result = await self._client.add_batch_tests(
                 tests=batch,
                 create_only=create_only,
