@@ -4,13 +4,6 @@
 from enum import Enum
 
 
-class RunReviewStatusEnum(str, Enum):
-    PENDING = "PENDING"
-    COMPLETED = "COMPLETED"
-    ARCHIVED = "ARCHIVED"
-    CANCELLED = "CANCELLED"
-
-
 class AppQuestionAnswerSetCreationMethodChoices(str, Enum):
     LIVE_QUERY = "LIVE_QUERY"
     SDK = "SDK"
@@ -30,13 +23,20 @@ class TestResultReviewStatusEnum(str, Enum):
     ARCHIVED = "ARCHIVED"
 
 
-class AppPairwiseTestResultReviewWinningRunChoices(str, Enum):
+class RunReviewStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    ARCHIVED = "ARCHIVED"
+    CANCELLED = "CANCELLED"
+
+
+class AppPairwiseRunReviewWinningRunChoices(str, Enum):
     A = "A"
     B = "B"
     TIE = "TIE"
 
 
-class AppPairwiseRunReviewWinningRunChoices(str, Enum):
+class AppPairwiseTestResultReviewWinningRunChoices(str, Enum):
     A = "A"
     B = "B"
     TIE = "TIE"
@@ -65,12 +65,6 @@ class TestResultReviewSortField(str, Enum):
     COMPLETED_AT = "COMPLETED_AT"
 
 
-class TestSuiteSortField(str, Enum):
-    TITLE = "TITLE"
-    CREATED = "CREATED"
-    LAST_MODIFIED_AT = "LAST_MODIFIED_AT"
-
-
 class RunResultSortField(str, Enum):
     NAME = "NAME"
     STARTED_AT = "STARTED_AT"
@@ -84,6 +78,12 @@ class TestResultCheckErrorEnum(str, Enum):
     ALL_CHECKS_FAILED = "ALL_CHECKS_FAILED"
     ALL_CHECKS_PASSED = "ALL_CHECKS_PASSED"
     TESTS_WITH_OUTPUT_ERRORS = "TESTS_WITH_OUTPUT_ERRORS"
+
+
+class TestSuiteSortField(str, Enum):
+    TITLE = "TITLE"
+    CREATED = "CREATED"
+    LAST_MODIFIED_AT = "LAST_MODIFIED_AT"
 
 
 class WinningRunEnum(str, Enum):

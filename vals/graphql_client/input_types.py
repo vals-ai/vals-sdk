@@ -37,23 +37,6 @@ class TestReviewFilterOptionsInput(BaseModel):
     status: Optional[TestResultReviewStatusEnum] = None
 
 
-class FilterOptionsInput(BaseModel):
-    limit: Optional[int] = None
-    offset: Optional[int] = None
-    search: Optional[str] = None
-    folder_id: Optional[str] = Field(alias="folderId", default=None)
-    test_suite_id: Optional[str] = Field(alias="testSuiteId", default=None)
-    sort_by: Optional[TestSuiteSortField] = Field(alias="sortBy", default=None)
-    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
-
-
-class TestFilterOptions(BaseModel):
-    search: Optional[str] = None
-    tags: Optional[List[Optional[str]]] = None
-    offset: Optional[int] = None
-    limit: Optional[int] = None
-
-
 class RunResultFilterOptionsInput(BaseModel):
     limit: Optional[int] = None
     offset: Optional[int] = None
@@ -81,6 +64,23 @@ class TestResultFilterOptions(BaseModel):
 
 
 class QuestionAnswerPairsFilterOptions(BaseModel):
+    search: Optional[str] = None
+    tags: Optional[List[Optional[str]]] = None
+    offset: Optional[int] = None
+    limit: Optional[int] = None
+
+
+class FilterOptionsInput(BaseModel):
+    limit: Optional[int] = None
+    offset: Optional[int] = None
+    search: Optional[str] = None
+    folder_id: Optional[str] = Field(alias="folderId", default=None)
+    test_suite_id: Optional[str] = Field(alias="testSuiteId", default=None)
+    sort_by: Optional[TestSuiteSortField] = Field(alias="sortBy", default=None)
+    sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+
+
+class TestFilterOptions(BaseModel):
     search: Optional[str] = None
     tags: Optional[List[Optional[str]]] = None
     offset: Optional[int] = None
@@ -131,6 +131,7 @@ class ParameterInputType(BaseModel):
     run_confidence_evaluation: bool = Field(alias="runConfidenceEvaluation")
     heavyweight_factor: int = Field(alias="heavyweightFactor")
     create_text_summary: bool = Field(alias="createTextSummary")
+    retry_failed_calls_indefinitely: bool = Field(alias="retryFailedCallsIndefinitely")
     model_under_test: str = Field(alias="modelUnderTest")
     temperature: float
     max_output_tokens: int = Field(alias="maxOutputTokens")

@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import concurrent.futures._base
 import inspect
 import json
@@ -36,6 +37,7 @@ from vals.sdk.types import (
     SimpleModelFunctionType,
     Test,
     TestSuiteMetadata,
+    File,
 )
 from vals.sdk.util import (
     _get_auth_token,
@@ -47,7 +49,6 @@ from vals.sdk.util import (
     parse_file_id,
     read_file,
 )
-import base64
 
 
 class Suite(BaseModel):
@@ -592,47 +593,88 @@ class Suite(BaseModel):
             raise Exception("This suite has not been created yet.")
 
         for test in self.tests:
-            for file in test.files_under_test:
-                if file.path is None and upload_files_path is not None:
-                    path = os.path.join(upload_files_path, file.file_name)
-
-                    # Case if its in a sub directory
-                    duplicated_file_path = os.path.join(
-                        upload_files_path, file.hash, file.file_name
+            # Convert files_under_test to a list of File objects if they're not already
+            normalized_files = []
+            for file_item in test.files_under_test:
+                if isinstance(file_item, str):
+                    # Handle string path
+                    normalized_files.append(
+                        File(file_name=os.path.basename(file_item), path=file_item)
                     )
+                elif isinstance(file_item, dict):
+                    # Handle dictionary representation
+                    file_name = file_item.get("file_name") or os.path.basename(
+                        file_item.get("path", "")
+                    )
+                    normalized_files.append(
+                        File(
+                            file_name=file_name,
+                            file_id=file_item.get("file_id"),
+                            path=file_item.get("path"),
+                            hash=file_item.get("hash"),
+                        )
+                    )
+                elif isinstance(file_item, File):
+                    # Already a File object
+                    normalized_files.append(file_item)
+                else:
+                    raise ValueError(f"Unexpected file type: {type(file_item)}")
 
-                    if os.path.exists(duplicated_file_path):
-                        path = duplicated_file_path
+            # Replace the original files_under_test with normalized File objects
+            test.files_under_test = normalized_files
 
-                    if os.path.exists(path):
-                        # If file exists and hash is different
-                        with open(path, "rb") as f:
-                            hash_check = md5_hash(f)
+            # Process each file
+            for file in test.files_under_test:
+                # Determine the file path
+                file_path = None
 
-                        if hash_check != file.hash:
-                            print(
-                                f"Uploading existing file {file.file_name} from {path}"
-                            )
-                            file.file_id = self._upload_file(self.id, path)
-                            file.hash = hash_check
-
-                # If file is new and it exists
+                # Case 1: File has a path
                 if file.path is not None and os.path.exists(file.path):
-                    # Check if it already exists inside of the test
-                    with open(file.path, "rb") as f:
-                        file_hash = md5_hash(f)
+                    file_path = file.path
+                # Case 2: File has no path but we have upload_files_path
+                elif upload_files_path is not None:
+                    # Try standard path
+                    potential_path = os.path.join(upload_files_path, file.file_name)
+                    if os.path.exists(potential_path):
+                        file_path = potential_path
+                    # Try hash subdirectory path if hash exists
+                    elif file.hash is not None:
+                        hash_path = os.path.join(
+                            upload_files_path, file.hash, file.file_name
+                        )
+                        if os.path.exists(hash_path):
+                            file_path = hash_path
 
-                    if file_hash in [f.hash for f in test.files_under_test]:
+                # Skip if we couldn't find the file
+                if file_path is None:
+                    continue
+
+                # Calculate file hash
+                with open(file_path, "rb") as f:
+                    file_hash = md5_hash(f)
+
+                # Case: File is new or hash has changed
+                if file.file_id is None or file.hash != file_hash:
+                    # Check if this hash already exists in another file in the test
+                    if file_hash in [
+                        f.hash
+                        for f in test.files_under_test
+                        if f != file and f.hash is not None
+                    ]:
                         print(
-                            f"File {file.file_name} already exists in the test suite."
+                            f"File {file.file_name} with same hash already exists in the test suite."
                         )
                         continue
 
-                    print(f"Uploading new file {file.file_name} from {file.path}")
-                    file.file_id = self._upload_file(self.id, file.path)
+                    file.file_id = self._upload_file(self.id, file_path)
                     file.hash = file_hash
 
-            test._file_ids = [file.file_id for file in test.files_under_test]
+            # Update file IDs for the test
+            test._file_ids = [
+                file.file_id
+                for file in test.files_under_test
+                if file.file_id is not None
+            ]
 
     async def _upload_tests(self, create_only: bool = True) -> None:
         """
@@ -644,8 +686,8 @@ class Suite(BaseModel):
         # Upload tests in batches of 100
         created_tests = []
         test_mutations = [test.to_test_mutation_info(self.id) for test in self.tests]
-        for i in range(0, len(test_mutations), 100):
-            batch = test_mutations[i : i + 100]
+        for i in range(0, len(test_mutations), 25):
+            batch = test_mutations[i : i + 25]
             batch_result = await self._client.add_batch_tests(
                 tests=batch,
                 create_only=create_only,
@@ -684,11 +726,19 @@ class Suite(BaseModel):
             for check in test.checks:
                 await self._validate_checks(check, operators_dict)
 
-            for file_path in test.files_under_test:
-                if file_path.path is not None and not os.path.exists(file_path.path):
-                    raise ValueError(f"File does not exist: {file_path.path}")
-                if file_path.path is not None and not os.path.isfile(file_path.path):
-                    raise ValueError(f"Path is a directory: {file_path.path}")
+            for file in test.files_under_test:
+                if isinstance(file, str):
+                    file_path = file
+                elif isinstance(file, dict):
+                    file_path = file["path"]
+                elif isinstance(file, File):
+                    file_path = file.path
+                else:
+                    raise ValueError(f"Unexpected file type: {type(file)}")
+                if not os.path.exists(file_path):
+                    raise ValueError(f"File does not exist: {file_path}")
+                if not os.path.isfile(file_path):
+                    raise ValueError(f"Path is a directory: {file_path}")
 
         for check in self.global_checks:
             await self._validate_checks(check, operators_dict)
