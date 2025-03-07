@@ -21,15 +21,13 @@ def suite_group():
 
 
 async def create_commmand_async(file: TextIOWrapper):
-    try:
-        suite = await Suite.from_dict(json.loads(file.read()))
-        await suite.create()
-        click.secho("Successfully created test suite.", fg="green")
-        click.secho(f"ID: {suite.id}")
-        click.secho(suite.url, bold=True)
 
-    except ValsException as e:
-        display_error_and_exit(e.message)
+    suite = await Suite.from_dict(json.loads(file.read()))
+    await suite.create()
+
+    click.secho("Successfully created test suite.", fg="green")
+    click.secho(f"ID: {suite.id}")
+    click.secho(suite.url, bold=True)
 
 
 @click.command(name="create")
