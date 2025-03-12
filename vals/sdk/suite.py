@@ -689,15 +689,18 @@ class Suite(BaseModel):
         # Upload tests in batches of 100
         created_tests = []
         test_mutations = [test.to_test_mutation_info(self.id) for test in self.tests]
-        for i in range(0, len(test_mutations), 25):
-            batch = test_mutations[i : i + 25]
-            batch_result = await self._client.add_batch_tests(
-                tests=batch,
-                create_only=create_only,
-            )
-            if batch_result.batch_update_test is None:
-                raise Exception("Unable to add tests to the test suite.")
-            created_tests.extend(batch_result.batch_update_test.tests)
+
+        with tqdm(total=len(test_mutations), desc="Uploading tests") as pbar:
+            for i in range(0, len(test_mutations), 25):
+                batch = test_mutations[i : i + 25]
+                batch_result = await self._client.add_batch_tests(
+                    tests=batch,
+                    create_only=create_only,
+                )
+                if batch_result.batch_update_test is None:
+                    raise Exception("Unable to add tests to the test suite.")
+                created_tests.extend(batch_result.batch_update_test.tests)
+                pbar.update(len(batch))
 
         # Update the local suite with the new tests to ensure everything is in sync.
         self.tests = [Test.from_graphql_test(test) for test in created_tests]
@@ -863,23 +866,35 @@ class Suite(BaseModel):
         in_tokens_start = patch.in_tokens
         out_tokens_start = patch.out_tokens
 
+        # Get the current event loop
+        loop = asyncio.get_running_loop()
+
         if is_simple_model_function:
             casted_model_function = cast(SimpleModelFunctionType, model_function)
             if inspect.iscoroutinefunction(casted_model_function):
+                # Already async, just await it
                 output = await casted_model_function(test.input_under_test)
             else:
-                output = casted_model_function(test.input_under_test)
+                # Run synchronous function in a thread pool to avoid blocking
+                output = await loop.run_in_executor(
+                    None, lambda: casted_model_function(test.input_under_test)
+                )
         else:
             casted_model_function = cast(
                 ModelFunctionWithFilesAndContextType, model_function
             )
             if inspect.iscoroutinefunction(casted_model_function):
+                # Already async, just await it
                 output = await casted_model_function(
                     test.input_under_test, files, test.context
                 )
             else:
-                output = casted_model_function(
-                    test.input_under_test, files, test.context
+                # Run synchronous function in a thread pool to avoid blocking
+                output = await loop.run_in_executor(
+                    None,
+                    lambda: casted_model_function(
+                        test.input_under_test, files, test.context
+                    ),
                 )
 
         time_end = time()
@@ -916,10 +931,18 @@ class Suite(BaseModel):
             context=qa_pair.context,
             output_context=qa_pair.output_context,
         )
+
+        # Get the current event loop
+        loop = asyncio.get_running_loop()
+
         if inspect.iscoroutinefunction(custom_operator):
+            # Already async, just await it
             result = await custom_operator(operator_input)
         else:
-            result = custom_operator(operator_input)
+            # Run synchronous function in a thread pool to avoid blocking
+            result = await loop.run_in_executor(
+                None, lambda: custom_operator(operator_input)
+            )
 
         return LocalEvalUploadInputType(
             questionAnswerPairId=qa_pair.id,
