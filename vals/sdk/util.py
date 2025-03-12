@@ -1,15 +1,16 @@
+import asyncio
 import base64
 import hashlib
 import os
-from io import BytesIO
-from collections import defaultdict
 import urllib.parse
+from collections import defaultdict
+from io import BytesIO
+
 import httpx
 import requests
+from tqdm import tqdm
 from vals.graphql_client.client import Client as AriadneClient
 from vals.sdk.auth import _get_auth_token, _get_region
-import asyncio
-from tqdm import tqdm
 
 VALS_ENV = os.getenv("VALS_ENV")
 
@@ -155,8 +156,11 @@ async def download_files_bulk(
         download_path: Path where to save the downloaded files
         max_concurrent_downloads: Maximum number of concurrent downloads (default: 5)
     """
+
     if len(file_ids) == 0:
         raise Exception("No files to download")
+
+    filename_to_filepath_map = {}
 
     os.makedirs(download_path, exist_ok=True)
 
@@ -222,6 +226,10 @@ async def download_files_bulk(
         with open(file_path, "wb") as f:
             f.write(content)
 
+        filename_to_filepath_map[filename] = os.path.abspath(file_path)
+
         progress_bar.update(1)
 
     progress_bar.close()
+
+    return filename_to_filepath_map

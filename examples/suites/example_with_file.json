@@ -4,7 +4,7 @@
   "tests": [
     {
       "input_under_test": "Who is Athena?",
-      "file_under_test": "/Users/langston/Downloads/Athena.pdf",
+      "files_under_test": ["/Users/langston/Downloads/Athena.pdf"],
       "checks": [
         {
           "operator": "includes",

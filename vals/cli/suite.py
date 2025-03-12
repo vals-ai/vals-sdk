@@ -111,10 +111,6 @@ async def pull_command_async(
         )
 
     suite = await Suite.from_id(suite_id)
-    if to_csv:
-        file.write(suite.to_csv_string())
-    else:
-        file.write(suite.to_json_string())
 
     if download_files:
         file_ids = []
@@ -125,9 +121,28 @@ async def pull_command_async(
 
         path = suite.title if download_path is None else download_path
 
-        await download_files_bulk(
+        if len(file_ids) != 0:
+            click.secho(
+                f"This suite has files. Downloading them to directory '{path}'...",
+                fg="green",
+            )
+        filename_to_filepath_map = await download_files_bulk(
             file_ids, path, max_concurrent_downloads=max_concurrent_downloads
         )
+
+    if to_csv:
+        file.write(suite.to_csv_string())
+    else:
+        json_string = suite.to_json_string()
+        if download_files:
+            parsed_json = json.loads(json_string)
+            for i, test in enumerate(parsed_json["tests"]):
+                file_paths = []
+                for filename in test["files_under_test"]:
+                    file_paths.append(filename_to_filepath_map[filename])
+                parsed_json["tests"][i]["files_under_test"] = file_paths
+            json_string = json.dumps(parsed_json, indent=2)
+        file.write(json_string)
 
     click.secho("Successfully pulled test suite.", fg="green")
 
