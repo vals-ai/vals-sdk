@@ -97,7 +97,7 @@ async def pull_suite():
     Example of pulling a suite that already exists.
     """
     # TODO: Replace this with your own suite id.
-    suite = await Suite.from_id("21b49075-67fb-456c-9294-fc52e3582b05")
+    suite = await Suite.from_id("051b6428-995d-4468-b60d-37e560b5c51b")
 
     print(f"Pulling: Suite Title: {suite.title}")
     print(f"Global Checks: {suite.global_checks}")
@@ -105,6 +105,24 @@ async def pull_suite():
     suite.title = suite.title + " - UPDATED TITLE"
     await suite.update()
     print(json.dumps(suite.to_dict(), indent=2))
+
+
+async def pull_suite_with_files():
+    suite = Suite(
+        title="Test Suite",
+        global_checks=[Check(operator="grammar")],
+        tests=[
+            Test(
+                input_under_test="What is the MFN clause?",
+                files_under_test=["data_files/postmoney_safe.docx"],
+                checks=[Check(operator="equals", criteria="QSBS")],
+            ),
+        ],
+    )
+    await suite.create()
+
+    suite2 = await Suite.from_id(suite.id, download_files=True)
+    print(suite2)
 
 
 async def load_from_json():
@@ -142,6 +160,7 @@ async def move_test_between_suites():
 
 
 async def all():
+    await pull_suite_with_files()
     await list_suites()
     await create_suite()
     await create_and_delete_suite()

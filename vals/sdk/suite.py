@@ -37,7 +37,6 @@ from vals.sdk.types import (
     SimpleModelFunctionType,
     Test,
     TestSuiteMetadata,
-    File,
 )
 from vals.sdk.util import (
     _get_auth_token,
@@ -132,14 +131,19 @@ class Suite(BaseModel):
 
             for test in tests:
                 file_ids.extend([file.file_id for file in test.files_under_test])
+
+            if len(file_ids) > 0:
+                name_to_path_map = await download_files_bulk(
+                    file_ids, path, max_concurrent_downloads=max_concurrent_downloads
+                )
                 test.files_under_test = [
-                    File(file_name=file.file_name, file_id=file.file_id, path=path)
+                    File(
+                        file_name=file.file_name,
+                        file_id=file.file_id,
+                        path=name_to_path_map[file.file_name],
+                    )
                     for file in test.files_under_test
                 ]
-
-            await download_files_bulk(
-                file_ids, path, max_concurrent_downloads=max_concurrent_downloads
-            )
 
         return suite
 
