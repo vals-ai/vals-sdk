@@ -65,4 +65,5 @@ OperatorType = Literal[
     "legal_bench_numerical_equals",
     "legal_bench_original",
     "legal_bench_includes",
+    "edgar_research_final_answer",
 ]
