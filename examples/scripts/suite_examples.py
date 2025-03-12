@@ -161,14 +161,14 @@ async def move_test_between_suites():
 
 async def all():
     await pull_suite_with_files()
-    # await list_suites()
-    # await create_suite()
-    # await create_and_delete_suite()
-    # await create_suite_with_files()
-    # await update_suite()
-    # await pull_suite()
-    # await load_from_json()
-    # await move_test_between_suites()
+    await list_suites()
+    await create_suite()
+    await create_and_delete_suite()
+    await create_suite_with_files()
+    await update_suite()
+    await pull_suite()
+    await load_from_json()
+    await move_test_between_suites()
 
 
 if __name__ == "__main__":
