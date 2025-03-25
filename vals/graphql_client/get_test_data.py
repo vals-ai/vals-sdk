@@ -9,10 +9,15 @@ from .base_model import BaseModel
 
 
 class GetTestData(BaseModel):
-    tests: List["GetTestDataTests"]
+    tests_with_count: "GetTestDataTestsWithCount" = Field(alias="testsWithCount")
 
 
-class GetTestDataTests(BaseModel):
+class GetTestDataTestsWithCount(BaseModel):
+    tests: List["GetTestDataTestsWithCountTests"]
+    count: int
+
+
+class GetTestDataTestsWithCountTests(BaseModel):
     checks: Any
     test_id: str = Field(alias="testId")
     cross_version_id: str = Field(alias="crossVersionId")
@@ -21,12 +26,13 @@ class GetTestDataTests(BaseModel):
     tags: Any
     context: Any
     golden_output: str = Field(alias="goldenOutput")
-    test_suite: "GetTestDataTestsTestSuite" = Field(alias="testSuite")
+    test_suite: "GetTestDataTestsWithCountTestsTestSuite" = Field(alias="testSuite")
 
 
-class GetTestDataTestsTestSuite(BaseModel):
+class GetTestDataTestsWithCountTestsTestSuite(BaseModel):
     id: str
 
 
 GetTestData.model_rebuild()
-GetTestDataTests.model_rebuild()
+GetTestDataTestsWithCount.model_rebuild()
+GetTestDataTestsWithCountTests.model_rebuild()

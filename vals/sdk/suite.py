@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import concurrent.futures._base
 import inspect
 import json
@@ -23,14 +22,11 @@ from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.run import Run
 from vals.sdk.types import (
     Check,
-    CustomModelInput,
-    CustomModelOutput,
     File,
     ModelCustomOperatorFunctionType,
     ModelFunctionType,
     ModelFunctionWithFilesAndContextType,
     OperatorInput,
-    OperatorOutput,
     QuestionAnswerPair,
     RunParameters,
     RunStatus,
@@ -95,11 +91,9 @@ class Suite(BaseModel):
         Create a new local test suite based on the data from the server.
         """
         client = get_ariadne_client()
-        suites_list = await client.get_test_suite_data(suite_id)
-        if len(suites_list.test_suites) == 0:
-            raise Exception("Couldn't find suite with id: " + suite_id)
+        suite_query = await client.get_test_suite_data(suite_id)
+        suite_data = suite_query.test_suite
 
-        suite_data = suites_list.test_suites[0]
         title = suite_data.title
         description = suite_data.description
 
@@ -110,12 +104,22 @@ class Suite(BaseModel):
                 for check in json.loads(suite_data.global_checks)
             ]
 
-        test_data = await client.get_test_data(suite_id)
-
         tests = []
-        for graphql_test in test_data.tests:
-            test = Test.from_graphql_test(graphql_test)
-            tests.append(test)
+        offset = 0
+        page_size = 200
+        have_pulled_all_tests = False
+
+        while not have_pulled_all_tests:
+            test_data = await client.get_test_data(suite_id, offset, page_size)
+
+            for graphql_test in test_data.tests_with_count.tests:
+                test = Test.from_graphql_test(graphql_test)
+                tests.append(test)
+
+            if len(tests) >= test_data.tests_with_count.count:
+                have_pulled_all_tests = True
+            else:
+                offset += page_size
 
         suite = cls(
             id=suite_id,
@@ -727,8 +731,8 @@ class Suite(BaseModel):
         operators = (await self._client.get_operators()).operators
         base_operators_dict = {op.name_in_doc: op for op in operators}
         custom_operators = (
-            await self._client.get_active_custom_operators()
-        ).custom_operators
+            await self._client.get_active_custom_operators(0, 200)
+        ).custom_operators.operators
         custom_operators_dict = {op.name: op for op in custom_operators}
         operators_dict = {**base_operators_dict, **custom_operators_dict}
 

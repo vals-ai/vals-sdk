@@ -2,7 +2,7 @@
 # Source: vals/graphql/
 
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from pydantic import Field
 
@@ -11,7 +11,6 @@ from .base_model import BaseModel
 
 class PullRun(BaseModel):
     run: "PullRunRun"
-    test_results: List["PullRunTestResults"] = Field(alias="testResults")
 
 
 class PullRunRun(BaseModel):
@@ -63,29 +62,5 @@ class PullRunRunTestSuite(BaseModel):
     title: str
 
 
-class PullRunTestResults(BaseModel):
-    id: str
-    llm_output: str = Field(alias="llmOutput")
-    pass_percentage: float = Field(alias="passPercentage")
-    pass_percentage_with_optional: float = Field(alias="passPercentageWithOptional")
-    result_json: Any = Field(alias="resultJson")
-    qa_pair: Optional["PullRunTestResultsQaPair"] = Field(alias="qaPair")
-    test: "PullRunTestResultsTest"
-    metadata: Optional[Any]
-
-
-class PullRunTestResultsQaPair(BaseModel):
-    context: Any
-    output_context: Any = Field(alias="outputContext")
-    error_message: str = Field(alias="errorMessage")
-
-
-class PullRunTestResultsTest(BaseModel):
-    test_id: str = Field(alias="testId")
-    input_under_test: str = Field(alias="inputUnderTest")
-    context: Any
-
-
 PullRun.model_rebuild()
 PullRunRun.model_rebuild()
-PullRunTestResults.model_rebuild()

@@ -10,12 +10,17 @@ from .base_model import BaseModel
 
 
 class GetActiveCustomOperators(BaseModel):
-    custom_operators: List["GetActiveCustomOperatorsCustomOperators"] = Field(
+    custom_operators: "GetActiveCustomOperatorsCustomOperators" = Field(
         alias="customOperators"
     )
 
 
 class GetActiveCustomOperatorsCustomOperators(BaseModel):
+    operators: List["GetActiveCustomOperatorsCustomOperatorsOperators"]
+    count: int
+
+
+class GetActiveCustomOperatorsCustomOperatorsOperators(BaseModel):
     id: str
     name: str
     prompt: str
@@ -26,3 +31,4 @@ class GetActiveCustomOperatorsCustomOperators(BaseModel):
 
 
 GetActiveCustomOperators.model_rebuild()
+GetActiveCustomOperatorsCustomOperators.model_rebuild()

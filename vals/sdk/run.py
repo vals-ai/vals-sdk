@@ -1,5 +1,4 @@
 import asyncio
-import json
 import time
 from datetime import datetime
 from typing import Any
@@ -7,11 +6,9 @@ from typing import Any
 import requests
 from pydantic import BaseModel, PrivateAttr
 from vals.graphql_client import Client
-from vals.graphql_client.pull_run import PullRun
 from vals.sdk.exceptions import ValsException
 from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.types import (
-    Metadata,
     ModelCustomOperatorFunctionType,
     ModelFunctionType,
     QuestionAnswerPair,
@@ -81,12 +78,34 @@ class Run(BaseModel):
     _client: Client = PrivateAttr(default_factory=get_ariadne_client)
 
     @staticmethod
-    def _create_from_pull_result(run_id: str, result: PullRun) -> "Run":
+    async def _create_from_pull_result(run_id: str, client: Client) -> "Run":
         """Helper method to create a Run instance from a pull_run query result"""
+
+        result = await client.pull_run(run_id)
+
+        offset = 0
+        page_size = 200
+        test_results = []
+        exists_test_results_left_to_pull = True
+        while exists_test_results_left_to_pull:
+            test_result_query = await client.pull_test_results_with_count(
+                run_id=run_id, offset=offset
+            )
+            test_results.extend(
+                [
+                    TestResult.from_graphql(test_result)
+                    for test_result in test_result_query.test_results_with_count.test_results
+                ]
+            )
+            offset += page_size
+            exists_test_results_left_to_pull = (
+                len(test_result_query.test_results_with_count.test_results) >= page_size
+            )
 
         # Map maximum_threads to parallelism for backwards compatibility
         parameters_dict = result.run.typed_parameters.model_dump()
         model = parameters_dict.pop("model_under_test", "")
+
         if "maximum_threads" in parameters_dict:
             parameters_dict["parallelism"] = parameters_dict.pop("maximum_threads")
         parameters = RunParameters(**parameters_dict)
@@ -117,10 +136,7 @@ class Run(BaseModel):
             timestamp=result.run.timestamp,
             completed_at=result.run.completed_at,
             parameters=parameters,
-            test_results=[
-                TestResult.from_graphql(test_result)
-                for test_result in result.test_results
-            ],
+            test_results=test_results,
             test_suite_title=result.run.test_suite.title,
             test_suite_id=result.run.test_suite.id,
         )
@@ -151,8 +167,7 @@ class Run(BaseModel):
     async def from_id(cls, run_id: str) -> "Run":
         """Pull most recent metadata and test results from the vals servers."""
         client = get_ariadne_client()
-        result = await client.pull_run(run_id=run_id)
-        return cls._create_from_pull_result(run_id, result)
+        return await cls._create_from_pull_result(run_id, client)
 
     @property
     def url(self) -> str:
@@ -169,8 +184,8 @@ class Run(BaseModel):
 
     async def pull(self) -> None:
         """Update this Run instance with latest data from vals servers."""
-        result = await self._client.pull_run(run_id=self.id)
-        updated = self._create_from_pull_result(self.id, result)
+
+        updated = await self._create_from_pull_result(self.id, self._client)
         # TODO: There's probably a better way to update the object.
         for field in updated.__fields__:
             setattr(self, field, getattr(updated, field))

@@ -1,5 +1,6 @@
-import click
 import sys
+
+import click
 
 from .rag import rag_group
 from .run import run_group
@@ -17,7 +18,7 @@ class ExceptionHandlingWrapper(click.Group):
             display_error_and_exit(e)
 
 
-@click.group(cls=ExceptionHandlingWrapper)
+@click.group()
 def cli():
     pass
 
