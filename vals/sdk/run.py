@@ -313,7 +313,7 @@ class Run(BaseModel):
 
         # Run the remaining tests, including existing QA pairs
         await self._client.update_run_status(
-            run_id=self.id, status=RunStatus.IN_PROGRESS
+            run_id=self.id, status=RunStatus.IN_PROGRESS.value.upper()
         )
         await suite.run(
             model=model,
