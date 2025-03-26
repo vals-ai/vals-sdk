@@ -71,7 +71,17 @@ async def custom_model(input: str) -> str:
 
 
 async def run_with_local_eval():
-    suite = await Suite.from_id("859e5df9-05c8-4e83-9794-921cd6d94dd9")
+    suite = Suite(
+        title="Test Suite",
+        global_checks=[Check(operator="grammar")],
+        tests=[
+            Test(
+                input_under_test="What is QSBS?",
+                checks=[Check(operator="equals", criteria="QSBS")],
+            ),
+        ],
+    )
+    await suite.create()
 
     run = await suite.run(
         model=custom_model,
@@ -182,7 +192,8 @@ async def run_with_qa_pairs_and_context():
 
 
 async def pull_run(run_id: str):
-    run = await Run.from_id(run_id)
+    runs = await Run.list_runs()
+    run = await Run.from_id(runs[0].id)
     print(run.to_dict())
 
 

@@ -96,8 +96,12 @@ async def pull_suite():
     """
     Example of pulling a suite that already exists.
     """
+    suite = Suite(
+        title="Test Suite to Delete", global_checks=[Check(operator="grammar")]
+    )
+    await suite.create()
     # TODO: Replace this with your own suite id.
-    suite = await Suite.from_id("051b6428-995d-4468-b60d-37e560b5c51b")
+    suite = await Suite.from_id(suite.id)
 
     print(f"Pulling: Suite Title: {suite.title}")
     print(f"Global Checks: {suite.global_checks}")
