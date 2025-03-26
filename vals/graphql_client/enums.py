@@ -48,6 +48,12 @@ class TierEnum(str, Enum):
     ENTERPRISE = "ENTERPRISE"
 
 
+class TemplateType(str, Enum):
+    CATEGORICAL = "CATEGORICAL"
+    NUMERICAL = "NUMERICAL"
+    FREE_TEXT = "FREE_TEXT"
+
+
 class RunReviewTableSortField(str, Enum):
     CREATED_AT = "CREATED_AT"
     COMPLETED_TIME = "COMPLETED_TIME"

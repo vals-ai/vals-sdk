@@ -1,5 +1,5 @@
 query getTestSuiteData($suiteId: String!) {
-  testSuites(testSuiteId: $suiteId) {
+  testSuite(testSuiteId: $suiteId) {
     description
     id
     org
@@ -9,19 +9,25 @@ query getTestSuiteData($suiteId: String!) {
   }
 }
 
-query getTestData($suiteId: String!) {
-  tests(testSuiteId: $suiteId) {
-    checks
-    testId
-    crossVersionId
-    fileIds
-    inputUnderTest
-    tags
-    context
-    goldenOutput
-    testSuite {
-      id
+query getTestData($suiteId: String!, $offset: Int, $limit: Int) {
+  testsWithCount(
+    testSuiteId: $suiteId
+    filterOptions: { offset: $offset, limit: $limit }
+  ) {
+    tests {
+      checks
+      testId
+      crossVersionId
+      fileIds
+      inputUnderTest
+      tags
+      context
+      goldenOutput
+      testSuite {
+        id
+      }
     }
+    count
   }
 }
 
@@ -52,15 +58,20 @@ query getOperators {
   }
 }
 
-query GetActiveCustomOperators {
-  customOperators(archived: false) {
-    id
-    name
-    prompt
-    isUnary
-    createdBy
-    createdAt
-    archived
+query GetActiveCustomOperators($offset: Int!, $limit: Int!) {
+  customOperators(
+    filterOptions: { archived: false, offset: $offset, limit: $limit }
+  ) {
+    operators {
+      id
+      name
+      prompt
+      isUnary
+      createdBy
+      createdAt
+      archived
+    }
+    count
   }
 }
 

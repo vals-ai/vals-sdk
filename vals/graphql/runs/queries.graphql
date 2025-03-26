@@ -43,24 +43,32 @@ query PullRun($runId: String!) {
       title
     }
   }
+}
 
-  testResults(runId: $runId) {
-    id
-    llmOutput
-    passPercentage
-    passPercentageWithOptional
-    resultJson
-    qaPair {
-      context
-      outputContext
-      errorMessage
+query PullTestResultsWithCount($runId: String!, $offset: Int, $limit: Int) {
+  testResultsWithCount(
+    runId: $runId
+    filterOptions: { offset: $offset, limit: $limit }
+  ) {
+    testResults {
+      id
+      llmOutput
+      passPercentage
+      passPercentageWithOptional
+      resultJson
+      qaPair {
+        context
+        outputContext
+        errorMessage
+      }
+      test {
+        testId
+        inputUnderTest
+        context
+      }
+      metadata
     }
-    test {
-      testId
-      inputUnderTest
-      context
-    }
-    metadata
+    count
   }
 }
 

@@ -12,6 +12,7 @@ from .enums import (
     RunReviewTableSortField,
     RunStatus,
     SortOrder,
+    TemplateType,
     TestResultCheckErrorEnum,
     TestResultReviewSortField,
     TestResultReviewStatusEnum,
@@ -19,9 +20,26 @@ from .enums import (
 )
 
 
-class RunReviewTableFilterOptionsInput(BaseModel):
+class CustomOperatorFilterOptions(BaseModel):
+    archived: Optional[bool] = None
+    limit: int
+    offset: int
+
+
+class ResolveApiKeysFilterOptions(BaseModel):
+    limit: int
+    offset: int
+
+
+class HumanReviewTemplateFilterOptionsInput(BaseModel):
     limit: Optional[int] = None
     offset: Optional[int] = None
+    archived: Optional[bool] = None
+
+
+class RunReviewTableFilterOptionsInput(BaseModel):
+    limit: int
+    offset: int
     search: Optional[str] = None
     sort_by: Optional[RunReviewTableSortField] = Field(alias="sortBy", default=None)
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
@@ -29,8 +47,8 @@ class RunReviewTableFilterOptionsInput(BaseModel):
 
 
 class TestReviewFilterOptionsInput(BaseModel):
-    limit: Optional[int] = None
-    offset: Optional[int] = None
+    limit: int
+    offset: int
     search: Optional[str] = None
     sort_by: Optional[TestResultReviewSortField] = Field(alias="sortBy", default=None)
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
@@ -167,10 +185,36 @@ class LocalEvalUploadInputType(BaseModel):
     feedback: str
 
 
+class CustomHumanReviewValueInputType(BaseModel):
+    template_id: str = Field(alias="templateId")
+    value: str
+
+
 class PerCheckTestReviewInputType(BaseModel):
     id: int
     binary_human_eval: Optional[int] = Field(alias="binaryHumanEval", default=None)
     is_flagged: Optional[bool] = Field(alias="isFlagged", default=None)
+
+
+class CategoricalReviewTemplateInput(BaseModel):
+    type: TemplateType
+    name: str
+    instructions: str
+    categories: List[str]
+
+
+class NumericalReviewTemplateInput(BaseModel):
+    type: TemplateType
+    name: str
+    instructions: str
+    min_value: Optional[int] = Field(alias="minValue", default=None)
+    max_value: Optional[int] = Field(alias="maxValue", default=None)
+
+
+class FreeTextReviewTemplateInput(BaseModel):
+    type: TemplateType
+    name: str
+    instructions: str
 
 
 CheckInputType.model_rebuild()

@@ -29,6 +29,7 @@ from .list_question_answer_pairs import ListQuestionAnswerPairs
 from .list_runs import ListRuns
 from .mark_question_answer_set_as_complete import MarkQuestionAnswerSetAsComplete
 from .pull_run import PullRun
+from .pull_test_results_with_count import PullTestResultsWithCount
 from .remove_old_tests import RemoveOldTests
 from .rerun_tests import RerunTests
 from .run_status import RunStatus
@@ -322,24 +323,6 @@ class Client(AsyncBaseClient):
                   title
                 }
               }
-              testResults(runId: $runId) {
-                id
-                llmOutput
-                passPercentage
-                passPercentageWithOptional
-                resultJson
-                qaPair {
-                  context
-                  outputContext
-                  errorMessage
-                }
-                test {
-                  testId
-                  inputUnderTest
-                  context
-                }
-                metadata
-              }
             }
             """
         )
@@ -349,6 +332,57 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return PullRun.model_validate(data)
+
+    async def pull_test_results_with_count(
+        self,
+        run_id: str,
+        offset: Union[Optional[int], UnsetType] = UNSET,
+        limit: Union[Optional[int], UnsetType] = UNSET,
+        **kwargs: Any
+    ) -> PullTestResultsWithCount:
+        query = gql(
+            """
+            query PullTestResultsWithCount($runId: String!, $offset: Int, $limit: Int) {
+              testResultsWithCount(
+                runId: $runId
+                filterOptions: {offset: $offset, limit: $limit}
+              ) {
+                testResults {
+                  id
+                  llmOutput
+                  passPercentage
+                  passPercentageWithOptional
+                  resultJson
+                  qaPair {
+                    context
+                    outputContext
+                    errorMessage
+                  }
+                  test {
+                    testId
+                    inputUnderTest
+                    context
+                  }
+                  metadata
+                }
+                count
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {
+            "runId": run_id,
+            "offset": offset,
+            "limit": limit,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="PullTestResultsWithCount",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return PullTestResultsWithCount.model_validate(data)
 
     async def list_runs(
         self,
@@ -626,7 +660,7 @@ class Client(AsyncBaseClient):
         query = gql(
             """
             query getTestSuiteData($suiteId: String!) {
-              testSuites(testSuiteId: $suiteId) {
+              testSuite(testSuiteId: $suiteId) {
                 description
                 id
                 org
@@ -647,27 +681,43 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return GetTestSuiteData.model_validate(data)
 
-    async def get_test_data(self, suite_id: str, **kwargs: Any) -> GetTestData:
+    async def get_test_data(
+        self,
+        suite_id: str,
+        offset: Union[Optional[int], UnsetType] = UNSET,
+        limit: Union[Optional[int], UnsetType] = UNSET,
+        **kwargs: Any
+    ) -> GetTestData:
         query = gql(
             """
-            query getTestData($suiteId: String!) {
-              tests(testSuiteId: $suiteId) {
-                checks
-                testId
-                crossVersionId
-                fileIds
-                inputUnderTest
-                tags
-                context
-                goldenOutput
-                testSuite {
-                  id
+            query getTestData($suiteId: String!, $offset: Int, $limit: Int) {
+              testsWithCount(
+                testSuiteId: $suiteId
+                filterOptions: {offset: $offset, limit: $limit}
+              ) {
+                tests {
+                  checks
+                  testId
+                  crossVersionId
+                  fileIds
+                  inputUnderTest
+                  tags
+                  context
+                  goldenOutput
+                  testSuite {
+                    id
+                  }
                 }
+                count
               }
             }
             """
         )
-        variables: Dict[str, object] = {"suiteId": suite_id}
+        variables: Dict[str, object] = {
+            "suiteId": suite_id,
+            "offset": offset,
+            "limit": limit,
+        }
         response = await self.execute(
             query=query, operation_name="getTestData", variables=variables, **kwargs
         )
@@ -737,24 +787,29 @@ class Client(AsyncBaseClient):
         return GetOperators.model_validate(data)
 
     async def get_active_custom_operators(
-        self, **kwargs: Any
+        self, offset: int, limit: int, **kwargs: Any
     ) -> GetActiveCustomOperators:
         query = gql(
             """
-            query GetActiveCustomOperators {
-              customOperators(archived: false) {
-                id
-                name
-                prompt
-                isUnary
-                createdBy
-                createdAt
-                archived
+            query GetActiveCustomOperators($offset: Int!, $limit: Int!) {
+              customOperators(
+                filterOptions: {archived: false, offset: $offset, limit: $limit}
+              ) {
+                operators {
+                  id
+                  name
+                  prompt
+                  isUnary
+                  createdBy
+                  createdAt
+                  archived
+                }
+                count
               }
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: Dict[str, object] = {"offset": offset, "limit": limit}
         response = await self.execute(
             query=query,
             operation_name="GetActiveCustomOperators",

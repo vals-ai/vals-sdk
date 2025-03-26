@@ -2,7 +2,7 @@
 # Source: vals/graphql/
 
 from datetime import datetime
-from typing import Any, List
+from typing import Any
 
 from pydantic import Field
 
@@ -10,10 +10,10 @@ from .base_model import BaseModel
 
 
 class GetTestSuiteData(BaseModel):
-    test_suites: List["GetTestSuiteDataTestSuites"] = Field(alias="testSuites")
+    test_suite: "GetTestSuiteDataTestSuite" = Field(alias="testSuite")
 
 
-class GetTestSuiteDataTestSuites(BaseModel):
+class GetTestSuiteDataTestSuite(BaseModel):
     description: str
     id: str
     org: str

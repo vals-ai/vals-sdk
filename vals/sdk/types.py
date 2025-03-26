@@ -1,8 +1,8 @@
 """
 Contains types we define explicitly, as opposed to those that
-are auto-generated based on the GraphQL schema. 
+are auto-generated based on the GraphQL schema.
 
-These are meant to be user-facing. 
+These are meant to be user-facing.
 """
 
 import datetime
@@ -12,7 +12,7 @@ from io import BytesIO
 from typing import Any, Callable, Literal
 
 from pydantic import BaseModel
-from vals.graphql_client.get_test_data import GetTestDataTests
+from vals.graphql_client.get_test_data import GetTestDataTestsWithCountTests
 from vals.graphql_client.get_test_suites_with_count import (
     GetTestSuitesWithCountTestSuitesWithCountTestSuites,
 )
@@ -28,7 +28,9 @@ from vals.graphql_client.list_question_answer_pairs import (
     ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs,
 )
 from vals.graphql_client.list_runs import ListRunsRunsWithCountRunResults
-from vals.graphql_client.pull_run import PullRunTestResults
+from vals.graphql_client.pull_test_results_with_count import (
+    PullTestResultsWithCountTestResultsWithCountTestResults,
+)
 from vals.sdk.operator_type import OperatorType
 
 
@@ -202,7 +204,7 @@ class Test(BaseModel):
     """This is the *internal* representation of a file, as stored on the server. You generally should not edit or use these. """
 
     @classmethod
-    def from_graphql_test(cls, graphql_test: GetTestDataTests) -> "Test":
+    def from_graphql_test(cls, graphql_test: GetTestDataTestsWithCountTests) -> "Test":
         """Internal method to translate from what we receive from GraphQL to the Test class displayed to the user."""
         test = cls(
             input_under_test=graphql_test.input_under_test,
@@ -407,7 +409,10 @@ class TestResult(BaseModel):
     error_message: str = ""
 
     @classmethod
-    def from_graphql(cls, graphql_test_result: PullRunTestResults) -> "TestResult":
+    def from_graphql(
+        cls,
+        graphql_test_result: PullTestResultsWithCountTestResultsWithCountTestResults,
+    ) -> "TestResult":
         output_context = {}
         context = {}
         if graphql_test_result.qa_pair:
@@ -425,7 +430,11 @@ class TestResult(BaseModel):
             llm_output=graphql_test_result.llm_output,
             pass_percentage=graphql_test_result.pass_percentage,
             pass_percentage_with_optional=graphql_test_result.pass_percentage_with_optional,
-            error_message=graphql_test_result.qa_pair.error_message if graphql_test_result.qa_pair else "",
+            error_message=(
+                graphql_test_result.qa_pair.error_message
+                if graphql_test_result.qa_pair
+                else ""
+            ),
             check_results=[
                 CheckResult(
                     operator=check_result["operator"],
@@ -436,7 +445,11 @@ class TestResult(BaseModel):
                     is_global=check_result.get("is_global", False),
                     auto_eval=check_result.get("auto_eval", 0),
                     feedback=check_result.get("feedback", ""),
-                    confidence=Confidence(check_result.get("eval_cont", 0.5) if check_result.get("eval_cont", 0.5) in [0, 0.5, 1] else 0.5),
+                    confidence=Confidence(
+                        check_result.get("eval_cont", 0.5)
+                        if check_result.get("eval_cont", 0.5) in [0, 0.5, 1]
+                        else 0.5
+                    ),
                 )
                 for check_result in json.loads(graphql_test_result.result_json)
             ],

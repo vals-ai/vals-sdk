@@ -1,20 +1,18 @@
 import json
 import time
 from io import BytesIO
-from typing import Any, Callable, List, Optional, Union
-from inspect_ai import Task
-from inspect_ai.solver import TaskState, Solver, Generate, generate
-from inspect_ai.scorer import Target, Score, Scorer
-from inspect_ai.model import ModelOutput, GenerateConfig, get_model, ChatMessageUser
-from copy import deepcopy
+from typing import Any, Callable, List, Union
 
+from inspect_ai import Task
+from inspect_ai.model import ChatMessageUser, GenerateConfig, ModelOutput, get_model
+from inspect_ai.scorer import Score, Scorer, Target
+from inspect_ai.solver import Generate, Solver, TaskState
 from vals.sdk.types import (
-    QuestionAnswerPair,
-    OperatorInput,
-    OperatorOutput,
     CustomModelInput,
     CustomModelOutput,
     ModelCustomOperatorFunctionType,
+    OperatorInput,
+    OperatorOutput,
 )
 
 

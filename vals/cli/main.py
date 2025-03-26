@@ -1,5 +1,6 @@
-import click
 import sys
+
+import click
 
 from .rag import rag_group
 from .run import run_group
