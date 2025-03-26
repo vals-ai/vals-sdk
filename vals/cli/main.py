@@ -18,7 +18,7 @@ class ExceptionHandlingWrapper(click.Group):
             display_error_and_exit(e)
 
 
-@click.group()
+@click.group(cls=ExceptionHandlingWrapper)
 def cli():
     pass
 
