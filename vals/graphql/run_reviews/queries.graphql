@@ -1,0 +1,58 @@
+query GetSingleRunReview($runReviewId: String!) {
+  singleRunReviewsWithCount(runReviewId: $runReviewId) {
+    singleRunReviews {
+      id
+      createdBy
+      createdAt
+      status
+      completedTime
+      numberOfReviews
+      assignedReviewers
+      rereviewAutoEval
+      customReviewTemplates {
+        id
+        name
+        instructions
+        categories
+        type
+        minValue
+        maxValue
+      }
+      singletestresultreviewSet {
+        id
+        agreementRate
+        passPercentage
+        testResult {
+          id
+          llmOutput
+          qaPair {
+            id
+            outputContext
+          }
+          typedResultJson {
+            criteria
+            operator
+          }
+          test {
+            testId
+            inputUnderTest
+            typedContext
+            typedFileIds
+          }
+        }
+        customReviewValues {
+          template {
+            id
+            name
+            instructions
+            categories
+            type
+            minValue
+            maxValue
+          }
+          value
+        }
+      }
+    }
+  }
+}

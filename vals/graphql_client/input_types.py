@@ -150,6 +150,7 @@ class ParameterInputType(BaseModel):
     heavyweight_factor: int = Field(alias="heavyweightFactor")
     create_text_summary: bool = Field(alias="createTextSummary")
     retry_failed_calls_indefinitely: bool = Field(alias="retryFailedCallsIndefinitely")
+    detect_refusals: bool = Field(alias="detectRefusals")
     model_under_test: str = Field(alias="modelUnderTest")
     temperature: float
     max_output_tokens: int = Field(alias="maxOutputTokens")

@@ -15,6 +15,7 @@ from .enums import RunStatus
 from .get_active_custom_operators import GetActiveCustomOperators
 from .get_operators import GetOperators
 from .get_rag_suites import GetRagSuites
+from .get_single_run_review import GetSingleRunReview
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites_with_count import GetTestSuitesWithCount
@@ -204,6 +205,81 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return ListQuestionAnswerPairs.model_validate(data)
+
+    async def get_single_run_review(
+        self, run_review_id: str, **kwargs: Any
+    ) -> GetSingleRunReview:
+        query = gql(
+            """
+            query GetSingleRunReview($runReviewId: String!) {
+              singleRunReviewsWithCount(runReviewId: $runReviewId) {
+                singleRunReviews {
+                  id
+                  createdBy
+                  createdAt
+                  status
+                  completedTime
+                  numberOfReviews
+                  assignedReviewers
+                  rereviewAutoEval
+                  customReviewTemplates {
+                    id
+                    name
+                    instructions
+                    categories
+                    type
+                    minValue
+                    maxValue
+                  }
+                  singletestresultreviewSet {
+                    id
+                    agreementRate
+                    passPercentage
+                    testResult {
+                      id
+                      llmOutput
+                      qaPair {
+                        id
+                        outputContext
+                      }
+                      typedResultJson {
+                        criteria
+                        operator
+                      }
+                      test {
+                        testId
+                        inputUnderTest
+                        typedContext
+                        typedFileIds
+                      }
+                    }
+                    customReviewValues {
+                      template {
+                        id
+                        name
+                        instructions
+                        categories
+                        type
+                        minValue
+                        maxValue
+                      }
+                      value
+                    }
+                  }
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"runReviewId": run_review_id}
+        response = await self.execute(
+            query=query,
+            operation_name="GetSingleRunReview",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return GetSingleRunReview.model_validate(data)
 
     async def start_run(
         self,

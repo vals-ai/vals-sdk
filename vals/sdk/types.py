@@ -567,3 +567,9 @@ SimpleModelFunctionType = Callable[[str], str]
 ModelFunctionWithFilesAndContextType = Callable[[CustomModelInput], CustomModelOutput]
 
 ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType
+
+
+class RunReviewStatus(str, Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
