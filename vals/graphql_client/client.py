@@ -218,6 +218,9 @@ class Client(AsyncBaseClient):
                   createdBy
                   createdAt
                   status
+                  passRate
+                  flaggedRate
+                  agreementRate
                   completedTime
                   numberOfReviews
                   assignedReviewers
@@ -235,23 +238,32 @@ class Client(AsyncBaseClient):
                     id
                     agreementRate
                     passPercentage
+                    feedback
+                    completedBy
+                    completedAt
+                    startedAt
+                    createdBy
+                    status
+                    lockedBy
+                    lastHeartbeatAt
+                    lastActiveAt
                     testResult {
                       id
                       llmOutput
+                      passPercentage
+                      passPercentageWithOptional
+                      resultJson
                       qaPair {
-                        id
+                        context
                         outputContext
-                      }
-                      typedResultJson {
-                        criteria
-                        operator
+                        errorMessage
                       }
                       test {
                         testId
                         inputUnderTest
-                        typedContext
-                        typedFileIds
+                        context
                       }
+                      metadata
                     }
                     customReviewValues {
                       template {

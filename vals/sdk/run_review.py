@@ -1,6 +1,7 @@
+import json
 from pydantic import BaseModel
 from vals.graphql_client.enums import TemplateType
-from vals.sdk.types import RunReviewStatus, TestResult
+from vals.sdk.types import TestResult
 from vals.sdk.util import (
     get_ariadne_client,
 )
@@ -10,8 +11,11 @@ class SingleRunReview(BaseModel):
     id: str
     created_by: str
     created_at: str
-    status: RunReviewStatus
-    completed_time: str
+    status: str
+    pass_rate: float
+    flagged_rate: float
+    agreement_rate: float
+    completed_time: str | None
     number_of_reviews: int
     assigned_reviewers: list[str]
     rereview_auto_eval: bool
@@ -30,13 +34,22 @@ class SingleRunReview(BaseModel):
 
         single_test_result_reviews = []
         for test_result_review in run_review.singletestresultreview_set:
-            single_test_result_reviews.append(
-                SingleTestResultReview(
-                    id=test_result_review.id,
-                    agreement_rate=test_result_review.agreement_rate,
-                    pass_percentage=test_result_review.pass_percentage,
-                    test_result=TestResult.from_graphql(test_result_review.test_result),
-                )
+
+            single_test_result_review = SingleTestResultReview(
+                id=test_result_review.id,
+                status=test_result_review.status.value.lower(),
+                agreement_rate=test_result_review.agreement_rate,
+                pass_percentage=test_result_review.pass_percentage,
+                feedback=test_result_review.feedback,
+                completed_by=test_result_review.completed_by or None,
+                completed_at=str(test_result_review.completed_at) or None,
+                started_at=str(test_result_review.started_at),
+                created_by=test_result_review.created_by,
+                locked_by=test_result_review.locked_by or None,
+                last_heartbeat_at=str(test_result_review.last_heartbeat_at) or None,
+                last_active_at=str(test_result_review.last_active_at) or None,
+                test_result=TestResult.from_graphql(test_result_review.test_result),
+                custom_review_values=[],
             )
 
             custom_review_values = []
@@ -44,9 +57,13 @@ class SingleRunReview(BaseModel):
                 custom_review_values.append(
                     CustomReviewValue(
                         template=custom_review_value.template,
-                        value=custom_review_value,
+                        value=custom_review_value.value,
                     )
                 )
+
+            single_test_result_review.custom_review_values = custom_review_values
+
+            single_test_result_reviews.append(single_test_result_review)
 
         custom_review_templates = []
         for template in run_review.custom_review_templates:
@@ -65,11 +82,17 @@ class SingleRunReview(BaseModel):
         return cls(
             id=run_review.id,
             created_by=run_review.created_by,
-            created_at=run_review.created_at,
-            status=run_review.status,
-            completed_time=run_review.completed_time,
+            created_at=str(run_review.created_at),
+            status=run_review.status.value.lower(),
+            pass_rate=run_review.pass_rate,
+            flagged_rate=run_review.flagged_rate,
+            agreement_rate=run_review.agreement_rate,
+            completed_time=str(run_review.completed_time) or None,
             number_of_reviews=run_review.number_of_reviews,
-            assigned_reviewers=run_review.assigned_reviewers,
+            assigned_reviewers=json.loads(run_review.assigned_reviewers),
+            rereview_auto_eval=run_review.rereview_auto_eval,
+            single_test_result_reviews=single_test_result_reviews,
+            custom_review_templates=custom_review_templates,
         )
 
 
@@ -80,7 +103,27 @@ class SingleTestResultReview(BaseModel):
 
     pass_percentage: float
 
+    feedback: str
+
+    completed_by: str | None
+
+    completed_at: str | None
+
+    started_at: str
+
+    created_by: str
+
+    status: str
+
+    locked_by: str | None
+
+    last_heartbeat_at: str | None
+
+    last_active_at: str | None
+
     test_result: TestResult
+
+    custom_review_values: list["CustomReviewValue"]
 
 
 class CustomReviewTemplate(BaseModel):

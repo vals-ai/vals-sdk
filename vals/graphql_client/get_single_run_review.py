@@ -7,7 +7,7 @@ from typing import Any, List, Optional
 from pydantic import Field
 
 from .base_model import BaseModel
-from .enums import RunReviewStatusEnum, TemplateType
+from .enums import RunReviewStatusEnum, TemplateType, TestResultReviewStatusEnum
 
 
 class GetSingleRunReview(BaseModel):
@@ -27,6 +27,9 @@ class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviews(BaseModel):
     created_by: str = Field(alias="createdBy")
     created_at: datetime = Field(alias="createdAt")
     status: Optional[RunReviewStatusEnum]
+    pass_rate: Optional[float] = Field(alias="passRate")
+    flagged_rate: Optional[float] = Field(alias="flaggedRate")
+    agreement_rate: Optional[float] = Field(alias="agreementRate")
     completed_time: Optional[datetime] = Field(alias="completedTime")
     number_of_reviews: Optional[int] = Field(alias="numberOfReviews")
     assigned_reviewers: Any = Field(alias="assignedReviewers")
@@ -57,6 +60,15 @@ class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresul
     id: Any
     agreement_rate: float = Field(alias="agreementRate")
     pass_percentage: float = Field(alias="passPercentage")
+    feedback: str
+    completed_by: str = Field(alias="completedBy")
+    completed_at: Optional[datetime] = Field(alias="completedAt")
+    started_at: datetime = Field(alias="startedAt")
+    created_by: str = Field(alias="createdBy")
+    status: TestResultReviewStatusEnum
+    locked_by: Optional[str] = Field(alias="lockedBy")
+    last_heartbeat_at: Optional[datetime] = Field(alias="lastHeartbeatAt")
+    last_active_at: Optional[datetime] = Field(alias="lastActiveAt")
     test_result: (
         "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResult"
     ) = Field(alias="testResult")
@@ -70,27 +82,22 @@ class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresul
 ):
     id: str
     llm_output: str = Field(alias="llmOutput")
+    pass_percentage: float = Field(alias="passPercentage")
+    pass_percentage_with_optional: float = Field(alias="passPercentageWithOptional")
+    result_json: Any = Field(alias="resultJson")
     qa_pair: Optional[
         "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultQaPair"
     ] = Field(alias="qaPair")
-    typed_result_json: List[
-        "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultTypedResultJson"
-    ] = Field(alias="typedResultJson")
     test: "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultTest"
+    metadata: Optional[Any]
 
 
 class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultQaPair(
     BaseModel
 ):
-    id: Any
+    context: Any
     output_context: Any = Field(alias="outputContext")
-
-
-class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultTypedResultJson(
-    BaseModel
-):
-    criteria: str
-    operator: str
+    error_message: str = Field(alias="errorMessage")
 
 
 class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultTest(
@@ -98,8 +105,7 @@ class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresul
 ):
     test_id: str = Field(alias="testId")
     input_under_test: str = Field(alias="inputUnderTest")
-    typed_context: Any = Field(alias="typedContext")
-    typed_file_ids: List[str] = Field(alias="typedFileIds")
+    context: Any
 
 
 class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetCustomReviewValues(

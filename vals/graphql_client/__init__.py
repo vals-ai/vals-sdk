@@ -72,7 +72,6 @@ from .get_single_run_review import (
     GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResult,
     GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultQaPair,
     GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultTest,
-    GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultTypedResultJson,
 )
 from .get_test_data import (
     GetTestData,
@@ -223,7 +222,6 @@ __all__ = [
     "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResult",
     "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultQaPair",
     "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultTest",
-    "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultTypedResultJson",
     "GetTestData",
     "GetTestDataTestsWithCount",
     "GetTestDataTestsWithCountTests",
