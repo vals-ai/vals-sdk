@@ -1,69 +1,85 @@
 query GetSingleRunReview($runReviewId: String!) {
-  singleRunReviewsWithCount(runReviewId: $runReviewId) {
-    singleRunReviews {
+  singleRunReview(runReviewId: $runReviewId) {
+    id
+    createdBy
+    createdAt
+    status
+    passRate
+    flaggedRate
+    agreementRate
+    completedTime
+    numberOfReviews
+    assignedReviewers
+    rereviewAutoEval
+    run {
       id
+    }
+    customReviewTemplates {
+      id
+      name
+      instructions
+      categories
+      type
+      optional
+      minValue
+      maxValue
+    }
+  }
+}
+
+query GetSingleTestReviewsWithCount(
+  $filterOptions: TestReviewFilterOptionsInput!
+  $runId: String!
+) {
+  singleTestReviewsWithCount(filterOptions: $filterOptions, runId: $runId) {
+    count
+    singleTestReviews {
+      id
+      completedAt
+      startedAt
       createdBy
-      createdAt
       status
-      passRate
-      flaggedRate
+      passPercentage
+      completedBy
       agreementRate
-      completedTime
-      numberOfReviews
-      assignedReviewers
-      rereviewAutoEval
-      customReviewTemplates {
-        id
-        name
-        instructions
-        categories
-        type
-        minValue
-        maxValue
+      feedback
+      runHumanReview {
+        rereviewAutoEval
       }
-      singletestresultreviewSet {
+      perCheckTestReviewTyped {
+        binaryHumanEval
+        isFlagged
+      }
+      testResult {
         id
-        agreementRate
+        llmOutput
         passPercentage
-        feedback
-        completedBy
-        completedAt
-        startedAt
-        createdBy
-        status
-        lockedBy
-        lastHeartbeatAt
-        lastActiveAt
-        testResult {
+        passPercentageWithOptional
+        resultJson
+        qaPair {
+          context
+          outputContext
+          errorMessage
+        }
+        test {
+          testId
+          inputUnderTest
+          context
+        }
+        metadata
+      }
+      customReviewValues {
+        template {
           id
-          llmOutput
-          passPercentage
-          passPercentageWithOptional
-          resultJson
-          qaPair {
-            context
-            outputContext
-            errorMessage
-          }
-          test {
-            testId
-            inputUnderTest
-            context
-          }
-          metadata
+          name
+          instructions
+          optional
+          categories
+          type
+          minValue
+          maxValue
         }
-        customReviewValues {
-          template {
-            id
-            name
-            instructions
-            categories
-            type
-            minValue
-            maxValue
-          }
-          value
-        }
+        value
       }
     }
   }

@@ -201,6 +201,7 @@ class CategoricalReviewTemplateInput(BaseModel):
     type: TemplateType
     name: str
     instructions: str
+    optional: bool
     categories: List[str]
 
 
@@ -208,6 +209,7 @@ class NumericalReviewTemplateInput(BaseModel):
     type: TemplateType
     name: str
     instructions: str
+    optional: bool
     min_value: Optional[int] = Field(alias="minValue", default=None)
     max_value: Optional[int] = Field(alias="maxValue", default=None)
 
@@ -216,6 +218,7 @@ class FreeTextReviewTemplateInput(BaseModel):
     type: TemplateType
     name: str
     instructions: str
+    optional: bool
 
 
 CheckInputType.model_rebuild()

@@ -7,22 +7,16 @@ from typing import Any, List, Optional
 from pydantic import Field
 
 from .base_model import BaseModel
-from .enums import RunReviewStatusEnum, TemplateType, TestResultReviewStatusEnum
+from .enums import RunReviewStatusEnum, TemplateType
 
 
 class GetSingleRunReview(BaseModel):
-    single_run_reviews_with_count: "GetSingleRunReviewSingleRunReviewsWithCount" = (
-        Field(alias="singleRunReviewsWithCount")
+    single_run_review: Optional["GetSingleRunReviewSingleRunReview"] = Field(
+        alias="singleRunReview"
     )
 
 
-class GetSingleRunReviewSingleRunReviewsWithCount(BaseModel):
-    single_run_reviews: List[
-        "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviews"
-    ] = Field(alias="singleRunReviews")
-
-
-class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviews(BaseModel):
+class GetSingleRunReviewSingleRunReview(BaseModel):
     id: Any
     created_by: str = Field(alias="createdBy")
     created_at: datetime = Field(alias="createdAt")
@@ -34,102 +28,26 @@ class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviews(BaseModel):
     number_of_reviews: Optional[int] = Field(alias="numberOfReviews")
     assigned_reviewers: Any = Field(alias="assignedReviewers")
     rereview_auto_eval: bool = Field(alias="rereviewAutoEval")
+    run: "GetSingleRunReviewSingleRunReviewRun"
     custom_review_templates: List[
-        "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsCustomReviewTemplates"
+        "GetSingleRunReviewSingleRunReviewCustomReviewTemplates"
     ] = Field(alias="customReviewTemplates")
-    singletestresultreview_set: List[
-        "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSet"
-    ] = Field(alias="singletestresultreviewSet")
 
 
-class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsCustomReviewTemplates(
-    BaseModel
-):
-    id: Any
-    name: str
-    instructions: str
-    categories: Optional[List[str]]
-    type: TemplateType
-    min_value: Optional[int] = Field(alias="minValue")
-    max_value: Optional[int] = Field(alias="maxValue")
-
-
-class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSet(
-    BaseModel
-):
-    id: Any
-    agreement_rate: float = Field(alias="agreementRate")
-    pass_percentage: float = Field(alias="passPercentage")
-    feedback: str
-    completed_by: str = Field(alias="completedBy")
-    completed_at: Optional[datetime] = Field(alias="completedAt")
-    started_at: datetime = Field(alias="startedAt")
-    created_by: str = Field(alias="createdBy")
-    status: TestResultReviewStatusEnum
-    locked_by: Optional[str] = Field(alias="lockedBy")
-    last_heartbeat_at: Optional[datetime] = Field(alias="lastHeartbeatAt")
-    last_active_at: Optional[datetime] = Field(alias="lastActiveAt")
-    test_result: (
-        "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResult"
-    ) = Field(alias="testResult")
-    custom_review_values: List[
-        "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetCustomReviewValues"
-    ] = Field(alias="customReviewValues")
-
-
-class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResult(
-    BaseModel
-):
+class GetSingleRunReviewSingleRunReviewRun(BaseModel):
     id: str
-    llm_output: str = Field(alias="llmOutput")
-    pass_percentage: float = Field(alias="passPercentage")
-    pass_percentage_with_optional: float = Field(alias="passPercentageWithOptional")
-    result_json: Any = Field(alias="resultJson")
-    qa_pair: Optional[
-        "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultQaPair"
-    ] = Field(alias="qaPair")
-    test: "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultTest"
-    metadata: Optional[Any]
 
 
-class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultQaPair(
-    BaseModel
-):
-    context: Any
-    output_context: Any = Field(alias="outputContext")
-    error_message: str = Field(alias="errorMessage")
-
-
-class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResultTest(
-    BaseModel
-):
-    test_id: str = Field(alias="testId")
-    input_under_test: str = Field(alias="inputUnderTest")
-    context: Any
-
-
-class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetCustomReviewValues(
-    BaseModel
-):
-    template: "GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetCustomReviewValuesTemplate"
-    value: str
-
-
-class GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetCustomReviewValuesTemplate(
-    BaseModel
-):
+class GetSingleRunReviewSingleRunReviewCustomReviewTemplates(BaseModel):
     id: Any
     name: str
     instructions: str
     categories: Optional[List[str]]
     type: TemplateType
+    optional: bool
     min_value: Optional[int] = Field(alias="minValue")
     max_value: Optional[int] = Field(alias="maxValue")
 
 
 GetSingleRunReview.model_rebuild()
-GetSingleRunReviewSingleRunReviewsWithCount.model_rebuild()
-GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviews.model_rebuild()
-GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSet.model_rebuild()
-GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetTestResult.model_rebuild()
-GetSingleRunReviewSingleRunReviewsWithCountSingleRunReviewsSingletestresultreviewSetCustomReviewValues.model_rebuild()
+GetSingleRunReviewSingleRunReview.model_rebuild()
