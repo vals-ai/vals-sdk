@@ -15,6 +15,8 @@ from .enums import RunStatus
 from .get_active_custom_operators import GetActiveCustomOperators
 from .get_operators import GetOperators
 from .get_rag_suites import GetRagSuites
+from .get_single_run_review import GetSingleRunReview
+from .get_single_test_reviews_with_count import GetSingleTestReviewsWithCount
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites_with_count import GetTestSuitesWithCount
@@ -24,6 +26,7 @@ from .input_types import (
     ParameterInputType,
     QuestionAnswerPairInputType,
     TestMutationInfo,
+    TestReviewFilterOptionsInput,
 )
 from .list_question_answer_pairs import ListQuestionAnswerPairs
 from .list_runs import ListRuns
@@ -204,6 +207,125 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return ListQuestionAnswerPairs.model_validate(data)
+
+    async def get_single_run_review(
+        self, run_review_id: str, **kwargs: Any
+    ) -> GetSingleRunReview:
+        query = gql(
+            """
+            query GetSingleRunReview($runReviewId: String!) {
+              singleRunReview(runReviewId: $runReviewId) {
+                id
+                createdBy
+                createdAt
+                status
+                passRate
+                flaggedRate
+                agreementRate
+                completedTime
+                numberOfReviews
+                assignedReviewers
+                rereviewAutoEval
+                run {
+                  id
+                }
+                customReviewTemplates {
+                  id
+                  name
+                  instructions
+                  categories
+                  type
+                  optional
+                  minValue
+                  maxValue
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"runReviewId": run_review_id}
+        response = await self.execute(
+            query=query,
+            operation_name="GetSingleRunReview",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return GetSingleRunReview.model_validate(data)
+
+    async def get_single_test_reviews_with_count(
+        self, filter_options: TestReviewFilterOptionsInput, run_id: str, **kwargs: Any
+    ) -> GetSingleTestReviewsWithCount:
+        query = gql(
+            """
+            query GetSingleTestReviewsWithCount($filterOptions: TestReviewFilterOptionsInput!, $runId: String!) {
+              singleTestReviewsWithCount(filterOptions: $filterOptions, runId: $runId) {
+                count
+                singleTestReviews {
+                  id
+                  completedAt
+                  startedAt
+                  createdBy
+                  status
+                  passPercentage
+                  completedBy
+                  agreementRate
+                  feedback
+                  runHumanReview {
+                    rereviewAutoEval
+                  }
+                  perCheckTestReviewTyped {
+                    binaryHumanEval
+                    isFlagged
+                  }
+                  testResult {
+                    id
+                    llmOutput
+                    passPercentage
+                    passPercentageWithOptional
+                    resultJson
+                    qaPair {
+                      context
+                      outputContext
+                      errorMessage
+                    }
+                    test {
+                      testId
+                      inputUnderTest
+                      context
+                    }
+                    metadata
+                  }
+                  customReviewValues {
+                    template {
+                      id
+                      name
+                      instructions
+                      optional
+                      categories
+                      type
+                      minValue
+                      maxValue
+                    }
+                    value
+                  }
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {
+            "filterOptions": filter_options,
+            "runId": run_id,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="GetSingleTestReviewsWithCount",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return GetSingleTestReviewsWithCount.model_validate(data)
 
     async def start_run(
         self,

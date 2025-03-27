@@ -1,0 +1,86 @@
+query GetSingleRunReview($runReviewId: String!) {
+  singleRunReview(runReviewId: $runReviewId) {
+    id
+    createdBy
+    createdAt
+    status
+    passRate
+    flaggedRate
+    agreementRate
+    completedTime
+    numberOfReviews
+    assignedReviewers
+    rereviewAutoEval
+    run {
+      id
+    }
+    customReviewTemplates {
+      id
+      name
+      instructions
+      categories
+      type
+      optional
+      minValue
+      maxValue
+    }
+  }
+}
+
+query GetSingleTestReviewsWithCount(
+  $filterOptions: TestReviewFilterOptionsInput!
+  $runId: String!
+) {
+  singleTestReviewsWithCount(filterOptions: $filterOptions, runId: $runId) {
+    count
+    singleTestReviews {
+      id
+      completedAt
+      startedAt
+      createdBy
+      status
+      passPercentage
+      completedBy
+      agreementRate
+      feedback
+      runHumanReview {
+        rereviewAutoEval
+      }
+      perCheckTestReviewTyped {
+        binaryHumanEval
+        isFlagged
+      }
+      testResult {
+        id
+        llmOutput
+        passPercentage
+        passPercentageWithOptional
+        resultJson
+        qaPair {
+          context
+          outputContext
+          errorMessage
+        }
+        test {
+          testId
+          inputUnderTest
+          context
+        }
+        metadata
+      }
+      customReviewValues {
+        template {
+          id
+          name
+          instructions
+          optional
+          categories
+          type
+          minValue
+          maxValue
+        }
+        value
+      }
+    }
+  }
+}

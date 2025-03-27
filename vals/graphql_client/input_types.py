@@ -150,6 +150,7 @@ class ParameterInputType(BaseModel):
     heavyweight_factor: int = Field(alias="heavyweightFactor")
     create_text_summary: bool = Field(alias="createTextSummary")
     retry_failed_calls_indefinitely: bool = Field(alias="retryFailedCallsIndefinitely")
+    detect_refusals: bool = Field(alias="detectRefusals")
     model_under_test: str = Field(alias="modelUnderTest")
     temperature: float
     max_output_tokens: int = Field(alias="maxOutputTokens")
@@ -200,6 +201,7 @@ class CategoricalReviewTemplateInput(BaseModel):
     type: TemplateType
     name: str
     instructions: str
+    optional: bool
     categories: List[str]
 
 
@@ -207,6 +209,7 @@ class NumericalReviewTemplateInput(BaseModel):
     type: TemplateType
     name: str
     instructions: str
+    optional: bool
     min_value: Optional[int] = Field(alias="minValue", default=None)
     max_value: Optional[int] = Field(alias="maxValue", default=None)
 
@@ -215,6 +218,7 @@ class FreeTextReviewTemplateInput(BaseModel):
     type: TemplateType
     name: str
     instructions: str
+    optional: bool
 
 
 CheckInputType.model_rebuild()
