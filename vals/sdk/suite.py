@@ -498,6 +498,7 @@ class Suite(BaseModel):
         ]  # Need to explicitly map parallelism to maximum_threads
         parameter_input = ParameterInputType(
             **parameter_json,
+            detect_refusals=False,
             model_under_test="",
             maximum_threads=parameters.parallelism,
         )
