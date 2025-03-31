@@ -1,9 +1,10 @@
-from datetime import datetime
 import json
+from datetime import datetime
+
 from pydantic import BaseModel
 from vals.graphql_client.enums import (
-    TemplateType,
     RunReviewStatusEnum,
+    TemplateType,
     TestResultReviewStatusEnum,
 )
 from vals.graphql_client.get_single_test_reviews_with_count import (
@@ -99,7 +100,9 @@ class SingleRunReview(BaseModel):
             agreement_rate=run_review.agreement_rate or None,
             completed_time=run_review.completed_time or None,
             number_of_reviews=run_review.number_of_reviews,
-            assigned_reviewers=json.loads(run_review.assigned_reviewers),
+            assigned_reviewers=(
+                run_review.assigned_reviewers if run_review.assigned_reviewers else []
+            ),
             rereview_auto_eval=run_review.rereview_auto_eval,
             single_test_result_reviews=test_reviews,
             custom_review_templates=custom_review_templates,
@@ -110,10 +113,10 @@ class CustomReviewTemplate(BaseModel):
     id: str
     name: str
     instructions: str
-    categories: list[str]
+    categories: list[str] | None
     type: TemplateType
-    min_value: int
-    max_value: int
+    min_value: int | None
+    max_value: int | None
     optional: bool
 
 
@@ -172,7 +175,9 @@ def create_single_test_reviews(
         for custom_review_value in test_result_review.custom_review_values:
             custom_review_values.append(
                 CustomReviewValue(
-                    template=custom_review_value.template,
+                    template=CustomReviewTemplate(
+                        **custom_review_value.template.model_dump()
+                    ),
                     value=custom_review_value.value,
                 )
             )
