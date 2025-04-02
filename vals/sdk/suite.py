@@ -1,4 +1,6 @@
 import asyncio
+import aiohttp
+import aiofiles
 import concurrent.futures._base
 import inspect
 import json
@@ -10,6 +12,7 @@ import requests
 import vals.sdk.patch as patch
 from pydantic import BaseModel, PrivateAttr
 from tqdm import tqdm
+from tqdm.asyncio import tqdm as asyncio_tqdm
 from vals.graphql_client.client import UNSET, Client
 from vals.graphql_client.get_operators import GetOperatorsOperators
 from vals.graphql_client.input_types import (
@@ -291,7 +294,9 @@ class Suite(BaseModel):
         with open(file_path, "w") as f:
             f.write(self.to_csv_string())
 
-    async def create(self, force_creation: bool = False) -> None:
+    async def create(
+        self, force_creation: bool = False, max_upload_concurrency: int = 10
+    ) -> None:
         """
         Creates the test suite on the server.
 
@@ -315,7 +320,7 @@ class Suite(BaseModel):
         self.id = suite.update_test_suite.test_suite.id
 
         await self._upload_global_checks()
-        await self._upload_files()
+        await self._upload_files(max_upload_concurrency=max_upload_concurrency)
         await self._upload_tests(create_only=True)
 
     async def delete(self) -> None:
@@ -329,9 +334,15 @@ class Suite(BaseModel):
 
         await self._client.delete_test_suite(self.id)
 
-    async def update(self, upload_files_path: str | None = None) -> None:
+    async def update(
+        self, upload_files_path: str | None = None, max_upload_concurrency: int = 10
+    ) -> None:
         """
         Pushes any local changes to the the test suite object to the server.
+
+        Args:
+            upload_files_path: Optional path to look for files
+            max_upload_concurrency: Maximum number of concurrent file uploads (default: 10)
         """
         if self.id is None:
             raise Exception(
@@ -344,7 +355,7 @@ class Suite(BaseModel):
 
         path = self.title if upload_files_path is None else upload_files_path
 
-        await self._upload_files(path)
+        await self._upload_files(path, max_upload_concurrency)
         await self._upload_global_checks()
         await self._upload_tests(create_only=False)
 
@@ -596,97 +607,212 @@ class Suite(BaseModel):
 
         return run
 
-    async def _upload_files(self, upload_files_path: str | None = None):
+    async def _process_file(
+        self,
+        file: File,
+        upload_files_path: str | None,
+        all_files_in_test: list[File],
+    ) -> tuple[bool, str | None]:
+        """
+        Process a single file: find its path and calculate hash.
+        Returns a tuple of (needs_upload, file_path).
+
+        Args:
+            file: The File object to process
+            upload_files_path: Optional path to look for files
+            all_files_in_test: All files in the current test for duplicate hash checking
+        """
+        # Determine the file path
+        file_path = None
+
+        # Case 1: File has a path
+        if file.path is not None and os.path.exists(file.path):
+            file_path = file.path
+        # Case 2: File has no path but we have upload_files_path
+        elif upload_files_path is not None:
+            # Try standard path
+            potential_path = os.path.join(upload_files_path, file.file_name)
+            if os.path.exists(potential_path):
+                file_path = potential_path
+            # Try hash subdirectory path if hash exists
+            elif file.hash is not None:
+                hash_path = os.path.join(upload_files_path, file.hash, file.file_name)
+                if os.path.exists(hash_path):
+                    file_path = hash_path
+
+        # Skip if we couldn't find the file
+        if file_path is None:
+            return (False, None)
+
+        # Calculate file hash
+        with open(file_path, "rb") as f:
+            file_hash = md5_hash(f)
+
+        # Check if this hash already exists in another file in the test
+        if file_hash in [
+            f.hash for f in all_files_in_test if f != file and f.hash is not None
+        ]:
+            print(
+                f"File {file.file_name} with same hash already exists in the test suite."
+            )
+            file.hash = file_hash
+            return (False, None)
+
+        # File needs upload if it's new or hash has changed
+        needs_upload = file.file_id is None or file.hash != file_hash
+
+        # Store the hash regardless
+        file.hash = file_hash
+
+        return (needs_upload, file_path)
+
+    async def _process_files_under_test(
+        self,
+        test: Test,
+        upload_files_path: str | None,
+    ) -> list[tuple[File, str]]:
+        """
+        Process all files under test for a single test:
+        - Normalize files to File objects
+        - Process each file (find path, hash)
+        - Return list of (file, file_path) pairs that need uploading
+
+        Args:
+            test: The Test object containing files to process
+            upload_files_path: Optional path to look for files
+        """
+        # Convert files_under_test to a list of File objects if they're not already
+        normalized_files = []
+        for file_item in test.files_under_test:
+            if isinstance(file_item, str):
+                # Handle string path
+                normalized_files.append(
+                    File(file_name=os.path.basename(file_item), path=file_item)
+                )
+            elif isinstance(file_item, dict):
+                # Handle dictionary representation
+                file_name = file_item.get("file_name") or os.path.basename(
+                    file_item.get("path", "")
+                )
+                normalized_files.append(
+                    File(
+                        file_name=file_name,
+                        file_id=file_item.get("file_id"),
+                        path=file_item.get("path"),
+                        hash=file_item.get("hash"),
+                    )
+                )
+            elif isinstance(file_item, File):
+                # Already a File object
+                normalized_files.append(file_item)
+            else:
+                raise ValueError(f"Unexpected file type: {type(file_item)}")
+
+        # Replace the original files_under_test with normalized File objects
+        test.files_under_test = normalized_files
+
+        # Process each file to determine which need to be uploaded
+        files_to_upload = []
+
+        for file in test.files_under_test:
+            needs_upload, file_path = await self._process_file(
+                file, upload_files_path, test.files_under_test
+            )
+            if needs_upload and file_path:
+                files_to_upload.append((file, file_path))
+
+        # Update file IDs for the test (for files that already have IDs)
+        test._file_ids = [
+            file.file_id for file in test.files_under_test if file.file_id is not None
+        ]
+
+        return files_to_upload
+
+    async def _upload_files(
+        self, upload_files_path: str | None = None, max_upload_concurrency: int = 10
+    ):
         """
         Helper method to upload the files to the server.
-        Uploads any tests.files_under_test that haven't been uploaded yet.
+        First identifies all files that need uploading, then uploads them concurrently.
+
+        Args:
+            upload_files_path: Optional path to look for files
+            max_upload_concurrency: Maximum number of concurrent file uploads (default: 10)
         """
         if self.id is None:
             raise Exception("This suite has not been created yet.")
 
+        print("Identifying files to upload...")
+
+        # First, process all files to determine which need uploading
+        all_files_to_upload = []
+        for test in tqdm(self.tests, desc="Processing files"):
+            files_to_upload = await self._process_files_under_test(
+                test, upload_files_path
+            )
+            all_files_to_upload.extend(files_to_upload)
+
+        if not all_files_to_upload:
+            print("No files need uploading.")
+            return
+
+        # Deduplication based on file hash
+        hash_to_file_map = {}
+        deduplicated_files = []
+        for file_tuple in all_files_to_upload:
+            file, file_path = file_tuple
+            if file.hash not in hash_to_file_map:
+                hash_to_file_map[file.hash] = file
+                deduplicated_files.append(file_tuple)
+            else:
+                # Use file_id from the first file with the same hash
+                file.file_id = hash_to_file_map[file.hash].file_id
+
         for test in self.tests:
-            # Convert files_under_test to a list of File objects if they're not already
-            normalized_files = []
-            for file_item in test.files_under_test:
-                if isinstance(file_item, str):
-                    # Handle string path
-                    normalized_files.append(
-                        File(file_name=os.path.basename(file_item), path=file_item)
-                    )
-                elif isinstance(file_item, dict):
-                    # Handle dictionary representation
-                    file_name = file_item.get("file_name") or os.path.basename(
-                        file_item.get("path", "")
-                    )
-                    normalized_files.append(
-                        File(
-                            file_name=file_name,
-                            file_id=file_item.get("file_id"),
-                            path=file_item.get("path"),
-                            hash=file_item.get("hash"),
-                        )
-                    )
-                elif isinstance(file_item, File):
-                    # Already a File object
-                    normalized_files.append(file_item)
-                else:
-                    raise ValueError(f"Unexpected file type: {type(file_item)}")
-
-            # Replace the original files_under_test with normalized File objects
-            test.files_under_test = normalized_files
-
-            # Process each file
             for file in test.files_under_test:
-                # Determine the file path
-                file_path = None
+                if file.file_id is not None and file.file_id not in test._file_ids:
+                    test._file_ids.append(file.file_id)
+                for file in test.files_under_test:
+                    if file.file_id is None or file.path is None:
+                        print(test.input_under_test)
+                        print(test.files_under_test)
+                        break
 
-                # Case 1: File has a path
-                if file.path is not None and os.path.exists(file.path):
-                    file_path = file.path
-                # Case 2: File has no path but we have upload_files_path
-                elif upload_files_path is not None:
-                    # Try standard path
-                    potential_path = os.path.join(upload_files_path, file.file_name)
-                    if os.path.exists(potential_path):
-                        file_path = potential_path
-                    # Try hash subdirectory path if hash exists
-                    elif file.hash is not None:
-                        hash_path = os.path.join(
-                            upload_files_path, file.hash, file.file_name
-                        )
-                        if os.path.exists(hash_path):
-                            file_path = hash_path
+        print(
+            f"Found {len(all_files_to_upload)} files to upload, {len(deduplicated_files)} unique files (hash based on name and content)."
+        )
+        all_files_to_upload = deduplicated_files
 
-                # Skip if we couldn't find the file
-                if file_path is None:
-                    continue
+        # Create semaphore for concurrent uploads
+        semaphore = asyncio.Semaphore(max_upload_concurrency)
 
-                # Calculate file hash
-                with open(file_path, "rb") as f:
-                    file_hash = md5_hash(f)
+        # Upload files concurrently with a progress bar
+        with asyncio_tqdm(
+            total=len(all_files_to_upload), desc="Uploading files"
+        ) as pbar:
+            # First, upload all files and track the File objects to their IDs
+            async def upload_file_task(file, file_path):
+                async with semaphore:
+                    file.file_id = await self._upload_file(self.id, file_path)
+                    pbar.update(1)
+                    return file
 
-                # Case: File is new or hash has changed
-                if file.file_id is None or file.hash != file_hash:
-                    # Check if this hash already exists in another file in the test
-                    if file_hash in [
-                        f.hash
-                        for f in test.files_under_test
-                        if f != file and f.hash is not None
-                    ]:
-                        print(
-                            f"File {file.file_name} with same hash already exists in the test suite."
-                        )
-                        continue
+            await asyncio.gather(
+                *[
+                    upload_file_task(file, file_path)
+                    for file, file_path in all_files_to_upload
+                ]
+            )
 
-                    file.file_id = self._upload_file(self.id, file_path)
-                    file.hash = file_hash
-
-            # Update file IDs for the test
-            test._file_ids = [
-                file.file_id
-                for file in test.files_under_test
-                if file.file_id is not None
-            ]
+        # Then, update all tests' _file_ids in a separate pass
+        for test in self.tests:
+            for file in test.files_under_test:
+                if file.file_id is not None and file.file_id not in test._file_ids:
+                    test._file_ids.append(file.file_id)
+                for file in test.files_under_test:
+                    if file.file_id is None or file.path is None:
+                        print(test.input_under_test)
+                        print(test.files_under_test)
 
     async def _upload_tests(self, create_only: bool = True) -> None:
         """
@@ -1061,16 +1187,27 @@ class Suite(BaseModel):
 
         return uploaded_qa_pairs
 
-    def _upload_file(self, suite_id: str, file_path: str) -> str:
-        with open(file_path, "rb") as f:
-            response = requests.post(
+    async def _upload_file(self, suite_id: str, file_path: str) -> str:
+        """Upload a file to the server asynchronously."""
+
+        async with aiofiles.open(file_path, "rb") as f:
+            file_data = await f.read()
+
+        async with aiohttp.ClientSession() as session:
+            form = aiohttp.FormData()
+            form.add_field("file", file_data, filename=os.path.basename(file_path))
+
+            async with session.post(
                 f"{be_host()}/upload_file/?test_suite_id={suite_id}",
-                files={"file": f},
+                data=form,
                 headers={"Authorization": _get_auth_token()},
-            )
-            if response.status_code != 200:
-                raise Exception(f"Failed to upload file {file_path}")
-            return response.json()["file_id"]
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise Exception(f"Failed to upload file {file_path}: {error_text}")
+
+                response_json = await response.json()
+                return response_json["file_id"]
 
     async def _process_model_output(
         self,
