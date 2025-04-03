@@ -742,18 +742,16 @@ class Suite(BaseModel):
         if self.id is None:
             raise Exception("This suite has not been created yet.")
 
-        print("Identifying files to upload...")
-
         # First, process all files to determine which need uploading
         all_files_to_upload = []
-        for test in tqdm(self.tests, desc="Processing files"):
+        for test in tqdm(self.tests, desc="Checking each test for files to upload"):
             files_to_upload = await self._process_files_under_test(
                 test, upload_files_path
             )
             all_files_to_upload.extend(files_to_upload)
 
         if not all_files_to_upload:
-            print("No files need uploading.")
+            print("No files found or no files need uploading.")
             return
 
         # Deduplication based on file hash
@@ -857,18 +855,25 @@ class Suite(BaseModel):
                 await self._validate_checks(check, operators_dict)
 
             for file in test.files_under_test:
+                check_path = False
                 if isinstance(file, str):
                     file_path = file
+                    check_path = True
                 elif isinstance(file, dict):
                     file_path = file["path"]
+                    if file["file_id"] is None:
+                        check_path = True
                 elif isinstance(file, File):
                     file_path = file.path
+                    if file.file_id is None:
+                        check_path = True
                 else:
                     raise ValueError(f"Unexpected file type: {type(file)}")
-                if not os.path.exists(file_path):
-                    raise ValueError(f"File does not exist: {file_path}")
-                if not os.path.isfile(file_path):
-                    raise ValueError(f"Path is a directory: {file_path}")
+                if check_path:
+                    if not os.path.exists(file_path):
+                        raise ValueError(f"File does not exist: {file_path}")
+                    if not os.path.isfile(file_path):
+                        raise ValueError(f"Path is a directory: {file_path}")
 
         for check in self.global_checks:
             await self._validate_checks(check, operators_dict)
