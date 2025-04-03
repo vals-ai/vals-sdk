@@ -768,16 +768,6 @@ class Suite(BaseModel):
                 # Use file_id from the first file with the same hash
                 file.file_id = hash_to_file_map[file.hash].file_id
 
-        for test in self.tests:
-            for file in test.files_under_test:
-                if file.file_id is not None and file.file_id not in test._file_ids:
-                    test._file_ids.append(file.file_id)
-                for file in test.files_under_test:
-                    if file.file_id is None or file.path is None:
-                        print(test.input_under_test)
-                        print(test.files_under_test)
-                        break
-
         print(
             f"Found {len(all_files_to_upload)} files to upload, {len(deduplicated_files)} unique files (hash based on name and content)."
         )
@@ -787,6 +777,9 @@ class Suite(BaseModel):
         semaphore = asyncio.Semaphore(max_upload_concurrency)
 
         # Upload files concurrently with a progress bar
+
+        hash_map_upload = {}
+
         with asyncio_tqdm(
             total=len(all_files_to_upload), desc="Uploading files"
         ) as pbar:
@@ -794,6 +787,7 @@ class Suite(BaseModel):
             async def upload_file_task(file, file_path):
                 async with semaphore:
                     file.file_id = await self._upload_file(self.id, file_path)
+                    hash_map_upload[file.hash] = file.file_id
                     pbar.update(1)
                     return file
 
@@ -804,15 +798,10 @@ class Suite(BaseModel):
                 ]
             )
 
-        # Then, update all tests' _file_ids in a separate pass
         for test in self.tests:
             for file in test.files_under_test:
-                if file.file_id is not None and file.file_id not in test._file_ids:
-                    test._file_ids.append(file.file_id)
-                for file in test.files_under_test:
-                    if file.file_id is None or file.path is None:
-                        print(test.input_under_test)
-                        print(test.files_under_test)
+                if file.file_id is None:
+                    file.file_id = hash_map_upload[file.hash]
 
     async def _upload_tests(self, create_only: bool = True) -> None:
         """
