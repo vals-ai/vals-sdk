@@ -191,16 +191,39 @@ class Run(BaseModel):
             setattr(self, field, getattr(updated, field))
 
     async def get_qa_pairs(
-        self, offset: int = 0, limit: int = 1000
+        self, offset: int = 0, remaining_limit: int = 200
     ) -> list[QuestionAnswerPair]:
         """Get all QA pairs for a run."""
-        result = await self._client.list_question_answer_pairs(
-            qa_set_id=self.qa_set_id, offset=offset, limit=limit
-        )
-        return [
-            QuestionAnswerPair.from_graphql(graphql_qa_pair)
-            for graphql_qa_pair in result.question_answer_pairs_with_count.question_answer_pairs
-        ]
+        qa_pairs = []
+        current_offset = offset
+        batch_size = 200
+
+        while remaining_limit > 0:
+            # Calculate the current batch size
+            current_batch_size = min(batch_size, remaining_limit)
+
+            result = await self._client.list_question_answer_pairs(
+                qa_set_id=self.qa_set_id,
+                offset=current_offset,
+                limit=current_batch_size,
+            )
+
+            batch_results = [
+                QuestionAnswerPair.from_graphql(graphql_qa_pair)
+                for graphql_qa_pair in result.question_answer_pairs_with_count.question_answer_pairs
+            ]
+
+            qa_pairs.extend(batch_results)
+
+            # If we got fewer results than requested, we've reached the end
+            if len(batch_results) < current_batch_size:
+                break
+
+            # Update for next iteration
+            current_offset += len(batch_results)
+            remaining_limit -= len(batch_results)
+
+        return qa_pairs
 
     async def run_status(self) -> RunStatus:
         """Get the status of a run"""
