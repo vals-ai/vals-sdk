@@ -17,6 +17,7 @@ setup(
         "httpx",
         "tabulate",
         "inspect-ai",
+        "aiohttp",
     ],
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
