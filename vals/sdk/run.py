@@ -89,7 +89,7 @@ class Run(BaseModel):
         exists_test_results_left_to_pull = True
         while exists_test_results_left_to_pull:
             test_result_query = await client.pull_test_results_with_count(
-                run_id=run_id, offset=offset
+                run_id=run_id, offset=offset, limit=page_size
             )
             test_results.extend(
                 [
