@@ -276,6 +276,23 @@ class Client(AsyncBaseClient):
                   passPercentage
                   amountReviewed
                   latestCompletedReview
+                  llmOutput
+                  typedResultJson {
+                    autoEval
+                    criteria
+                    operator
+                  }
+                  qaPair {
+                    context
+                    outputContext
+                    errorMessage
+                  }
+                  test {
+                    testId
+                    inputUnderTest
+                    context
+                  }
+                  metadata
                   aggregatedCustomMetrics {
                     name
                     type
@@ -298,16 +315,6 @@ class Client(AsyncBaseClient):
                     }
                     testResult {
                       id
-                      llmOutput
-                      qaPair {
-                        outputContext
-                      }
-                      test {
-                        testId
-                        inputUnderTest
-                        typedContext
-                        typedFileIds
-                      }
                       typedResultJson {
                         autoEval
                         criteria

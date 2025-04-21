@@ -35,6 +35,15 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
     pass_percentage: float = Field(alias="passPercentage")
     amount_reviewed: Optional[int] = Field(alias="amountReviewed")
     latest_completed_review: Optional[datetime] = Field(alias="latestCompletedReview")
+    llm_output: str = Field(alias="llmOutput")
+    typed_result_json: List[
+        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedResultJson"
+    ] = Field(alias="typedResultJson")
+    qa_pair: Optional[
+        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsQaPair"
+    ] = Field(alias="qaPair")
+    test: "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTest"
+    metadata: Optional[Any]
     aggregated_custom_metrics: Optional[
         List[
             "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsAggregatedCustomMetrics"
@@ -45,6 +54,30 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
             "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviews"
         ]
     ] = Field(alias="singleTestReviews")
+
+
+class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedResultJson(
+    BaseModel
+):
+    auto_eval: float = Field(alias="autoEval")
+    criteria: str
+    operator: str
+
+
+class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsQaPair(
+    BaseModel
+):
+    context: Any
+    output_context: Any = Field(alias="outputContext")
+    error_message: str = Field(alias="errorMessage")
+
+
+class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTest(
+    BaseModel
+):
+    test_id: str = Field(alias="testId")
+    input_under_test: str = Field(alias="inputUnderTest")
+    context: Any
 
 
 class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsAggregatedCustomMetrics(
@@ -90,29 +123,9 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
     BaseModel
 ):
     id: str
-    llm_output: str = Field(alias="llmOutput")
-    qa_pair: Optional[
-        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultQaPair"
-    ] = Field(alias="qaPair")
-    test: "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultTest"
     typed_result_json: List[
         "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultTypedResultJson"
     ] = Field(alias="typedResultJson")
-
-
-class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultQaPair(
-    BaseModel
-):
-    output_context: Any = Field(alias="outputContext")
-
-
-class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultTest(
-    BaseModel
-):
-    test_id: str = Field(alias="testId")
-    input_under_test: str = Field(alias="inputUnderTest")
-    typed_context: Any = Field(alias="typedContext")
-    typed_file_ids: List[str] = Field(alias="typedFileIds")
 
 
 class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultTypedResultJson(

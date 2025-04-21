@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 from vals.graphql_client.enums import (
@@ -12,7 +13,7 @@ from vals.graphql_client.single_test_result_reviews_with_count import (
     SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResults,
     SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviews,
 )
-from vals.sdk.types import Test, TestResult
+from vals.sdk.types import Metadata, Test, TestResult
 from vals.sdk.util import get_ariadne_client
 
 
@@ -112,101 +113,70 @@ class SingleRunReview(BaseModel):
 
 class CustomReviewTemplate(BaseModel):
     id: str
-
     name: str
-
     instructions: str
-
     categories: list[str] | None
-
     type: TemplateType
-
     min_value: int | None
-
     max_value: int | None
-
     optional: bool
 
 
 class CustomReviewValue(BaseModel):
     template: CustomReviewTemplate
-
     value: str
 
 
 class AggregatedCustomMetric(BaseModel):
     name: str
-
     type: TemplateType
-
     displayed: bool
-
     instructions: str
-
     values: list[str]
-
     max: int
 
 
 class AutoEvalReview(BaseModel):
     criteria: str
-
     operator: str
-
     check_value: str
 
 
 class AutoEvalReviewValue(BaseModel):
     auto_eval: AutoEvalReview
-
     human_eval: int
-
     is_flagged: bool
 
 
 class SingleTestResultReview(BaseModel):
     id: str
-
     feedback: str
-
     completed_by: str
-
     completed_at: datetime
-
     started_at: datetime
-
     created_by: str
-
     status: TestResultReviewStatusEnum
-
-    test_result: TestResult
-
     auto_eval_review_values: list[AutoEvalReviewValue]
-
     custom_review_values: list[CustomReviewValue]
 
 
 class TestResult(BaseModel):
     id: str
-
     reviewed_by: list[str]
-
     has_feedback: bool
-
     agreement_rate_auto_eval: float
-
     agreement_rate_human_eval: float
-
     pass_rate_human_eval: float
-
     pass_percentage: float
-
     amount_reviewed: int
-
+    llm_output: str
+    input_under_test: str
+    context: dict[str, Any]
+    output_context: dict[str, Any]
+    metadata: Metadata | None
     latest_completed_review: datetime
-
+    auto_eval_values: list[AutoEvalReview]
     aggregated_custom_metrics: list[AggregatedCustomMetric]
-
     single_test_result_reviews: list[SingleTestResultReview]
 
 
@@ -261,6 +231,12 @@ def create_test_result(
         latest_completed_review=test_result_review.latest_completed_review,
         aggregated_custom_metrics=test_result_review.aggregated_custom_metrics,
         single_test_result_reviews=[],
+        auto_eval_values=test_result_review.typed_result_json,
+        input_under_test=test_result_review.test.input_under_test,
+        context=test_result_review.test.context,
+        output_context=test_result_review.qa_pair.output_context,
+        metadata=test_result_review.metadata,
+        llm_output=test_result_review.llm_output,
     )
 
 
@@ -275,6 +251,5 @@ def create_single_test_review(
         completed_at=single_test_review.completed_at,
         started_at=single_test_review.started_at,
         created_by=single_test_review.created_by,
-        test_result=TestResult.from_graphql(single_test_review.test_result),
         custom_review_values=[],
     )
