@@ -7,11 +7,12 @@ from vals.graphql_client.enums import (
     TemplateType,
     TestResultReviewStatusEnum,
 )
-from vals.graphql_client.get_single_test_reviews_with_count import (
-    GetSingleTestReviewsWithCountSingleTestReviewsWithCountSingleTestReviews,
-)
 from vals.graphql_client.input_types import TestReviewFilterOptionsInput
-from vals.sdk.types import TestResult
+from vals.graphql_client.single_test_result_reviews_with_count import (
+    SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResults,
+    SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviews,
+)
+from vals.sdk.types import Test, TestResult
 from vals.sdk.util import get_ariadne_client
 
 
@@ -53,8 +54,8 @@ class SingleRunReview(BaseModel):
                 )
             )
 
-        single_test_reviews_with_count = (
-            await client.get_single_test_reviews_with_count(
+        test_result_reviews_with_count = (
+            await client.single_test_result_reviews_with_count(
                 run_id=run_review.run.id,
                 filter_options=TestReviewFilterOptionsInput(
                     status=TestResultReviewStatusEnum.COMPLETED,
@@ -64,19 +65,19 @@ class SingleRunReview(BaseModel):
             )
         )
 
-        total_reviews_in_run = (
-            single_test_reviews_with_count.single_test_reviews_with_count.count
+        total_test_result_reviews_in_run = (
+            test_result_reviews_with_count.test_result_reviews_with_count.count
         )
 
-        test_reviews = create_single_test_reviews(
-            single_test_reviews_with_count.single_test_reviews_with_count.single_test_reviews
+        test_result_reviews = create_single_test_result_reviews(
+            test_result_reviews_with_count.test_result_reviews_with_count.single_test_results
         )
 
-        if len(test_reviews) < total_reviews_in_run:
-            while len(test_reviews) < total_reviews_in_run:
+        if len(test_result_reviews) < total_test_result_reviews_in_run:
+            while len(test_result_reviews) < total_test_result_reviews_in_run:
                 offset += LIMIT
-                single_test_reviews_with_count = (
-                    await client.get_single_test_reviews_with_count(
+                test_result_reviews_with_count = (
+                    await client.single_test_result_reviews_with_count(
                         run_id=run_review.run.id,
                         filter_options=TestReviewFilterOptionsInput(
                             status=TestResultReviewStatusEnum.COMPLETED,
@@ -86,8 +87,8 @@ class SingleRunReview(BaseModel):
                     )
                 )
 
-                test_reviews += create_single_test_reviews(
-                    single_test_reviews_with_count.single_test_reviews_with_count.single_test_reviews
+                test_result_reviews += create_single_test_result_reviews(
+                    test_result_reviews_with_count.test_result_reviews_with_count.single_test_results
                 )
 
         return cls(
@@ -104,33 +105,67 @@ class SingleRunReview(BaseModel):
                 run_review.assigned_reviewers if run_review.assigned_reviewers else []
             ),
             rereview_auto_eval=run_review.rereview_auto_eval,
-            single_test_result_reviews=test_reviews,
+            single_test_result_reviews=test_result_reviews,
             custom_review_templates=custom_review_templates,
         )
 
 
 class CustomReviewTemplate(BaseModel):
     id: str
+
     name: str
+
     instructions: str
+
     categories: list[str] | None
+
     type: TemplateType
+
     min_value: int | None
+
     max_value: int | None
+
     optional: bool
 
 
 class CustomReviewValue(BaseModel):
     template: CustomReviewTemplate
+
     value: str
+
+
+class AggregatedCustomMetric(BaseModel):
+    name: str
+
+    type: TemplateType
+
+    displayed: bool
+
+    instructions: str
+
+    values: list[str]
+
+    max: int
+
+
+class AutoEvalReview(BaseModel):
+    criteria: str
+
+    operator: str
+
+    check_value: str
+
+
+class AutoEvalReviewValue(BaseModel):
+    auto_eval: AutoEvalReview
+
+    human_eval: int
+
+    is_flagged: bool
 
 
 class SingleTestResultReview(BaseModel):
     id: str
-
-    agreement_rate: float
-
-    pass_percentage: float
 
     feedback: str
 
@@ -146,44 +181,100 @@ class SingleTestResultReview(BaseModel):
 
     test_result: TestResult
 
+    auto_eval_review_values: list[AutoEvalReviewValue]
+
     custom_review_values: list[CustomReviewValue]
 
 
-def create_single_test_reviews(
-    test_reviews: list[
-        GetSingleTestReviewsWithCountSingleTestReviewsWithCountSingleTestReviews
+class TestResult(BaseModel):
+    id: str
+
+    reviewed_by: list[str]
+
+    has_feedback: bool
+
+    agreement_rate_auto_eval: float
+
+    agreement_rate_human_eval: float
+
+    pass_rate_human_eval: float
+
+    pass_percentage: float
+
+    amount_reviewed: int
+
+    latest_completed_review: datetime
+
+    aggregated_custom_metrics: list[AggregatedCustomMetric]
+
+    single_test_result_reviews: list[SingleTestResultReview]
+
+
+def create_single_test_result_reviews(
+    test_result_reviews: list[
+        SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResults
     ],
-) -> list[SingleTestResultReview]:
+) -> list[TestResult]:
     single_test_result_reviews = []
-    for test_result_review in test_reviews:
+    for test_result_review in test_result_reviews:
 
-        single_test_result_review = SingleTestResultReview(
-            id=test_result_review.id,
-            status=test_result_review.status,
-            agreement_rate=test_result_review.agreement_rate,
-            pass_percentage=test_result_review.pass_percentage,
-            feedback=test_result_review.feedback,
-            completed_by=test_result_review.completed_by,
-            completed_at=test_result_review.completed_at,
-            started_at=test_result_review.started_at,
-            created_by=test_result_review.created_by,
-            test_result=TestResult.from_graphql(test_result_review.test_result),
-            custom_review_values=[],
-        )
+        test_result = create_test_result(test_result_review)
 
-        custom_review_values = []
-        for custom_review_value in test_result_review.custom_review_values:
-            custom_review_values.append(
-                CustomReviewValue(
-                    template=CustomReviewTemplate(
-                        **custom_review_value.template.model_dump()
-                    ),
-                    value=custom_review_value.value,
-                )
+        single_test_result_reviews = []
+
+        for single_test_review in test_result_review.single_test_reviews:
+            single_test_result_reviews.append(
+                create_single_test_review(single_test_review)
             )
 
-        single_test_result_review.custom_review_values = custom_review_values
+            custom_review_values = []
+            for custom_review_value in single_test_review.custom_review_values:
+                custom_review_values.append(
+                    CustomReviewValue(
+                        template=CustomReviewTemplate(
+                            **custom_review_value.template.model_dump()
+                        ),
+                        value=custom_review_value.value,
+                    )
+                )
 
-        single_test_result_reviews.append(single_test_result_review)
+            single_test_review.custom_review_values = custom_review_values
+            single_test_result_reviews.append(single_test_review)
 
-    return single_test_result_reviews
+        test_result.single_test_result_reviews = single_test_result_reviews
+
+    return test_result
+
+
+def create_test_result(
+    test_result_review: SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResults,
+) -> TestResult:
+    return TestResult(
+        id=test_result_review.id,
+        reviewed_by=test_result_review.reviewed_by,
+        has_feedback=test_result_review.has_feedback,
+        agreement_rate_auto_eval=test_result_review.agreement_rate_auto_eval,
+        agreement_rate_human_eval=test_result_review.agreement_rate_human_eval,
+        pass_rate_human_eval=test_result_review.pass_rate_human_eval,
+        pass_percentage=test_result_review.pass_percentage,
+        amount_reviewed=test_result_review.amount_reviewed,
+        latest_completed_review=test_result_review.latest_completed_review,
+        aggregated_custom_metrics=test_result_review.aggregated_custom_metrics,
+        single_test_result_reviews=[],
+    )
+
+
+def create_single_test_review(
+    single_test_review: SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviews,
+) -> SingleTestResultReview:
+    return SingleTestResultReview(
+        id=single_test_review.id,
+        status=single_test_review.status,
+        feedback=single_test_review.feedback,
+        completed_by=single_test_review.completed_by,
+        completed_at=single_test_review.completed_at,
+        started_at=single_test_review.started_at,
+        created_by=single_test_review.created_by,
+        test_result=TestResult.from_graphql(single_test_review.test_result),
+        custom_review_values=[],
+    )

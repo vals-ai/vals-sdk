@@ -27,59 +27,73 @@ query GetSingleRunReview($runReviewId: String!) {
   }
 }
 
-query GetSingleTestReviewsWithCount(
-  $filterOptions: TestReviewFilterOptionsInput!
+query SingleTestResultReviewsWithCount(
   $runId: String!
+  $filterOptions: TestReviewFilterOptionsInput
 ) {
-  singleTestReviewsWithCount(filterOptions: $filterOptions, runId: $runId) {
+  testResultReviewsWithCount(runId: $runId, filterOptions: $filterOptions) {
     count
-    singleTestReviews {
+    singleTestResults {
       id
-      completedAt
-      startedAt
-      createdBy
-      status
+      reviewedBy
+      hasFeedback
+      agreementRateAutoEval
+      agreementRateHumanEval
+      passRateHumanEval
       passPercentage
-      completedBy
-      agreementRate
-      feedback
-      runHumanReview {
-        rereviewAutoEval
+      amountReviewed
+      latestCompletedReview
+      aggregatedCustomMetrics {
+        name
+        type
+        displayed
+        instructions
+        values
+        max
       }
-      perCheckTestReviewTyped {
-        binaryHumanEval
-        isFlagged
-      }
-      testResult {
+      singleTestReviews {
         id
-        llmOutput
-        passPercentage
-        passPercentageWithOptional
-        resultJson
-        qaPair {
-          context
-          outputContext
-          errorMessage
+        completedBy
+        feedback
+        completedAt
+        startedAt
+        createdBy
+        status
+        perCheckTestReviewTyped {
+          binaryHumanEval
+          isFlagged
         }
-        test {
-          testId
-          inputUnderTest
-          context
-        }
-        metadata
-      }
-      customReviewValues {
-        template {
+        testResult {
           id
-          name
-          instructions
-          optional
-          categories
-          type
-          minValue
-          maxValue
+          llmOutput
+          qaPair {
+            outputContext
+          }
+          test {
+            testId
+            inputUnderTest
+            typedContext
+            typedFileIds
+          }
+          typedResultJson {
+            autoEval
+            criteria
+            operator
+          }
         }
-        value
+        customReviewValues {
+          template {
+            id
+            name
+            instructions
+            optional
+            categories
+            type
+            minValue
+            maxValue
+          }
+          value
+        }
       }
     }
   }
