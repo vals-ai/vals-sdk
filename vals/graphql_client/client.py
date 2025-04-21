@@ -16,10 +16,10 @@ from .get_active_custom_operators import GetActiveCustomOperators
 from .get_operators import GetOperators
 from .get_rag_suites import GetRagSuites
 from .get_single_run_review import GetSingleRunReview
-from .get_single_test_reviews_with_count import GetSingleTestReviewsWithCount
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites_with_count import GetTestSuitesWithCount
+from .get_user_options import GetUserOptions
 from .input_types import (
     CheckInputType,
     LocalEvalUploadInputType,
@@ -36,6 +36,7 @@ from .pull_test_results_with_count import PullTestResultsWithCount
 from .remove_old_tests import RemoveOldTests
 from .rerun_tests import RerunTests
 from .run_status import RunStatus
+from .single_test_result_reviews_with_count import SingleTestResultReviewsWithCount
 from .start_run import StartRun
 from .update_global_checks import UpdateGlobalChecks
 from .update_run_status import UpdateRunStatus
@@ -253,61 +254,100 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return GetSingleRunReview.model_validate(data)
 
-    async def get_single_test_reviews_with_count(
-        self, filter_options: TestReviewFilterOptionsInput, run_id: str, **kwargs: Any
-    ) -> GetSingleTestReviewsWithCount:
+    async def single_test_result_reviews_with_count(
+        self,
+        run_id: str,
+        filter_options: Union[
+            Optional[TestReviewFilterOptionsInput], UnsetType
+        ] = UNSET,
+        **kwargs: Any
+    ) -> SingleTestResultReviewsWithCount:
         query = gql(
             """
-            query GetSingleTestReviewsWithCount($filterOptions: TestReviewFilterOptionsInput!, $runId: String!) {
-              singleTestReviewsWithCount(filterOptions: $filterOptions, runId: $runId) {
+            query SingleTestResultReviewsWithCount($runId: String!, $filterOptions: TestReviewFilterOptionsInput) {
+              testResultReviewsWithCount(runId: $runId, filterOptions: $filterOptions) {
                 count
-                singleTestReviews {
+                singleTestResults {
                   id
-                  completedAt
-                  startedAt
-                  createdBy
-                  status
+                  reviewedBy
+                  hasFeedback
+                  agreementRateAutoEval
+                  agreementRateHumanEval
+                  passRateHumanEval
                   passPercentage
-                  completedBy
-                  agreementRate
-                  feedback
-                  runHumanReview {
-                    rereviewAutoEval
+                  amountReviewed
+                  latestCompletedReview
+                  llmOutput
+                  typedResultJson {
+                    autoEval
+                    criteria
+                    operator
                   }
-                  perCheckTestReviewTyped {
-                    binaryHumanEval
-                    isFlagged
+                  qaPair {
+                    context
+                    outputContext
+                    errorMessage
                   }
-                  testResult {
+                  test {
+                    testId
+                    inputUnderTest
+                    typedContext
+                  }
+                  typedMetadata {
+                    inTokens
+                    outTokens
+                    durationSeconds
+                  }
+                  aggregatedCustomMetrics {
+                    base {
+                      displayed
+                      value
+                    }
+                    comparative
+                    name
+                    type
+                    resultA {
+                      displayed
+                      value
+                    }
+                    resultB {
+                      displayed
+                      value
+                    }
+                  }
+                  singleTestReviews {
                     id
-                    llmOutput
-                    passPercentage
-                    passPercentageWithOptional
-                    resultJson
-                    qaPair {
-                      context
-                      outputContext
-                      errorMessage
+                    completedBy
+                    feedback
+                    completedAt
+                    startedAt
+                    createdBy
+                    status
+                    perCheckTestReviewTyped {
+                      binaryHumanEval
+                      isFlagged
                     }
-                    test {
-                      testId
-                      inputUnderTest
-                      context
-                    }
-                    metadata
-                  }
-                  customReviewValues {
-                    template {
+                    testResult {
                       id
-                      name
-                      instructions
-                      optional
-                      categories
-                      type
-                      minValue
-                      maxValue
+                      typedResultJson {
+                        autoEval
+                        criteria
+                        operator
+                      }
                     }
-                    value
+                    customReviewValues {
+                      template {
+                        id
+                        name
+                        instructions
+                        optional
+                        categories
+                        type
+                        minValue
+                        maxValue
+                      }
+                      value
+                    }
                   }
                 }
               }
@@ -315,17 +355,32 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {
-            "filterOptions": filter_options,
             "runId": run_id,
+            "filterOptions": filter_options,
         }
         response = await self.execute(
             query=query,
-            operation_name="GetSingleTestReviewsWithCount",
+            operation_name="SingleTestResultReviewsWithCount",
             variables=variables,
             **kwargs
         )
         data = self.get_data(response)
-        return GetSingleTestReviewsWithCount.model_validate(data)
+        return SingleTestResultReviewsWithCount.model_validate(data)
+
+    async def get_user_options(self, **kwargs: Any) -> GetUserOptions:
+        query = gql(
+            """
+            query GetUserOptions {
+              userEmails
+            }
+            """
+        )
+        variables: Dict[str, object] = {}
+        response = await self.execute(
+            query=query, operation_name="GetUserOptions", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return GetUserOptions.model_validate(data)
 
     async def start_run(
         self,

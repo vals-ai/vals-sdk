@@ -2,10 +2,8 @@ import asyncio
 import base64
 import hashlib
 import os
-import urllib.parse
 from collections import defaultdict
 from io import BytesIO
-from PIL import Image
 
 import httpx
 import requests
