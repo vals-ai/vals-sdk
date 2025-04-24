@@ -439,13 +439,13 @@ class Suite(BaseModel):
         ):
             if run_id:
                 await self._client.update_run_status(
-                    run_id=run_id, status=RunStatus.ERROR
+                    run_id=run_id, status=RunStatus.ERROR.value.upper()
                 )
             raise
         except Exception as e:
             if run_id:
                 await self._client.update_run_status(
-                    run_id=run_id, status=RunStatus.ERROR
+                    run_id=run_id, status=RunStatus.ERROR.value.upper()
                 )
             raise
 
@@ -932,6 +932,7 @@ class Suite(BaseModel):
 
         # Create a semaphore to limit concurrent processing
         semaphore = asyncio.Semaphore(parameter_input.maximum_threads)
+        upload_lock = asyncio.Lock()  # Add a lock for upload coordination
         operator_results = []
         last_uploaded_idx = 0
         upload_tasks = []
@@ -945,23 +946,29 @@ class Suite(BaseModel):
                         for custom_operator in custom_operators
                     )
                 )
-                operator_results.extend(results)
-                pbar.update(1)
 
-                # Upload batch when we reach batch_size
-                nonlocal last_uploaded_idx
-                while len(operator_results) >= last_uploaded_idx + upload_concurrency:
-                    pbar.set_description(
-                        f"Processing operator evaluations (uploading evaluations {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency})"
-                    )
-                    batch_to_upload = operator_results[
-                        last_uploaded_idx : last_uploaded_idx + upload_concurrency
-                    ]
-                    task = asyncio.create_task(
-                        self._client.upload_local_evaluation(qa_set_id, batch_to_upload)
-                    )
-                    upload_tasks.append(task)
-                    last_uploaded_idx += upload_concurrency
+                async with upload_lock:  # Lock while updating shared state
+                    operator_results.extend(results)
+                    pbar.update(1)
+
+                    # Upload batch when we reach batch_size
+                    nonlocal last_uploaded_idx
+                    while (
+                        len(operator_results) >= last_uploaded_idx + upload_concurrency
+                    ):
+                        pbar.set_description(
+                            f"Processing operator evaluations (uploading evaluations {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency})"
+                        )
+                        batch_to_upload = operator_results[
+                            last_uploaded_idx : last_uploaded_idx + upload_concurrency
+                        ]
+                        task = asyncio.create_task(
+                            self._client.upload_local_evaluation(
+                                qa_set_id, batch_to_upload
+                            )
+                        )
+                        upload_tasks.append(task)
+                        last_uploaded_idx += upload_concurrency
 
         # Process all QA pairs concurrently with limited concurrency
         with tqdm(total=len(qa_pairs), desc="Processing operator evaluations") as pbar:
@@ -1112,6 +1119,7 @@ class Suite(BaseModel):
 
         # Create a semaphore to limit concurrent processing
         semaphore = asyncio.Semaphore(parameter_input.maximum_threads)
+        upload_lock = asyncio.Lock()  # Add a lock for upload coordination
         last_uploaded_idx = 0
         upload_tasks = []
         qa_pairs: list[QuestionAnswerPairInputType] = []
@@ -1121,27 +1129,30 @@ class Suite(BaseModel):
                 result = await self._process_single_test(
                     test, model_function, is_simple_model_function
                 )
-                qa_pairs.append(result)
-                pbar.update(1)
 
-                # Upload batch when we reach batch_size
-                nonlocal last_uploaded_idx
-                while len(qa_pairs) >= last_uploaded_idx + upload_concurrency:
-                    pbar.set_description(
-                        f"Processing tests (uploading outputs {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency})"
-                    )
-                    batch_to_upload = qa_pairs[
-                        last_uploaded_idx : last_uploaded_idx + upload_concurrency
-                    ]
-                    task = asyncio.create_task(
-                        self._client.batch_add_question_answer_pairs(
-                            qa_set_id, batch_to_upload
+                async with upload_lock:  # Lock while updating shared state
+                    qa_pairs.append(result)
+                    pbar.update(1)
+
+                    # Upload batch when we reach batch_size
+                    nonlocal last_uploaded_idx
+                    while len(qa_pairs) >= last_uploaded_idx + upload_concurrency:
+                        pbar.set_description(
+                            f"Processing tests (uploading outputs {last_uploaded_idx} to {last_uploaded_idx + upload_concurrency})"
                         )
-                    )
-                    upload_tasks.append(task)
-                    last_uploaded_idx += upload_concurrency
+                        batch_to_upload = qa_pairs[
+                            last_uploaded_idx : last_uploaded_idx + upload_concurrency
+                        ]
+                        task = asyncio.create_task(
+                            self._client.batch_add_question_answer_pairs(
+                                qa_set_id, batch_to_upload
+                            )
+                        )
+                        upload_tasks.append(task)
+                        last_uploaded_idx += upload_concurrency
 
         # Process all tests concurrently with limited concurrency
+
 
         with tqdm(
             total=(
@@ -1242,6 +1253,7 @@ class Suite(BaseModel):
         in_tokens = metadata.get("in_tokens", in_tokens_end - in_tokens_start)
         out_tokens = metadata.get("out_tokens", out_tokens_end - out_tokens_start)
         output_context = output.get("output_context", None)
+        duration_seconds = metadata.get("duration_seconds", time_end - time_start)
 
         return QuestionAnswerPairInputType(
             input_under_test=test.input_under_test,
@@ -1252,7 +1264,7 @@ class Suite(BaseModel):
             metadata=MetadataType(
                 in_tokens=in_tokens,
                 out_tokens=out_tokens,
-                duration_seconds=time_end - time_start,
+                duration_seconds=duration_seconds,
             ),
             test_id=test._id,
         )
