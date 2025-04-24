@@ -25,7 +25,7 @@ We've provided a set of examples in `examples/`. They are organized as follows:
 
 Make an account at [https://platform.vals.ai](https://platform.vals.ai) and confirm your email.
 
-Then, go to [https://platform.vals.ai/auth](https://platform.vals/ai/auth) and create an API key.
+Then, go to [https://platform.vals.ai/auth](https://platform.vals.ai/auth) and create an API key.
 
 If you are using the command line, you should set the following:
 
