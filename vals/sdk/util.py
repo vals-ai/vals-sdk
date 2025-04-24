@@ -118,18 +118,19 @@ def parse_file_id(file_id: str) -> tuple[str, str, str | None]:
 
 def read_file(file_id: str) -> BytesIO:
     response = requests.post(
-        url=f"{be_host()}/download_file/?file_id={file_id}",
+        url=f"{be_host()}/download_files_bulk/",
         headers={"Authorization": _get_auth_token()},
+        json={"file_ids": [file_id]},
     )
     return BytesIO(response.content)
 
 
 async def _download_file_async(file_id: str, client: httpx.AsyncClient):
     """Helper function to download a single file asynchronously"""
-    encoded_file_id = urllib.parse.quote(file_id)
-    response = await client.get(
-        f"{be_host()}/download_files_bulk/?file_ids={encoded_file_id}",
+    response = await client.post(
+        f"{be_host()}/download_files_bulk/",
         headers={"Authorization": _get_auth_token()},
+        json={"file_ids": [file_id]},
     )
 
     if response.status_code != 200:
