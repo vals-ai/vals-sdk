@@ -322,7 +322,7 @@ class Run(BaseModel):
         completed_qa_pairs = {}
         completed_test_results = {}
 
-        qa_pairs = await self.get_qa_pairs(offset=0, limit=len(suite.tests))
+        qa_pairs = await self.get_qa_pairs(offset=0, remaining_limit=len(suite.tests))
 
         for qa_pair in qa_pairs:
             if len(qa_pair.local_evals) > 0:
