@@ -114,6 +114,7 @@ class CheckInputType(BaseModel):
 class CheckModifiersInputType(BaseModel):
     optional: bool
     severity: Optional[float] = None
+    display_metrics: bool = Field(alias="displayMetrics")
     examples: List["ExampleInputType"]
     extractor: Optional[str] = None
     conditional: Optional["ConditionalCheckInputType"] = None

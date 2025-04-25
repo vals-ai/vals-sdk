@@ -4,6 +4,15 @@
 from enum import Enum
 
 
+class DropdownSectionEnum(str, Enum):
+    CONSTITUTIONAL = "CONSTITUTIONAL"
+    SEMANTIC = "SEMANTIC"
+    STRING_MATCHING = "STRING_MATCHING"
+    FORMATTING = "FORMATTING"
+    CONSISTENT_WITH_SOURCE = "CONSISTENT_WITH_SOURCE"
+    OTHER = "OTHER"
+
+
 class AppQuestionAnswerSetCreationMethodChoices(str, Enum):
     LIVE_QUERY = "LIVE_QUERY"
     SDK = "SDK"
@@ -30,13 +39,13 @@ class RunReviewStatusEnum(str, Enum):
     CANCELLED = "CANCELLED"
 
 
-class AppPairwiseRunReviewWinningRunChoices(str, Enum):
+class AppPairwiseTestResultReviewWinningRunChoices(str, Enum):
     A = "A"
     B = "B"
     TIE = "TIE"
 
 
-class AppPairwiseTestResultReviewWinningRunChoices(str, Enum):
+class WinningRunEnum(str, Enum):
     A = "A"
     B = "B"
     TIE = "TIE"
@@ -90,9 +99,3 @@ class TestSuiteSortField(str, Enum):
     TITLE = "TITLE"
     CREATED = "CREATED"
     LAST_MODIFIED_AT = "LAST_MODIFIED_AT"
-
-
-class WinningRunEnum(str, Enum):
-    A = "A"
-    B = "B"
-    TIE = "TIE"
