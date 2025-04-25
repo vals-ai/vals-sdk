@@ -45,7 +45,7 @@ from vals.sdk.util import (
     get_ariadne_client,
     md5_hash,
     parse_file_id,
-    read_file,
+    read_files,
 )
 
 
@@ -993,10 +993,7 @@ class Suite(BaseModel):
         is_simple_model_function: bool,
     ) -> QuestionAnswerPairInputType:
         """Inner implementation of process_single_test"""
-        files = {}
-        for file_id in test._file_ids:
-            _, file_name, _ = parse_file_id(file_id)
-            files[file_name] = read_file(file_id)
+        files = read_files(test._file_ids)
 
         time_start = time()
         in_tokens_start = patch.in_tokens
@@ -1055,10 +1052,7 @@ class Suite(BaseModel):
         qa_pair: QuestionAnswerPairInputType,
     ) -> LocalEvalUploadInputType:
         """Inner implementation of process_single_local_eval"""
-        files = {}
-        for file_id in qa_pair.file_ids:
-            _, file_name, _ = parse_file_id(file_id)
-            files[file_name] = read_file(file_id)
+        files = read_files(qa_pair.file_ids)
 
         operator_input = OperatorInput(
             input=qa_pair.input_under_test,
