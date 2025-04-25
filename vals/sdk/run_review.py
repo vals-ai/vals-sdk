@@ -28,7 +28,7 @@ class SingleRunReview(BaseModel):
     completed_time: datetime | None
     number_of_reviews: int
     assigned_reviewers: list[str]
-    rereview_auto_eval: bool
+    auto_eval_review: bool
     single_test_result_reviews: list["TestResult"]
     custom_review_templates: list["CustomReviewTemplate"] | None
 
@@ -109,7 +109,7 @@ class SingleRunReview(BaseModel):
             completed_time=run_review.completed_time or None,
             number_of_reviews=run_review.number_of_reviews,
             assigned_reviewers=run_review.assigned_reviewers,
-            rereview_auto_eval=run_review.rereview_auto_eval,
+            auto_eval_review=run_review.rereview_auto_eval,
             single_test_result_reviews=test_result_reviews,
             custom_review_templates=(
                 custom_review_templates if len(custom_review_templates) > 0 else None
@@ -138,7 +138,7 @@ class AggregatedCustomMetric(BaseModel):
     type: TemplateType
     displayed: str
     instructions: str
-    values: list[str]
+    values: Any
     max: int | None
 
 
@@ -190,7 +190,7 @@ def create_single_test_result_reviews(
     test_result_reviews: list[
         SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResults
     ],
-    rereview_auto_eval: bool,
+    auto_eval_review: bool,
 ) -> list[TestResult]:
     results: list[TestResult] = []
     for test_result_review in test_result_reviews:
@@ -225,7 +225,7 @@ def create_single_test_result_reviews(
 
             auto_eval_review_values: list[AutoEvalReviewValue] = []
 
-            if rereview_auto_eval:
+            if auto_eval_review:
 
                 for (
                     auto_eval_review_value,
