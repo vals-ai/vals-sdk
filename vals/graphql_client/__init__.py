@@ -80,6 +80,7 @@ from .get_test_suites_with_count import (
     GetTestSuitesWithCountTestSuitesWithCountTestSuites,
     GetTestSuitesWithCountTestSuitesWithCountTestSuitesFolder,
 )
+from .get_user_options import GetUserOptions
 from .input_types import (
     CategoricalReviewTemplateInput,
     CheckInputType,
@@ -161,6 +162,7 @@ from .single_test_result_reviews_with_count import (
     SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResult,
     SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultTypedResultJson,
     SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTest,
+    SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedMetadata,
     SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedResultJson,
 )
 from .start_run import StartRun, StartRunStartRun
@@ -235,6 +237,7 @@ __all__ = [
     "GetTestSuitesWithCountTestSuitesWithCount",
     "GetTestSuitesWithCountTestSuitesWithCountTestSuites",
     "GetTestSuitesWithCountTestSuitesWithCountTestSuitesFolder",
+    "GetUserOptions",
     "GraphQLClientError",
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",
@@ -301,6 +304,7 @@ __all__ = [
     "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResult",
     "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultTypedResultJson",
     "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTest",
+    "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedMetadata",
     "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedResultJson",
     "SortOrder",
     "StartRun",

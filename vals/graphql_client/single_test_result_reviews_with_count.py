@@ -43,7 +43,9 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
         "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsQaPair"
     ] = Field(alias="qaPair")
     test: "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTest"
-    metadata: Optional[Any]
+    typed_metadata: (
+        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedMetadata"
+    ) = Field(alias="typedMetadata")
     aggregated_custom_metrics: Optional[
         List[
             "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsAggregatedCustomMetrics"
@@ -77,7 +79,15 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
 ):
     test_id: str = Field(alias="testId")
     input_under_test: str = Field(alias="inputUnderTest")
-    context: Any
+    typed_context: Any = Field(alias="typedContext")
+
+
+class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedMetadata(
+    BaseModel
+):
+    in_tokens: int = Field(alias="inTokens")
+    out_tokens: int = Field(alias="outTokens")
+    duration_seconds: float = Field(alias="durationSeconds")
 
 
 class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsAggregatedCustomMetrics(

@@ -19,6 +19,7 @@ from .get_single_run_review import GetSingleRunReview
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites_with_count import GetTestSuitesWithCount
+from .get_user_options import GetUserOptions
 from .input_types import (
     CheckInputType,
     LocalEvalUploadInputType,
@@ -290,9 +291,13 @@ class Client(AsyncBaseClient):
                   test {
                     testId
                     inputUnderTest
-                    context
+                    typedContext
                   }
-                  metadata
+                  typedMetadata {
+                    inTokens
+                    outTokens
+                    durationSeconds
+                  }
                   aggregatedCustomMetrics {
                     name
                     type
@@ -352,6 +357,21 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return SingleTestResultReviewsWithCount.model_validate(data)
+
+    async def get_user_options(self, **kwargs: Any) -> GetUserOptions:
+        query = gql(
+            """
+            query GetUserOptions {
+              userEmails
+            }
+            """
+        )
+        variables: Dict[str, object] = {}
+        response = await self.execute(
+            query=query, operation_name="GetUserOptions", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return GetUserOptions.model_validate(data)
 
     async def start_run(
         self,

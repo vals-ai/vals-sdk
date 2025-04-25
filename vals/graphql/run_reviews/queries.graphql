@@ -57,9 +57,13 @@ query SingleTestResultReviewsWithCount(
       test {
         testId
         inputUnderTest
-        context
+        typedContext
       }
-      metadata
+      typedMetadata {
+        inTokens
+        outTokens
+        durationSeconds
+      }
       aggregatedCustomMetrics {
         name
         type
@@ -104,4 +108,8 @@ query SingleTestResultReviewsWithCount(
       }
     }
   }
+}
+
+query GetUserOptions {
+  userEmails
 }
