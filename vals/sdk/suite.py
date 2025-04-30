@@ -45,7 +45,7 @@ from vals.sdk.util import (
     get_ariadne_client,
     md5_hash,
     parse_file_id,
-    read_file,
+    read_files,
 )
 
 
@@ -993,10 +993,7 @@ class Suite(BaseModel):
         is_simple_model_function: bool,
     ) -> QuestionAnswerPairInputType:
         """Inner implementation of process_single_test"""
-        files = {}
-        for file_id in test._file_ids:
-            _, file_name, _ = parse_file_id(file_id)
-            files[file_name] = read_file(file_id)
+        files = read_files(test._file_ids) if test._file_ids else {}
 
         time_start = time()
         in_tokens_start = patch.in_tokens
@@ -1055,10 +1052,7 @@ class Suite(BaseModel):
         qa_pair: QuestionAnswerPairInputType,
     ) -> LocalEvalUploadInputType:
         """Inner implementation of process_single_local_eval"""
-        files = {}
-        for file_id in qa_pair.file_ids:
-            _, file_name, _ = parse_file_id(file_id)
-            files[file_name] = read_file(file_id)
+        files = read_files(qa_pair.file_ids) if qa_pair.file_ids else {}
 
         operator_input = OperatorInput(
             input=qa_pair.input_under_test,
@@ -1254,6 +1248,13 @@ class Suite(BaseModel):
         out_tokens = metadata.get("out_tokens", out_tokens_end - out_tokens_start)
         output_context = output.get("output_context", None)
         duration_seconds = metadata.get("duration_seconds", time_end - time_start)
+
+        if llm_output is None:
+            llm_output = ""
+        if in_tokens is None:
+            in_tokens = 0
+        if out_tokens is None:
+            out_tokens = 0
 
         return QuestionAnswerPairInputType(
             input_under_test=test.input_under_test,

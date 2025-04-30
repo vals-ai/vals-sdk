@@ -5,6 +5,7 @@ import os
 import urllib.parse
 from collections import defaultdict
 from io import BytesIO
+from PIL import Image
 
 import httpx
 import requests
@@ -116,13 +117,14 @@ def parse_file_id(file_id: str) -> tuple[str, str, str | None]:
     return org, filename, hash
 
 
-def read_file(file_id: str) -> BytesIO:
+def read_files(file_ids: list[str]) -> dict[str, BytesIO]:
     response = requests.post(
         url=f"{be_host()}/download_files_bulk/",
         headers={"Authorization": _get_auth_token()},
-        json={"file_ids": [file_id]},
+        json={"file_ids": file_ids},
     )
-    return BytesIO(response.content)
+
+    return {file["filename"]: BytesIO(base64.b64decode(file["content"])) for file in response.json()["files"]}
 
 
 async def _download_file_async(file_id: str, client: httpx.AsyncClient):
