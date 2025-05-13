@@ -164,7 +164,7 @@ async def move_test_between_suites():
 
 
 async def all():
-    await pull_suite_with_files()
+    # await pull_suite_with_files()
     await list_suites()
     await create_suite()
     await create_and_delete_suite()
