@@ -150,8 +150,8 @@ async def _download_files_chunk_async(file_ids_chunk: list[str]):
 
 
 async def download_files_bulk(
-    files: list[File], download_path: str, max_concurrent_downloads: int = 50, use_absolute_path: bool = False
-):
+    files: list[File], download_path: str, max_concurrent_downloads: int = 50
+) -> dict[str, str]:
     """
     Download multiple files in parallel with a maximum of max_concurrent_downloads downloads at once.
     Process files as they are downloaded to minimize memory usage.
@@ -164,14 +164,13 @@ async def download_files_bulk(
     if len(files) == 0:
         raise Exception("No files to download")
 
-    filename_to_filepath_map = {}
+    file_id_to_file_path = {}
     os.makedirs(download_path, exist_ok=True)
 
     # Pre-process files to identify duplicates by filename
     filename_count = defaultdict(set)
     for file in files:
         filename_count[file.file_name].add(file.hash)
- 
 
     # Split files into chunks
     chunks = [
@@ -199,7 +198,6 @@ async def download_files_bulk(
                 
                 # Determine file path - use hash directory if filename has duplicates
                 file_path = os.path.join(download_path, filename)
-                file_path = os.path.abspath(file_path) if use_absolute_path else file_path
 
                 if len(filename_count[filename]) > 1 or os.path.exists(file_path):
                     hash_dir = os.path.join(download_path, hash)
@@ -211,11 +209,11 @@ async def download_files_bulk(
                     f.write(content)
                 
                 # Store path mapping
-                filename_to_filepath_map[hash + "-" + filename] = file_path
+                file_id_to_file_path[hash + "-" + filename] = file_path
                 
                 # Update progress
                 progress_bar.update(1)
 
     progress_bar.close()
 
-    return filename_to_filepath_map
+    return file_id_to_file_path

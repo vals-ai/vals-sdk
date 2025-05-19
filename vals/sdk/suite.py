@@ -135,26 +135,18 @@ class Suite(BaseModel):
         if download_files:
             files = []
             path = suite.title if download_path is None else download_path
-            use_absolute_path = download_path is not None
 
             for test in tests:
                 files.extend(test.files_under_test)
 
             if len(files) > 0:
-                hash_to_path_map = await download_files_bulk(
-                    files, path, max_concurrent_downloads=max_concurrent_downloads, use_absolute_path=use_absolute_path
+                file_id_to_file_path = await download_files_bulk(
+                    files, path, max_concurrent_downloads=max_concurrent_downloads
                 )
                 
-                # Update file paths in tests
                 for test in suite.tests:
                     for file in test.files_under_test:
-                        # print(hash_to_path_map[file.hash + "-" + file.file_name])
-                        file.path = hash_to_path_map[file.hash + "-" + file.file_name]
-
-        # for test in suite.tests:
-        #     for file in test.files_under_test:
-        #         print(file.path)
-
+                        file.path = file_id_to_file_path[file.file_id]
 
         return suite
 

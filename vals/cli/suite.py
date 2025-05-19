@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 from io import TextIOWrapper
 from typing import Any
 
@@ -120,28 +121,26 @@ async def pull_command_async(
             )
 
         path = suite.title if download_path is None else download_path
+        path_documents = os.path.join(path, "documents")
 
         if len(file_ids) != 0:
             click.secho(
                 f"This suite has files. Downloading them to directory '{path}'...",
                 fg="green",
             )
-        filename_to_filepath_map = await download_files_bulk(
-            file_ids, path, max_concurrent_downloads=max_concurrent_downloads
+        file_id_to_file_path = await download_files_bulk(
+            file_ids, path_documents, max_concurrent_downloads=max_concurrent_downloads
         )
 
     if to_csv:
         file.write(suite.to_csv_string())
     else:
-        json_string = suite.to_json_string()
+        suite_dict = suite.to_dict()
         if download_files:
-            parsed_json = json.loads(json_string)
-            for i, test in enumerate(parsed_json["tests"]):
-                file_paths = []
-                for filename in test["files_under_test"]:
-                    file_paths.append(filename_to_filepath_map[filename])
-                parsed_json["tests"][i]["files_under_test"] = file_paths
-            json_string = json.dumps(parsed_json, indent=2)
+            for test in suite.tests:
+                for file in test.files_under_test:
+                    file.path = file_id_to_file_path[file.file_id]
+        json_string = json.dumps(suite_dict, indent=2)
         file.write(json_string)
 
     click.secho("Successfully pulled test suite.", fg="green")
