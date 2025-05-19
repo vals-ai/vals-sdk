@@ -131,26 +131,30 @@ class Suite(BaseModel):
             global_checks=global_checks,
             tests=tests,
         )
-
+        
         if download_files:
-            file_ids = []
+            files = []
             path = suite.title if download_path is None else download_path
+            use_absolute_path = download_path is not None
 
             for test in tests:
-                file_ids.extend([file.file_id for file in test.files_under_test])
+                files.extend(test.files_under_test)
 
-            if len(file_ids) > 0:
-                name_to_path_map = await download_files_bulk(
-                    file_ids, path, max_concurrent_downloads=max_concurrent_downloads
+            if len(files) > 0:
+                hash_to_path_map = await download_files_bulk(
+                    files, path, max_concurrent_downloads=max_concurrent_downloads, use_absolute_path=use_absolute_path
                 )
-                test.files_under_test = [
-                    File(
-                        file_name=file.file_name,
-                        file_id=file.file_id,
-                        path=name_to_path_map[file.file_name],
-                    )
-                    for file in test.files_under_test
-                ]
+                
+                # Update file paths in tests
+                for test in suite.tests:
+                    for file in test.files_under_test:
+                        # print(hash_to_path_map[file.hash + "-" + file.file_name])
+                        file.path = hash_to_path_map[file.hash + "-" + file.file_name]
+
+        # for test in suite.tests:
+        #     for file in test.files_under_test:
+        #         print(file.path)
+
 
         return suite
 
@@ -646,23 +650,23 @@ class Suite(BaseModel):
 
         # Calculate file hash
         with open(file_path, "rb") as f:
-            file_hash = md5_hash(f)
+            file_id = md5_hash(f) + "-" + file.file_name
 
         # Check if this hash already exists in another file in the test
-        if file_hash in [
-            f.hash for f in all_files_in_test if f != file and f.hash is not None
+        if file_id in [
+            f.file_id for f in all_files_in_test if f != file and f.file_id is not None
         ]:
             print(
                 f"File {file.file_name} with same hash already exists in the test suite."
             )
-            file.hash = file_hash
+            file.file_id = file_id
             return (False, None)
 
         # File needs upload if it's new or hash has changed
-        needs_upload = file.file_id is None or file.hash != file_hash
+        needs_upload = file.file_id is None or file.file_id != file_id
 
         # Store the hash regardless
-        file.hash = file_hash
+        file.file_id = file_id
 
         return (needs_upload, file_path)
 
@@ -760,11 +764,11 @@ class Suite(BaseModel):
         for file_tuple in all_files_to_upload:
             file, file_path = file_tuple
             if file.hash not in hash_to_file_map:
-                hash_to_file_map[file.hash] = file
+                hash_to_file_map[file.file_id] = file
                 deduplicated_files.append(file_tuple)
             else:
                 # Use file_id from the first file with the same hash
-                file.file_id = hash_to_file_map[file.hash].file_id
+                file.file_id = hash_to_file_map[file.file_id].file_id
 
         print(
             f"Found {len(all_files_to_upload)} files to upload, {len(deduplicated_files)} unique files (hash based on name and content)."
