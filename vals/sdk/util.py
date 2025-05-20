@@ -12,6 +12,7 @@ import requests
 from tqdm import tqdm
 from vals.graphql_client.client import Client as AriadneClient
 from vals.sdk.auth import _get_auth_token, _get_region
+from vals.sdk.types import File
 
 VALS_ENV = os.getenv("VALS_ENV")
 
@@ -149,90 +150,71 @@ async def _download_files_chunk_async(file_ids_chunk: list[str]):
 
 
 async def download_files_bulk(
-    file_ids: list[str], download_path: str, max_concurrent_downloads: int = 50
-):
+    files: list[File], documents_download_path: str, max_concurrent_downloads: int = 50
+) -> dict[str, str]:
     """
     Download multiple files in parallel with a maximum of max_concurrent_downloads downloads at once.
+    Process files as they are downloaded to minimize memory usage.
 
     Args:
-        file_ids: List of file IDs to download
+        files: List of File objects to download
         download_path: Path where to save the downloaded files
-        max_concurrent_downloads: Maximum number of concurrent downloads (default: 5)
+        max_concurrent_downloads: Maximum number of concurrent downloads (default: 50)
     """
-
-    if len(file_ids) == 0:
+    if len(files) == 0:
         raise Exception("No files to download")
 
-    filename_to_filepath_map = {}
+    file_id_to_file_path = {}
+    os.makedirs(documents_download_path, exist_ok=True)
 
-    os.makedirs(download_path, exist_ok=True)
+    # Pre-process files to identify duplicates by filename
+    filename_count = defaultdict(set)
+    for file in files:
+        filename_count[file.file_name].add(file.hash)
 
-    # Prepare filename groups to handle duplicates
-    filename_groups = defaultdict(set)
-    for file_id in file_ids:
-        id, filename = file_id.split("-", 1)
-        hash = id.split("/", 1)[-1]
-        filename_groups[filename].add(hash)
-
-    duplicate_files = {
-        filename: ids for filename, ids in filename_groups.items() if len(ids) > 1
-    }
-
-    # Create directories for duplicate files
-    for filename, hashes in duplicate_files.items():
-        for hash in hashes:
-            download_dir = os.path.join(download_path, hash)
-            os.makedirs(download_dir, exist_ok=True)
-
-    # Split file_ids into chunks of max_concurrent_downloads size
+    # Split files into chunks
     chunks = [
-        file_ids[i : i + max_concurrent_downloads]
-        for i in range(0, len(file_ids), max_concurrent_downloads)
+        files[i : i + max_concurrent_downloads]
+        for i in range(0, len(files), max_concurrent_downloads)
     ]
 
-    total_files = len(file_ids)
-    all_files_data = []
+    # Progress bar for the entire operation
+    with tqdm(total=len(files), desc="Downloading and saving files", unit="file") as progress_bar:
+        for chunk in chunks:
+            # Download chunk of files
+            chunk_results = await _download_files_chunk_async([file.file_id for file in chunk])
+            
+            # Process each result as it comes
+            for i, result in enumerate(chunk_results):
+                if isinstance(result, Exception):
+                    print(f"Error downloading {chunk[i]}: {result}")
+                    progress_bar.update(1)
+                    continue
+                
+                # Extract file info
+                filename = result["filename"]
+                hash = result["hash"]
+                content = base64.b64decode(result["content"])
+                
+                # Determine file path - use hash directory if filename has duplicates
+                file_path = os.path.join(documents_download_path, filename)
+                relative_file_path = os.path.join(os.path.basename(documents_download_path), filename)
 
-    # Progress bar for downloading
-    progress_bar = tqdm(total=total_files, desc="Downloading files", unit="file")
+                if len(filename_count[filename]) > 1 or os.path.exists(file_path):
+                    hash_dir = os.path.join(documents_download_path, hash)
+                    os.makedirs(hash_dir, exist_ok=True)
+                    file_path = os.path.join(hash_dir, filename)
+                    relative_file_path = os.path.join(os.path.basename(documents_download_path), hash, filename)
 
-    for chunk in chunks:
-        # Use asyncio to download files in parallel
-        chunk_results = await _download_files_chunk_async(chunk)
+                # Write the file
+                with open(file_path, "wb") as f:
+                    f.write(content)
 
-        # Handle any exceptions
-        for i, result in enumerate(chunk_results):
-            if isinstance(result, Exception):
-                print(f"Error downloading {chunk[i]}: {result}")
-            else:
-                all_files_data.append(result)
-
-            progress_bar.update(1)
-
-    progress_bar.close()
-
-    # Progress bar for saving files
-    progress_bar = tqdm(total=len(all_files_data), desc="Saving files", unit="file")
-
-    # Save downloaded files
-    for file_data in all_files_data:
-        filename = file_data["filename"]
-        hash = file_data["hash"]
-        content = base64.b64decode(file_data["content"])
-
-        if filename in duplicate_files:
-            download_dir = os.path.join(download_path, hash)
-            file_path = os.path.join(download_dir, filename)
-        else:
-            file_path = os.path.join(download_path, filename)
-
-        with open(file_path, "wb") as f:
-            f.write(content)
-
-        filename_to_filepath_map[filename] = os.path.abspath(file_path)
-
-        progress_bar.update(1)
+                file_id_to_file_path["vals.ai/" + hash + "-" + filename] = relative_file_path
+                
+                # Update progress
+                progress_bar.update(1)
 
     progress_bar.close()
 
-    return filename_to_filepath_map
+    return file_id_to_file_path

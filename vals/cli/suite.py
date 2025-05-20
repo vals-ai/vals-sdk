@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 from io import TextIOWrapper
 from typing import Any
 
@@ -97,12 +98,12 @@ def list_command(
 
 
 async def pull_command_async(
-    file: TextIOWrapper,
+    file: str,
     suite_id: str,
     to_csv: bool,
     to_json: bool,
     download_files: bool,
-    download_path: str | None,
+    suite_download_path: str | None,
     max_concurrent_downloads: int = 50,
 ):
     if to_csv and to_json:
@@ -110,55 +111,35 @@ async def pull_command_async(
             "Cannot specify both --csv and --json - they are mutually exclusive."
         )
 
-    suite = await Suite.from_id(suite_id)
+    path_output = suite_download_path if suite_download_path else os.getcwd()
+    path_output_suite = os.path.join(path_output, os.path.basename(file))
+    path_documents = os.path.join(path_output, "documents")
 
-    if download_files:
-        file_ids = []
-        for test in suite.tests:
-            file_ids.extend(
-                [file_id for file_id in test._file_ids if file_id is not None]
-            )
-
-        path = suite.title if download_path is None else download_path
-
-        if len(file_ids) != 0:
-            click.secho(
-                f"This suite has files. Downloading them to directory '{path}'...",
-                fg="green",
-            )
-        filename_to_filepath_map = await download_files_bulk(
-            file_ids, path, max_concurrent_downloads=max_concurrent_downloads
-        )
+    suite = await Suite.from_id(suite_id, download_files=download_files, download_path=path_documents, max_concurrent_downloads=max_concurrent_downloads)
 
     if to_csv:
-        file.write(suite.to_csv_string())
+        with open(path_output_suite, "w") as f:
+            f.write(suite.to_csv_string())
     else:
-        json_string = suite.to_json_string()
         if download_files:
-            parsed_json = json.loads(json_string)
-            for i, test in enumerate(parsed_json["tests"]):
-                file_paths = []
-                for filename in test["files_under_test"]:
-                    file_paths.append(filename_to_filepath_map[filename])
-                parsed_json["tests"][i]["files_under_test"] = file_paths
-            json_string = json.dumps(parsed_json, indent=2)
-        file.write(json_string)
+            for test in suite.tests:
+                test.files_under_test = [file.path for file in test.files_under_test if file.path is not None]
+        suite_dict = suite.to_dict()
+        json_string = json.dumps(suite_dict, indent=2)
+        with open(path_output_suite, "w") as f:
+            f.write(json_string)
 
     click.secho("Successfully pulled test suite.", fg="green")
 
 
 @click.command(name="pull")
-@click.argument(
-    "file",
-    type=click.File("w"),
-    required=True,
-)
 @click.argument("suite_id", type=str, required=True)
+@click.option("--file", type=str, required=True, help="Name of the file to save the suite to")
 @click.option("--csv", is_flag=True, help="Output in CSV format")
 @click.option("--json", is_flag=True, help="Output in JSON format")
-@click.option("--download-files", is_flag=True, help="Download files from the suite")
+@click.option("--no-download-files", is_flag=True, help="Do not download files from the suite")
 @click.option(
-    "--download-path", type=str, default=None, help="Path to download the files to"
+    "--download-path", type=str, default=None, help="Path to write the suite file and associated files to"
 )
 @click.option(
     "--max-concurrent-downloads",
@@ -167,11 +148,11 @@ async def pull_command_async(
     help="Maximum number of concurrent downloads",
 )
 def pull_command(
-    file: TextIOWrapper,
     suite_id: str,
+    file: str,
     csv: bool,
     json: bool,
-    download_files: bool,
+    no_download_files: bool,
     download_path: str,
     max_concurrent_downloads: int = 50,
 ):
@@ -184,7 +165,7 @@ def pull_command(
             suite_id,
             csv,
             json,
-            download_files,
+            not no_download_files,
             download_path,
             max_concurrent_downloads,
         )
