@@ -150,7 +150,7 @@ async def _download_files_chunk_async(file_ids_chunk: list[str]):
 
 
 async def download_files_bulk(
-    files: list[File], download_path: str, max_concurrent_downloads: int = 50
+    files: list[File], documents_download_path: str, max_concurrent_downloads: int = 50
 ) -> dict[str, str]:
     """
     Download multiple files in parallel with a maximum of max_concurrent_downloads downloads at once.
@@ -165,7 +165,7 @@ async def download_files_bulk(
         raise Exception("No files to download")
 
     file_id_to_file_path = {}
-    os.makedirs(download_path, exist_ok=True)
+    os.makedirs(documents_download_path, exist_ok=True)
 
     # Pre-process files to identify duplicates by filename
     filename_count = defaultdict(set)
@@ -197,19 +197,20 @@ async def download_files_bulk(
                 content = base64.b64decode(result["content"])
                 
                 # Determine file path - use hash directory if filename has duplicates
-                file_path = os.path.join(download_path, filename)
+                file_path = os.path.join(documents_download_path, filename)
+                relative_file_path = os.path.join(os.path.basename(documents_download_path), filename)
 
                 if len(filename_count[filename]) > 1 or os.path.exists(file_path):
-                    hash_dir = os.path.join(download_path, hash)
+                    hash_dir = os.path.join(documents_download_path, hash)
                     os.makedirs(hash_dir, exist_ok=True)
                     file_path = os.path.join(hash_dir, filename)
-                
+                    relative_file_path = os.path.join(os.path.basename(documents_download_path), hash, filename)
+
                 # Write the file
                 with open(file_path, "wb") as f:
                     f.write(content)
-                
-                # Store path mapping
-                file_id_to_file_path[hash + "-" + filename] = file_path
+
+                file_id_to_file_path["vals.ai/" + hash + "-" + filename] = relative_file_path
                 
                 # Update progress
                 progress_bar.update(1)
