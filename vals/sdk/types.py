@@ -173,11 +173,8 @@ class File(BaseModel):
 
 
 class Test(BaseModel):
-    _id: str = "0"
+    id: str = "0"
     """Internal id of the test. 0 signifies it hasn't been created yet."""
-
-    _cross_version_id: str = ""
-    """Internal id that stays constant across versions."""
 
     _test_suite_id: str = ""
     """Maintain internal representation of which Test Suite the test originally belonged to"""
@@ -225,8 +222,7 @@ class Test(BaseModel):
             ],
         )
         test._file_ids = json.loads(graphql_test.file_ids)
-        test._id = graphql_test.test_id
-        test._cross_version_id = graphql_test.cross_version_id
+        test.id = graphql_test.cross_version_id
         test._test_suite_id = graphql_test.test_suite.id
         return test
 
