@@ -47,10 +47,46 @@ $ vals
 
 Use the `--help` flag at the top and subcommand level for guidance.
 
-Commands must be run from the pip environment the cli was installed in. Commands are split up into subcommand. Currently there are two subcommands:
+Commands must be run from the pip environment the cli was installed in. Commands are split up into subcommands. Currently there are three main subcommands:
 
 - `vals suite --help`: relating to creating / updating tests and suites
-- `vals run --help`: relating to creating and querying runs and run results.
+- `vals run --help`: relating to creating and querying runs and run results
+- `vals project --help`: relating to listing and managing projects
+
+### Project Support
+
+The SDK and CLI now support working with multiple projects within your organization. You can:
+
+1. **Set a default project ID** via environment variable:
+   ```bash
+   export VALS_PROJECT_ID="your-project-id"
+   ```
+
+2. **Specify project ID** when creating or listing resources:
+   ```bash
+   # List suites in a specific project
+   vals suite list --project-id "project-123"
+   
+   # Create a suite in a specific project  
+   vals suite create suite.json --project-id "project-123"
+   
+   # List runs in a specific project
+   vals run list --project-id "project-123"
+   ```
+
+3. **List available projects**:
+   ```bash
+   # List all projects in your organization
+   vals project list
+   
+   # Show the default project
+   vals project default
+   ```
+
+The priority order for project selection is:
+1. Explicit `--project-id` flag
+2. `VALS_PROJECT_ID` environment variable
+3. Organization's default project
 
 Full documentation of the CLI usage can be found in our documentation at [https://www.platform.vals.ai/docs/index.html#/cli](https://www.platform.vals.ai/docs/index.html#/cli)
 
@@ -58,6 +94,52 @@ Full documentation of the CLI usage can be found in our documentation at [https:
 
 All of the functionality that is in the CLI can also be accessed via Python functions,
 as well as features only available in the SDK.
+
+### Project Support in SDK
+
+The SDK provides full support for working with projects:
+
+```python
+from vals import Suite, Run, Project
+import asyncio
+
+async def main():
+    # List all projects in your organization
+    projects = await Project.list_projects()
+    for project in projects:
+        print(f"{project.name} ({project.id}) - Default: {project.is_default}")
+    
+    # Get the default project
+    default_project = await Project.get_default_project()
+    print(f"Default project: {default_project.name}")
+    
+    # Create a suite in a specific project
+    suite = Suite(
+        title="My Test Suite",
+        description="Test suite with project support",
+        project_id="project-123"  # Optional - defaults to organization's default project
+    )
+    await suite.create()
+    
+    # List suites in a specific project
+    suites = await Suite.list_suites(project_id="project-123")
+    
+    # List runs in a specific project
+    runs = await Run.list_runs(project_id="project-123")
+
+asyncio.run(main())
+```
+
+You can also use the `VALS_PROJECT_ID` environment variable to set a default project for all SDK operations:
+
+```python
+import os
+os.environ['VALS_PROJECT_ID'] = "project-123"
+
+# Now all operations will use this project by default
+suite = Suite(title="My Suite", description="Uses project from env var")
+await suite.create()  # Creates in project-123
+```
 
 See usage documentation in our docs: [https://www.platform.vals.ai/docs/index.html#/sdk](https://www.platform.vals.ai/docs/index.html#/sdk)
 

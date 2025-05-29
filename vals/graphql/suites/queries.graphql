@@ -31,9 +31,9 @@ query getTestData($suiteId: String!, $offset: Int, $limit: Int) {
   }
 }
 
-query getTestSuitesWithCount($offset: Int, $limit: Int, $search: String) {
+query getTestSuitesWithCount($offset: Int, $limit: Int, $search: String, $projectId: String) {
   testSuitesWithCount(
-    filterOptions: { offset: $offset, limit: $limit, search: $search }
+    filterOptions: { offset: $offset, limit: $limit, search: $search, projectId: $projectId }
   ) {
     testSuites {
       id

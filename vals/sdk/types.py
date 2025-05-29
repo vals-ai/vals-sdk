@@ -9,7 +9,7 @@ import datetime
 import json
 from enum import Enum
 from io import BytesIO
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Literal, Optional
 
 from pydantic import BaseModel
 from vals.graphql_client.get_test_data import GetTestDataTestsWithCountTests
@@ -32,6 +32,40 @@ from vals.graphql_client.pull_test_results_with_count import (
     PullTestResultsWithCountTestResultsWithCountTestResults,
 )
 from vals.sdk.operator_type import OperatorType
+
+
+class OutputObject(BaseModel):
+    """
+    Structured output for model functions with optional metadata.
+    
+    This class provides a type-safe way to return model outputs along with
+    additional context and metadata. It's especially useful for RAG applications,
+    chain-of-thought reasoning, and model monitoring.
+    
+    Example:
+        ```python
+        def my_model(input: str) -> OutputObject:
+            response = generate_response(input)
+            sources = retrieve_sources(input)
+            
+            return OutputObject(
+                llm_output=response,
+                output_context={
+                    "sources": sources,
+                    "confidence": 0.95
+                },
+                in_tokens=100,
+                out_tokens=50,
+                duration=1.5
+            )
+        ```
+    """
+    
+    llm_output: str  # Required: The actual model output
+    output_context: Optional[dict[str, Any]] = None  # Optional: Arbitrary metadata about the output
+    duration: Optional[float] = None  # Optional: Generation time in seconds
+    in_tokens: Optional[int] = None  # Optional: Input token count
+    out_tokens: Optional[int] = None  # Optional: Output token count
 
 
 class TestSuiteMetadata(BaseModel):
@@ -153,12 +187,13 @@ class Check(BaseModel):
         )
 
     def to_graphql_input(self) -> dict:
+        modifiers_dict = self.modifiers.model_dump(exclude_none=True)
+        # Add display_metrics with default value if not present
+        modifiers_dict.setdefault('display_metrics', True)
         return CheckInputType(
             operator=self.operator,
             criteria=self.criteria,
-            modifiers=CheckModifiersInputType(
-                **self.modifiers.model_dump(exclude_none=True)
-            ),
+            modifiers=CheckModifiersInputType(**modifiers_dict),
         )
 
 
@@ -562,9 +597,9 @@ class CustomModelOutput(BaseModel):
     }
 
 
-SimpleModelFunctionType = Callable[[str], str]
+SimpleModelFunctionType = Callable[[str], str | OutputObject]
 
-ModelFunctionWithFilesAndContextType = Callable[[CustomModelInput], CustomModelOutput]
+ModelFunctionWithFilesAndContextType = Callable[[str, dict[str, BytesIO], dict[str, Any]], str | dict[str, Any] | OutputObject]
 
 ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType
 

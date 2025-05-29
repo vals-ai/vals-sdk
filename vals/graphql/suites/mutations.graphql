@@ -2,11 +2,13 @@ mutation createOrUpdateTestSuite(
   $testSuiteId: String!
   $title: String!
   $description: String!
+  $projectId: String
 ) {
   updateTestSuite(
     testSuiteId: $testSuiteId
     title: $title
     description: $description
+    projectId: $projectId
   ) {
     testSuite {
       description

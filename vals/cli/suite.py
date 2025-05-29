@@ -10,7 +10,7 @@ from vals.cli.util import display_error_and_exit
 from vals.sdk.exceptions import ValsException
 from vals.sdk.suite import Suite
 from vals.sdk.types import RunParameters, RunStatus
-from vals.sdk.util import download_files_bulk
+from vals.sdk.util import download_files_bulk, get_effective_project_id
 
 
 @click.group(name="suite")
@@ -21,9 +21,12 @@ def suite_group():
     pass
 
 
-async def create_commmand_async(file: TextIOWrapper):
+async def create_commmand_async(file: TextIOWrapper, project_id: str | None):
 
     suite = await Suite.from_dict(json.loads(file.read()))
+    effective_project_id = get_effective_project_id(project_id)
+    if effective_project_id:
+        suite.project_id = effective_project_id
     await suite.create()
 
     click.secho("Successfully created test suite.", fg="green")
@@ -33,13 +36,14 @@ async def create_commmand_async(file: TextIOWrapper):
 
 @click.command(name="create")
 @click.argument("file", type=click.File("r"))
-def create_command(file: TextIOWrapper):
+@click.option("--project-id", type=str, help="Project ID to create the suite in")
+def create_command(file: TextIOWrapper, project_id: str | None):
     """
     Creates a new test suite based on the json file provided.
 
     See the documentation for information on the format.
     """
-    asyncio.run(create_commmand_async(file))
+    asyncio.run(create_commmand_async(file, project_id))
 
 
 async def update_command_async(file: TextIOWrapper, suite_id: str):
@@ -67,8 +71,9 @@ def update_command(file: TextIOWrapper, suite_id: str):
     asyncio.run(update_command_async(file, suite_id))
 
 
-async def list_command_async(limit: int, offset: int, search: str):
-    suites = await Suite.list_suites(limit=limit, offset=offset - 1, search=search)
+async def list_command_async(limit: int, offset: int, search: str, project_id: str | None):
+    effective_project_id = get_effective_project_id(project_id)
+    suites = await Suite.list_suites(limit=limit, offset=offset - 1, search=search, project_id=effective_project_id)
     headers = ["#", "Title", "Suite ID", "Last Modified"]
     rows = []
     for i, suite in enumerate(suites, start=offset):
@@ -86,15 +91,17 @@ async def list_command_async(limit: int, offset: int, search: str):
     "-o", "--offset", type=int, default=1, help="Start table at this row (1-indexed)"
 )
 @click.option("--search", type=str, default="", help="Search for a suite by title")
+@click.option("--project-id", type=str, help="Project ID to filter suites by")
 def list_command(
     limit: int,
     offset: int,
     search: str,
+    project_id: str | None,
 ):
     """
     List test suites associated with this organization
     """
-    asyncio.run(list_command_async(limit, offset, search))
+    asyncio.run(list_command_async(limit, offset, search, project_id))
 
 
 async def pull_command_async(
