@@ -74,12 +74,3 @@ query GetActiveCustomOperators($offset: Int!, $limit: Int!) {
     count
   }
 }
-
-query getRagSuites {
-  ragSuites {
-    id
-    org
-    path
-    query
-  }
-}

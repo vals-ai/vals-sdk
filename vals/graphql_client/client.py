@@ -15,17 +15,18 @@ from .delete_test_suite import DeleteTestSuite
 from .enums import RunStatus
 from .get_active_custom_operators import GetActiveCustomOperators
 from .get_operators import GetOperators
-from .get_rag_suites import GetRagSuites
 from .get_single_run_review import GetSingleRunReview
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
 from .get_test_suites_with_count import GetTestSuitesWithCount
+from .get_user_options import GetUserOptions
 from .input_types import (
     CheckInputType,
     LocalEvalUploadInputType,
     ParameterInputType,
     QuestionAnswerPairInputType,
     TestMutationInfo,
+    TestReviewFilterOptionsInput,
 )
 from .list_projects import ListProjects
 from .list_question_answer_pairs import ListQuestionAnswerPairs
@@ -36,6 +37,7 @@ from .pull_test_results_with_count import PullTestResultsWithCount
 from .remove_old_tests import RemoveOldTests
 from .rerun_tests import RerunTests
 from .run_status import RunStatus
+from .single_test_result_reviews_with_count import SingleTestResultReviewsWithCount
 from .start_run import StartRun
 from .update_global_checks import UpdateGlobalChecks
 from .update_run_status import UpdateRunStatus
@@ -302,6 +304,134 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return GetSingleRunReview.model_validate(data)
+
+    async def single_test_result_reviews_with_count(
+        self,
+        run_id: str,
+        filter_options: Union[
+            Optional[TestReviewFilterOptionsInput], UnsetType
+        ] = UNSET,
+        **kwargs: Any
+    ) -> SingleTestResultReviewsWithCount:
+        query = gql(
+            """
+            query SingleTestResultReviewsWithCount($runId: String!, $filterOptions: TestReviewFilterOptionsInput) {
+              testResultReviewsWithCount(runId: $runId, filterOptions: $filterOptions) {
+                count
+                singleTestResults {
+                  id
+                  reviewedBy
+                  hasFeedback
+                  agreementRateAutoEval
+                  agreementRateHumanEval
+                  passRateHumanEval
+                  passPercentage
+                  amountReviewed
+                  latestCompletedReview
+                  llmOutput
+                  typedResultJson {
+                    autoEval
+                    criteria
+                    operator
+                  }
+                  qaPair {
+                    context
+                    outputContext
+                    errorMessage
+                  }
+                  test {
+                    testId
+                    inputUnderTest
+                    typedContext
+                  }
+                  typedMetadata {
+                    inTokens
+                    outTokens
+                    durationSeconds
+                  }
+                  aggregatedCustomMetrics {
+                    base {
+                      displayed
+                      value
+                    }
+                    comparative
+                    name
+                    type
+                    resultA {
+                      displayed
+                      value
+                    }
+                    resultB {
+                      displayed
+                      value
+                    }
+                  }
+                  singleTestReviews {
+                    id
+                    completedBy
+                    feedback
+                    completedAt
+                    startedAt
+                    createdBy
+                    status
+                    perCheckTestReviewTyped {
+                      binaryHumanEval
+                      isFlagged
+                    }
+                    testResult {
+                      id
+                      typedResultJson {
+                        autoEval
+                        criteria
+                        operator
+                      }
+                    }
+                    customReviewValues {
+                      template {
+                        id
+                        name
+                        instructions
+                        optional
+                        categories
+                        type
+                        minValue
+                        maxValue
+                      }
+                      value
+                    }
+                  }
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {
+            "runId": run_id,
+            "filterOptions": filter_options,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="SingleTestResultReviewsWithCount",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return SingleTestResultReviewsWithCount.model_validate(data)
+
+    async def get_user_options(self, **kwargs: Any) -> GetUserOptions:
+        query = gql(
+            """
+            query GetUserOptions {
+              userEmails
+            }
+            """
+        )
+        variables: Dict[str, object] = {}
+        response = await self.execute(
+            query=query, operation_name="GetUserOptions", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return GetUserOptions.model_validate(data)
 
     async def start_run(
         self,
@@ -686,28 +816,6 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return RemoveOldTests.model_validate(data)
 
-    async def create_rag_suite(
-        self, query: str, file_path: str, **kwargs: Any
-    ) -> CreateRagSuite:
-        _query = gql(
-            """
-            mutation createRagSuite($query: String!, $filePath: String!) {
-              updateRagSuite(ragSuiteId: "0", query: $query, filePath: $filePath) {
-                ragSuite {
-                  id
-                  query
-                }
-              }
-            }
-            """
-        )
-        variables: Dict[str, object] = {"query": query, "filePath": file_path}
-        response = await self.execute(
-            query=_query, operation_name="createRagSuite", variables=variables, **kwargs
-        )
-        data = self.get_data(response)
-        return CreateRagSuite.model_validate(data)
-
     async def rerun_tests(self, run_id: str, **kwargs: Any) -> RerunTests:
         query = gql(
             """
@@ -927,23 +1035,3 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return GetActiveCustomOperators.model_validate(data)
-
-    async def get_rag_suites(self, **kwargs: Any) -> GetRagSuites:
-        query = gql(
-            """
-            query getRagSuites {
-              ragSuites {
-                id
-                org
-                path
-                query
-              }
-            }
-            """
-        )
-        variables: Dict[str, object] = {}
-        response = await self.execute(
-            query=query, operation_name="getRagSuites", variables=variables, **kwargs
-        )
-        data = self.get_data(response)
-        return GetRagSuites.model_validate(data)

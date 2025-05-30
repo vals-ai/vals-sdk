@@ -1148,7 +1148,6 @@ class Suite(BaseModel):
 
         # Process all tests concurrently with limited concurrency
 
-
         with tqdm(
             total=(
                 len(self.tests) if remaining_tests is None else len(remaining_tests)

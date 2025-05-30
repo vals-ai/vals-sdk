@@ -4,6 +4,21 @@
 from enum import Enum
 
 
+class DropdownSectionEnum(str, Enum):
+    CONSTITUTIONAL = "CONSTITUTIONAL"
+    SEMANTIC = "SEMANTIC"
+    STRING_MATCHING = "STRING_MATCHING"
+    FORMATTING = "FORMATTING"
+    CONSISTENT_WITH_SOURCE = "CONSISTENT_WITH_SOURCE"
+    OTHER = "OTHER"
+
+
+class AppQuestionAnswerPairStatusChoices(str, Enum):
+    IN_PROGRESS = "IN_PROGRESS"
+    ERROR = "ERROR"
+    SUCCESS = "SUCCESS"
+
+
 class AppQuestionAnswerSetCreationMethodChoices(str, Enum):
     LIVE_QUERY = "LIVE_QUERY"
     SDK = "SDK"
@@ -14,7 +29,14 @@ class RunStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"
     ERROR = "ERROR"
     SUCCESS = "SUCCESS"
-    RERUNNING = "RERUNNING"
+    PAUSE = "PAUSE"
+    PENDING = "PENDING"
+
+
+class AppTestResultStatusChoices(str, Enum):
+    IN_PROGRESS = "IN_PROGRESS"
+    ERROR = "ERROR"
+    SUCCESS = "SUCCESS"
 
 
 class TestResultReviewStatusEnum(str, Enum):
@@ -30,13 +52,19 @@ class RunReviewStatusEnum(str, Enum):
     CANCELLED = "CANCELLED"
 
 
-class AppPairwiseRunReviewWinningRunChoices(str, Enum):
+class TemplateType(str, Enum):
+    CATEGORICAL = "CATEGORICAL"
+    NUMERICAL = "NUMERICAL"
+    FREE_TEXT = "FREE_TEXT"
+
+
+class AppPairwiseTestResultReviewWinningRunChoices(str, Enum):
     A = "A"
     B = "B"
     TIE = "TIE"
 
 
-class AppPairwiseTestResultReviewWinningRunChoices(str, Enum):
+class WinningRunEnum(str, Enum):
     A = "A"
     B = "B"
     TIE = "TIE"
@@ -46,12 +74,6 @@ class TierEnum(str, Enum):
     FREE = "FREE"
     STARTUP = "STARTUP"
     ENTERPRISE = "ENTERPRISE"
-
-
-class TemplateType(str, Enum):
-    CATEGORICAL = "CATEGORICAL"
-    NUMERICAL = "NUMERICAL"
-    FREE_TEXT = "FREE_TEXT"
 
 
 class RunReviewTableSortField(str, Enum):
@@ -92,7 +114,7 @@ class TestSuiteSortField(str, Enum):
     LAST_MODIFIED_AT = "LAST_MODIFIED_AT"
 
 
-class WinningRunEnum(str, Enum):
-    A = "A"
-    B = "B"
-    TIE = "TIE"
+class CustomMetricReviewType(str, Enum):
+    BASE = "BASE"
+    RESULT_A = "RESULT_A"
+    RESULT_B = "RESULT_B"

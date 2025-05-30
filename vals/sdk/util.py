@@ -2,10 +2,8 @@ import asyncio
 import base64
 import hashlib
 import os
-import urllib.parse
 from collections import defaultdict
 from io import BytesIO
-from PIL import Image
 
 import httpx
 import requests
@@ -141,7 +139,10 @@ def read_files(file_ids: list[str]) -> dict[str, BytesIO]:
         json={"file_ids": file_ids},
     )
 
-    return {file["filename"]: BytesIO(base64.b64decode(file["content"])) for file in response.json()["files"]}
+    return {
+        file["filename"]: BytesIO(base64.b64decode(file["content"]))
+        for file in response.json()["files"]
+    }
 
 
 async def _download_file_async(file_id: str, client: httpx.AsyncClient):
@@ -155,7 +156,11 @@ async def _download_file_async(file_id: str, client: httpx.AsyncClient):
     if response.status_code != 200:
         raise Exception(f"Failed to download file {file_id}: {response.text}")
 
-    return response.json()["files"][0]
+    result = response.json()["files"][0]
+
+    result["file_id"] = file_id
+
+    return result
 
 
 async def _download_files_chunk_async(file_ids_chunk: list[str]):
@@ -195,39 +200,47 @@ async def download_files_bulk(
     ]
 
     # Progress bar for the entire operation
-    with tqdm(total=len(files), desc="Downloading and saving files", unit="file") as progress_bar:
+    with tqdm(
+        total=len(files), desc="Downloading and saving files", unit="file"
+    ) as progress_bar:
         for chunk in chunks:
             # Download chunk of files
-            chunk_results = await _download_files_chunk_async([file.file_id for file in chunk])
-            
+            chunk_results = await _download_files_chunk_async(
+                [file.file_id for file in chunk]
+            )
+
             # Process each result as it comes
             for i, result in enumerate(chunk_results):
                 if isinstance(result, Exception):
                     print(f"Error downloading {chunk[i]}: {result}")
                     progress_bar.update(1)
                     continue
-                
+
                 # Extract file info
                 filename = result["filename"]
                 hash = result["hash"]
                 content = base64.b64decode(result["content"])
-                
+
                 # Determine file path - use hash directory if filename has duplicates
                 file_path = os.path.join(documents_download_path, filename)
-                relative_file_path = os.path.join(os.path.basename(documents_download_path), filename)
+                relative_file_path = os.path.join(
+                    os.path.basename(documents_download_path), filename
+                )
 
                 if len(filename_count[filename]) > 1 or os.path.exists(file_path):
                     hash_dir = os.path.join(documents_download_path, hash)
                     os.makedirs(hash_dir, exist_ok=True)
                     file_path = os.path.join(hash_dir, filename)
-                    relative_file_path = os.path.join(os.path.basename(documents_download_path), hash, filename)
+                    relative_file_path = os.path.join(
+                        os.path.basename(documents_download_path), hash, filename
+                    )
 
                 # Write the file
                 with open(file_path, "wb") as f:
                     f.write(content)
 
-                file_id_to_file_path["vals.ai/" + hash + "-" + filename] = relative_file_path
-                
+                file_id_to_file_path[result["file_id"]] = relative_file_path
+
                 # Update progress
                 progress_bar.update(1)
 

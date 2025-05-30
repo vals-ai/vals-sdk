@@ -321,12 +321,13 @@ class RunParameters(BaseModel):
 
 
 class RunStatus(str, Enum):
-    """Status of a run: 'in_progress', 'error', or 'success'."""
+    """Status of a run."""
 
     IN_PROGRESS = "in_progress"
     ERROR = "error"
     SUCCESS = "success"
-    RERUNNING = "rerunning"
+    PAUSE = "pause"
+    PENDING = "pending"
 
 
 class RunMetadata(BaseModel):
