@@ -5,11 +5,9 @@ This script shows how to:
 1. List all projects in your organization
 2. Get the default project
 3. Create and list resources within specific projects
-4. Use the VALS_PROJECT_ID environment variable
 """
 
 import asyncio
-import os
 from vals.sdk import Suite, Run, Project
 from vals.sdk.types import Check
 
@@ -96,38 +94,6 @@ async def list_runs_in_project(project_id: str):
     return runs
 
 
-async def demonstrate_environment_variable():
-    """Demonstrate using the VALS_PROJECT_ID environment variable."""
-    print("\n=== Using VALS_PROJECT_ID Environment Variable ===")
-    
-    # Save current env var if it exists
-    original_project_id = os.environ.get('VALS_PROJECT_ID')
-    
-    try:
-        # Get projects to find a non-default one
-        projects = await Project.list_projects()
-        non_default_project = next((p for p in projects if not p.is_default), None)
-        
-        if non_default_project:
-            # Set the environment variable
-            os.environ['VALS_PROJECT_ID'] = non_default_project.id
-            print(f"Set VALS_PROJECT_ID to: {non_default_project.id}")
-            
-            # Now operations will use this project by default
-            # Note: In a real scenario, you would need to reload the module
-            # for the environment variable to take effect
-            print("Future operations would use this project by default")
-        else:
-            print("No non-default projects found to demonstrate with")
-            
-    finally:
-        # Restore original env var
-        if original_project_id:
-            os.environ['VALS_PROJECT_ID'] = original_project_id
-        else:
-            os.environ.pop('VALS_PROJECT_ID', None)
-
-
 async def main():
     """Main function to run all examples."""
     print("Vals SDK Project Support Examples")
@@ -154,9 +120,6 @@ async def main():
         await list_runs_in_project(project_to_use.id)
     else:
         print("\nNote: Only one project found. Create additional projects to see project filtering in action.")
-    
-    # Demonstrate environment variable usage
-    await demonstrate_environment_variable()
     
     print("\n=== Examples Complete ===")
 

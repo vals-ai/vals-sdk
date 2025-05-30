@@ -13,7 +13,6 @@ from vals.sdk.auth import _get_auth_token, _get_region
 from vals.sdk.types import File
 
 VALS_ENV = os.getenv("VALS_ENV")
-VALS_PROJECT_ID = os.getenv("VALS_PROJECT_ID")
 
 
 def get_effective_project_id(project_id: str | None = None) -> str | None:
@@ -24,11 +23,9 @@ def get_effective_project_id(project_id: str | None = None) -> str | None:
         project_id: Explicitly provided project ID
         
     Returns:
-        The project ID to use (from parameter, environment, or None for default)
+        The project ID to use (from parameter or None for default)
     """
-    if project_id is not None:
-        return project_id
-    return VALS_PROJECT_ID
+    return project_id
 
 
 def read_pdf(file: BytesIO):

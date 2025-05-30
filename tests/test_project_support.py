@@ -171,37 +171,10 @@ class TestUtilityFunctions:
         result = get_effective_project_id("explicit-project-id")
         assert result == "explicit-project-id"
     
-    def test_get_effective_project_id_with_env_var(self):
-        """Test get_effective_project_id with environment variable."""
-        with patch.dict(os.environ, {'VALS_PROJECT_ID': 'env-project-id'}):
-            # Need to reload the module to pick up the env var
-            from vals.sdk import util
-            import importlib
-            importlib.reload(util)
-            from vals.sdk.util import get_effective_project_id as get_proj_id
-            
-            result = get_proj_id(None)
-            assert result == 'env-project-id'
-    
-    def test_get_effective_project_id_no_env_var(self):
-        """Test get_effective_project_id without environment variable."""
-        with patch.dict(os.environ, {}, clear=True):
-            # Remove VALS_PROJECT_ID if it exists
-            os.environ.pop('VALS_PROJECT_ID', None)
-            
-            from vals.sdk import util
-            import importlib
-            importlib.reload(util)
-            from vals.sdk.util import get_effective_project_id as get_proj_id
-            
-            result = get_proj_id(None)
-            assert result is None
-    
-    def test_get_effective_project_id_parameter_overrides_env(self):
-        """Test that explicit parameter overrides environment variable."""
-        with patch.dict(os.environ, {'VALS_PROJECT_ID': 'env-project-id'}):
-            result = get_effective_project_id("explicit-project-id")
-            assert result == "explicit-project-id"
+    def test_get_effective_project_id_without_parameter(self):
+        """Test get_effective_project_id without parameter returns None."""
+        result = get_effective_project_id(None)
+        assert result is None
 
 
 class TestCLIProjectSupport:
