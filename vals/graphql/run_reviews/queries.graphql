@@ -1,0 +1,124 @@
+query GetSingleRunReview($runReviewId: String!) {
+  singleRunReview(runReviewId: $runReviewId) {
+    id
+    createdBy
+    createdAt
+    status
+    passRate
+    flaggedRate
+    agreementRate
+    completedTime
+    numberOfReviews
+    assignedReviewers
+    rereviewAutoEval
+    run {
+      id
+    }
+    customReviewTemplates {
+      id
+      name
+      instructions
+      categories
+      type
+      optional
+      minValue
+      maxValue
+    }
+  }
+}
+
+query SingleTestResultReviewsWithCount(
+  $runId: String!
+  $filterOptions: TestReviewFilterOptionsInput
+) {
+  testResultReviewsWithCount(runId: $runId, filterOptions: $filterOptions) {
+    count
+    singleTestResults {
+      id
+      reviewedBy
+      hasFeedback
+      agreementRateAutoEval
+      agreementRateHumanEval
+      passRateHumanEval
+      passPercentage
+      amountReviewed
+      latestCompletedReview
+      llmOutput
+      typedResultJson {
+        autoEval
+        criteria
+        operator
+      }
+      qaPair {
+        context
+        outputContext
+        errorMessage
+      }
+      test {
+        testId
+        inputUnderTest
+        typedContext
+      }
+      typedMetadata {
+        inTokens
+        outTokens
+        durationSeconds
+      }
+      aggregatedCustomMetrics {
+        base {
+          displayed
+          value
+        }
+        comparative
+        name
+        type
+        resultA {
+          displayed
+          value
+        }
+        resultB {
+          displayed
+          value
+        }
+      }
+      singleTestReviews {
+        id
+        completedBy
+        feedback
+        completedAt
+        startedAt
+        createdBy
+        status
+        perCheckTestReviewTyped {
+          binaryHumanEval
+          isFlagged
+        }
+        testResult {
+          id
+          typedResultJson {
+            autoEval
+            criteria
+            operator
+          }
+        }
+        customReviewValues {
+          template {
+            id
+            name
+            instructions
+            optional
+            categories
+            type
+            minValue
+            maxValue
+          }
+          value
+        }
+      }
+    }
+  }
+}
+
+query GetUserOptions {
+  userEmails
+}
