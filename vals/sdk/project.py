@@ -41,20 +41,3 @@ class Project(BaseModel):
             )
         return projects
     
-    @classmethod
-    async def get_default_project(cls) -> "Project":
-        """
-        Get the default project for the organization.
-        
-        Returns:
-            The default Project object
-        """
-        client = get_ariadne_client()
-        result = await client.default_project()
-        
-        return cls(
-            id=result.default_project.id,
-            name=result.default_project.name,
-            slug=result.default_project.slug,
-            is_default=result.default_project.is_default,
-        )

@@ -104,6 +104,11 @@ from .input_types import (
     TestResultFilterOptions,
     TestReviewFilterOptionsInput,
 )
+from .list_projects import (
+    ListProjects,
+    ListProjectsProjectsWithCount,
+    ListProjectsProjectsWithCountProjects,
+)
 from .list_question_answer_pairs import (
     ListQuestionAnswerPairs,
     ListQuestionAnswerPairsQuestionAnswerPairsWithCount,
@@ -240,6 +245,9 @@ __all__ = [
     "GraphQLClientInvalidResponseError",
     "HumanReviewTemplateFilterOptionsInput",
     "HumanReviewTemplateInput",
+    "ListProjects",
+    "ListProjectsProjectsWithCount",
+    "ListProjectsProjectsWithCountProjects",
     "ListQuestionAnswerPairs",
     "ListQuestionAnswerPairsQuestionAnswerPairsWithCount",
     "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs",

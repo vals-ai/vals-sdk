@@ -6,11 +6,12 @@ from typing import Any
 
 import click
 from tabulate import tabulate
+
 from vals.cli.util import display_error_and_exit
 from vals.sdk.exceptions import ValsException
 from vals.sdk.suite import Suite
 from vals.sdk.types import RunParameters, RunStatus
-from vals.sdk.util import download_files_bulk, get_effective_project_id
+from vals.sdk.util import get_effective_project_id
 
 
 @click.group(name="suite")
@@ -73,6 +74,12 @@ def update_command(file: TextIOWrapper, suite_id: str):
 
 async def list_command_async(limit: int, offset: int, search: str, project_id: str | None):
     effective_project_id = get_effective_project_id(project_id)
+    
+    if effective_project_id:
+        click.echo(f"Listing suites for project: {effective_project_id}")
+    else:
+        click.echo("Listing suites for default project")
+    
     suites = await Suite.list_suites(limit=limit, offset=offset - 1, search=search, project_id=effective_project_id)
     headers = ["#", "Title", "Suite ID", "Last Modified"]
     rows = []
@@ -203,11 +210,11 @@ async def run_command_async(
 
     if wait_for_completion:
         if run.status == RunStatus.SUCCESS:
-            click.secho(f"Run has finished successfully", fg="green")
+            click.secho("Run has finished successfully", fg="green")
         elif run.status == RunStatus.ERROR:
-            click.secho(f"Run has completed with an error", fg="red")
+            click.secho("Run has completed with an error", fg="red")
     else:
-        click.secho(f"Run has been successfully started", fg="green")
+        click.secho("Run has been successfully started", fg="green")
 
     click.secho(f"Run ID: {run.id}")
     click.secho(run.url, bold=True)

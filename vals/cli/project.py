@@ -40,23 +40,4 @@ def list_command(limit: int, offset: int):
     asyncio.run(list_command_async(limit, offset))
 
 
-async def default_command_async():
-    """Show the default project for the organization."""
-    project = await Project.get_default_project()
-    
-    click.echo(f"Default Project:")
-    click.echo(f"  Name: {project.name}")
-    click.echo(f"  ID: {project.id}")
-    click.echo(f"  Slug: {project.slug}")
-
-
-@click.command(name="default")
-def default_command():
-    """
-    Show the default project for the organization
-    """
-    asyncio.run(default_command_async())
-
-
 project_group.add_command(list_command)
-project_group.add_command(default_command)

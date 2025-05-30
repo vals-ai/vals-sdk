@@ -8,6 +8,7 @@ from io import BytesIO
 import httpx
 import requests
 from tqdm import tqdm
+
 from vals.graphql_client.client import Client as AriadneClient
 from vals.sdk.auth import _get_auth_token, _get_region
 from vals.sdk.types import File

@@ -30,7 +30,6 @@ from vals.sdk.types import (
     ModelFunctionType,
     ModelFunctionWithFilesAndContextType,
     OperatorInput,
-    OutputObject,
     QuestionAnswerPair,
     RunParameters,
     RunStatus,
@@ -1210,7 +1209,7 @@ class Suite(BaseModel):
 
     async def _process_model_output(
         self,
-        output: str | dict | QuestionAnswerPairInputType | OutputObject,
+        output: str | dict | QuestionAnswerPairInputType,
         test: Test,
         file_ids: list[str],
         time_start: float,
@@ -1221,26 +1220,10 @@ class Suite(BaseModel):
         out_tokens_end: int,
     ) -> QuestionAnswerPairInputType:
         """Helper function to process model output into a QuestionAnswerPairInputType.
-        The output can now be either a string, a dict, a QuestionAnswerPairInputType, or an OutputObject, so we need to handle all cases.
+        The output can be either a string, a dict, or a QuestionAnswerPairInputType.
         """
         if isinstance(output, QuestionAnswerPairInputType):
             return output
-
-        # If output is an OutputObject, extract fields
-        if isinstance(output, OutputObject):
-            return QuestionAnswerPairInputType(
-                input_under_test=test.input_under_test,
-                file_ids=file_ids,
-                context=test.context,
-                llm_output=output.llm_output,
-                output_context=output.output_context,
-                metadata=MetadataType(
-                    in_tokens=output.in_tokens or (in_tokens_end - in_tokens_start),
-                    out_tokens=output.out_tokens or (out_tokens_end - out_tokens_start),
-                    duration_seconds=output.duration or (time_end - time_start),
-                ),
-                test_id=test._id,
-            )
 
         # If output is just a string, treat it as llm_output
         if isinstance(output, str):

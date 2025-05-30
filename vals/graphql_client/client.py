@@ -9,8 +9,6 @@ from .base_model import UNSET, UnsetType
 from .batch_add_question_answer_pairs import BatchAddQuestionAnswerPairs
 from .create_or_update_test_suite import CreateOrUpdateTestSuite
 from .create_question_answer_set import CreateQuestionAnswerSet
-from .create_rag_suite import CreateRagSuite
-from .default_project import DefaultProject
 from .delete_test_suite import DeleteTestSuite
 from .enums import RunStatus
 from .get_active_custom_operators import GetActiveCustomOperators
@@ -58,7 +56,9 @@ class Client(AsyncBaseClient):
         query = gql(
             """
             query listProjects($offset: Int, $limit: Int) {
-              projectsWithCount(filterOptions: {offset: $offset, limit: $limit}) {
+              projectsWithCount(
+                filterOptions: {offset: $offset, limit: $limit, archived: false}
+              ) {
                 projects {
                   id
                   name
@@ -77,27 +77,6 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return ListProjects.model_validate(data)
-
-    async def default_project(self, **kwargs: Any) -> DefaultProject:
-        query = gql(
-            """
-            query defaultProject {
-              defaultProject {
-                id
-                name
-                slug
-                created
-                isDefault
-              }
-            }
-            """
-        )
-        variables: Dict[str, object] = {}
-        response = await self.execute(
-            query=query, operation_name="defaultProject", variables=variables, **kwargs
-        )
-        data = self.get_data(response)
-        return DefaultProject.model_validate(data)
 
     async def create_question_answer_set(
         self,

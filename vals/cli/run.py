@@ -3,6 +3,7 @@ from io import TextIOWrapper
 
 import click
 from tabulate import tabulate
+
 from vals.sdk.run import Run
 from vals.sdk.util import get_effective_project_id
 
@@ -42,6 +43,12 @@ async def list_async(
     limit: int, offset: int, suite_id: str | None, show_archived: bool, search: str, project_id: str | None
 ):
     effective_project_id = get_effective_project_id(project_id)
+    
+    if effective_project_id:
+        click.echo(f"Listing runs for project: {effective_project_id}")
+    else:
+        click.echo("Listing runs for default project")
+    
     run_results = await Run.list_runs(
         limit=limit,
         offset=offset - 1,
@@ -103,7 +110,7 @@ async def list_async(
     default="",
     help="Search for a run based off its name, model or test suite title",
 )
-@click.option("--project-id", type=str, help="Project ID to filter runs by")
+@click.option("--project-id", type=str, help="Project ID to filter runs by (e.g., test-y10n61)")
 def list(
     limit: int, offset: int, suite_id: str | None, show_archived: bool, search: str, project_id: str | None
 ):
