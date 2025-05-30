@@ -1,14 +1,7 @@
-"""
-Example script demonstrating project support in the Vals SDK.
-
-This script shows how to:
-1. List all projects in your organization
-2. Get the default project
-3. Create and list resources within specific projects
-"""
 
 import asyncio
-from vals.sdk import Suite, Run, Project
+
+from vals.sdk import Project, Run, Suite
 from vals.sdk.types import Check
 
 
@@ -24,16 +17,6 @@ async def list_all_projects():
     return projects
 
 
-async def get_default_project_info():
-    """Get information about the default project."""
-    print("\n=== Default Project Info ===")
-    default_project = await Project.get_default_project()
-    
-    print(f"Name: {default_project.name}")
-    print(f"ID: {default_project.id}")
-    print(f"Slug: {default_project.slug}")
-    
-    return default_project
 
 
 async def create_suite_in_project(project_id: str):
@@ -102,13 +85,9 @@ async def main():
     # List all projects
     projects = await list_all_projects()
     
-    # Get default project info
-    default_project = await get_default_project_info()
-    
-    # If there are multiple projects, demonstrate project-specific operations
     if len(projects) > 1:
-        # Use a non-default project for demonstration
-        project_to_use = next((p for p in projects if not p.is_default), default_project)
+        # Use the first non-default project for demonstration
+        project_to_use = next((p for p in projects if not p.is_default), projects[0])
         
         # Create a suite in the project
         suite = await create_suite_in_project(project_to_use.id)

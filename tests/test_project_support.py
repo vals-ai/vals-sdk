@@ -41,28 +41,6 @@ class TestProjectClass:
         
         mock_client.list_projects.assert_called_once_with(limit=10, offset=0)
     
-    @pytest.mark.asyncio
-    async def test_get_default_project(self):
-        """Test getting the default project."""
-        mock_client = AsyncMock()
-        mock_response = MagicMock()
-        mock_response.default_project = MagicMock(
-            id="default-proj",
-            name="Default Project",
-            slug="default",
-            is_default=True
-        )
-        mock_client.default_project.return_value = mock_response
-        
-        with patch('vals.sdk.project.get_ariadne_client', return_value=mock_client):
-            project = await Project.get_default_project()
-            
-        assert project.id == "default-proj"
-        assert project.name == "Default Project"
-        assert project.slug == "default"
-        assert project.is_default
-        
-        mock_client.default_project.assert_called_once()
 
 
 class TestSuiteProjectSupport:
@@ -202,21 +180,6 @@ class TestCLIProjectSupport:
             # This would normally print to console, just testing it doesn't error
             await list_command_async(limit=10, offset=1)
     
-    @pytest.mark.asyncio
-    async def test_project_default_command(self):
-        """Test the project default CLI command."""
-        from vals.cli.project import default_command_async
-        
-        mock_project = Project(
-            id="default-1",
-            name="Default Project",
-            slug="default",
-            is_default=True
-        )
-        
-        with patch('vals.sdk.project.Project.get_default_project', return_value=mock_project):
-            # This would normally print to console, just testing it doesn't error
-            await default_command_async()
 
 
 class TestEndToEndProjectSupport:
