@@ -149,8 +149,18 @@ class Run(BaseModel):
         suite_id: str | None = None,
         show_archived: bool = False,
         search: str = "",
+        project_id: str | None = None,
     ) -> list["RunMetadata"]:
-        """List runs associated with this organization"""
+        """List runs associated with this organization
+        
+        Args:
+            limit: Maximum number of runs to return
+            offset: Number of runs to skip
+            suite_id: Filter by specific suite ID
+            show_archived: Include archived runs
+            search: Search string for filtering runs
+            project_id: Optional project ID to filter runs by project
+        """
         client = get_ariadne_client()
         result = await client.list_runs(
             limit=limit,
@@ -158,6 +168,7 @@ class Run(BaseModel):
             suite_id=suite_id,
             archived=show_archived,
             search=search,
+            project_id=project_id,
         )
         return [
             RunMetadata.from_graphql(run) for run in result.runs_with_count.run_results

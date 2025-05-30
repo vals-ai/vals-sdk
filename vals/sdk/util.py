@@ -8,11 +8,25 @@ from io import BytesIO
 import httpx
 import requests
 from tqdm import tqdm
+
 from vals.graphql_client.client import Client as AriadneClient
 from vals.sdk.auth import _get_auth_token, _get_region
 from vals.sdk.types import File
 
 VALS_ENV = os.getenv("VALS_ENV")
+
+
+def get_effective_project_id(project_id: str | None = None) -> str | None:
+    """
+    Get the effective project ID to use.
+    
+    Args:
+        project_id: Explicitly provided project ID
+        
+    Returns:
+        The project ID to use (from parameter or None for default)
+    """
+    return project_id
 
 
 def read_pdf(file: BytesIO):

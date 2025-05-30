@@ -1,0 +1,14 @@
+query listProjects($offset: Int, $limit: Int) {
+  projectsWithCount(
+    filterOptions: { offset: $offset, limit: $limit, archived: false }
+  ) {
+    projects {
+      id
+      name
+      slug
+      created
+      isDefault
+    }
+    count
+  }
+}

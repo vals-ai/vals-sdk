@@ -34,6 +34,7 @@ from vals.graphql_client.pull_test_results_with_count import (
 from vals.sdk.operator_type import OperatorType
 
 
+
 class TestSuiteMetadata(BaseModel):
     """
     Data returned about a test suite when we are calling the
