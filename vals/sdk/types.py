@@ -109,6 +109,9 @@ class CheckModifiers(BaseModel):
     category: str | None = None
     """Override the default category of the check (correctness, formatting, etc.)"""
 
+    display_metrics: bool = False
+    """If true, will display the metrics for the check in the UI"""
+
     @classmethod
     def from_graphql(cls, modifiers_dict: dict) -> "CheckModifiers":
         """Internal method to translate from what we receive from GraphQL to the CheckModifiers class."""
@@ -130,6 +133,7 @@ class CheckModifiers(BaseModel):
             extractor=modifiers_dict.get("extractor"),
             conditional=conditional,
             category=modifiers_dict.get("category"),
+            display_metrics=modifiers_dict.get("displayMetrics", False),
         )
 
 
