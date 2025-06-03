@@ -9,14 +9,14 @@ from vals.sdk.project import Project
 @click.group(name="project")
 def project_group():
     """
-    Manage projects
+    Commands related to project management, e.g. creation, deletion, etc.
     """
     pass
 
 
 async def list_command_async(limit: int, offset: int):
     """List all projects in the organization."""
-    projects = await Project.list_projects(limit=limit, offset=offset - 1)
+    projects = await Project.list_projects(limit=limit, offset=offset)
     
     headers = ["#", "Name", "ID", "Slug", "Default"]
     rows = []
@@ -31,7 +31,7 @@ async def list_command_async(limit: int, offset: int):
 @click.command(name="list")
 @click.option("-l", "--limit", type=int, default=25, help="Number of rows to return")
 @click.option(
-    "-o", "--offset", type=int, default=1, help="Start table at this row (1-indexed)"
+    "-o", "--offset", type=int, default=0, help="Start table at this row (0-indexed)"
 )
 def list_command(limit: int, offset: int):
     """

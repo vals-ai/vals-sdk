@@ -11,7 +11,6 @@ from vals.cli.util import display_error_and_exit
 from vals.sdk.exceptions import ValsException
 from vals.sdk.suite import Suite
 from vals.sdk.types import RunParameters, RunStatus
-from vals.sdk.util import get_effective_project_id
 
 
 @click.group(name="suite")
@@ -25,9 +24,8 @@ def suite_group():
 async def create_commmand_async(file: TextIOWrapper, project_id: str | None):
 
     suite = await Suite.from_dict(json.loads(file.read()))
-    effective_project_id = get_effective_project_id(project_id)
-    if effective_project_id:
-        suite.project_id = effective_project_id
+    if project_id:
+        suite.project_id = project_id
     await suite.create()
 
     click.secho("Successfully created test suite.", fg="green")
@@ -73,14 +71,12 @@ def update_command(file: TextIOWrapper, suite_id: str):
 
 
 async def list_command_async(limit: int, offset: int, search: str, project_id: str | None):
-    effective_project_id = get_effective_project_id(project_id)
-    
-    if effective_project_id:
-        click.echo(f"Listing suites for project: {effective_project_id}")
+    if project_id:
+        click.echo(f"Listing suites for project: {project_id}")
     else:
         click.echo("Listing suites for default project")
     
-    suites = await Suite.list_suites(limit=limit, offset=offset - 1, search=search, project_id=effective_project_id)
+    suites = await Suite.list_suites(limit=limit, offset=offset - 1, search=search, project_id=project_id)
     headers = ["#", "Title", "Suite ID", "Last Modified"]
     rows = []
     for i, suite in enumerate(suites, start=offset):
@@ -98,7 +94,7 @@ async def list_command_async(limit: int, offset: int, search: str, project_id: s
     "-o", "--offset", type=int, default=1, help="Start table at this row (1-indexed)"
 )
 @click.option("--search", type=str, default="", help="Search for a suite by title")
-@click.option("--project-id", type=str, help="Project ID to filter suites by")
+@click.option("--project-id", type=str, help="Project ID to filter suites by. If unset, uses the default project.")
 def list_command(
     limit: int,
     offset: int,
