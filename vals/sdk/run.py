@@ -152,7 +152,7 @@ class Run(BaseModel):
         project_id: str | None = None,
     ) -> list["RunMetadata"]:
         """List runs associated with this organization
-        
+
         Args:
             limit: Maximum number of runs to return
             offset: Number of runs to skip
@@ -254,7 +254,7 @@ class Run(BaseModel):
         await asyncio.sleep(1)
         status = RunStatus.IN_PROGRESS
         start_time = time.time()
-        while status == RunStatus.IN_PROGRESS:
+        while status in [RunStatus.IN_PROGRESS, RunStatus.PENDING]:
             status = await self.run_status()
 
             # Sleep longer between polls, the longer the run goes.
