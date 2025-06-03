@@ -367,3 +367,10 @@ class Run(BaseModel):
             remaining_tests=list(remaining_tests.values()),
             uploaded_qa_pairs=uploaded_qa_pairs,
         )
+
+    @staticmethod
+    async def get_status_from_id(run_id: str) -> RunStatus:
+        """Get the status of a run directly from its ID without instantiating a Run object."""
+        client = get_ariadne_client()
+        result = await client.run_status(run_id=run_id)
+        return RunStatus(result.run.status.lower())
