@@ -27,6 +27,7 @@ class PullRunRun(BaseModel):
     pass_rate: Optional["PullRunRunPassRate"] = Field(alias="passRate")
     success_rate: Optional["PullRunRunSuccessRate"] = Field(alias="successRate")
     test_suite: "PullRunRunTestSuite" = Field(alias="testSuite")
+    project: "PullRunRunProject"
 
 
 class PullRunRunQaSet(BaseModel):
@@ -60,6 +61,10 @@ class PullRunRunSuccessRate(BaseModel):
 class PullRunRunTestSuite(BaseModel):
     id: str
     title: str
+
+
+class PullRunRunProject(BaseModel):
+    slug: str
 
 
 PullRun.model_rebuild()

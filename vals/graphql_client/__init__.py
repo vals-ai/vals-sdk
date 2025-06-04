@@ -18,6 +18,7 @@ from .create_or_update_test_suite import (
     CreateOrUpdateTestSuite,
     CreateOrUpdateTestSuiteUpdateTestSuite,
     CreateOrUpdateTestSuiteUpdateTestSuiteTestSuite,
+    CreateOrUpdateTestSuiteUpdateTestSuiteTestSuiteProject,
 )
 from .create_question_answer_set import (
     CreateQuestionAnswerSet,
@@ -70,7 +71,11 @@ from .get_test_data import (
     GetTestDataTestsWithCountTests,
     GetTestDataTestsWithCountTestsTestSuite,
 )
-from .get_test_suite_data import GetTestSuiteData, GetTestSuiteDataTestSuite
+from .get_test_suite_data import (
+    GetTestSuiteData,
+    GetTestSuiteDataTestSuite,
+    GetTestSuiteDataTestSuiteProject,
+)
 from .get_test_suites_with_count import (
     GetTestSuitesWithCount,
     GetTestSuitesWithCountTestSuitesWithCount,
@@ -135,6 +140,7 @@ from .pull_run import (
     PullRun,
     PullRunRun,
     PullRunRunPassRate,
+    PullRunRunProject,
     PullRunRunQaSet,
     PullRunRunSuccessRate,
     PullRunRunTestSuite,
@@ -206,6 +212,7 @@ __all__ = [
     "CreateOrUpdateTestSuite",
     "CreateOrUpdateTestSuiteUpdateTestSuite",
     "CreateOrUpdateTestSuiteUpdateTestSuiteTestSuite",
+    "CreateOrUpdateTestSuiteUpdateTestSuiteTestSuiteProject",
     "CreateQuestionAnswerSet",
     "CreateQuestionAnswerSetCreateQuestionAnswerSet",
     "CreateQuestionAnswerSetCreateQuestionAnswerSetQuestionAnswerSet",
@@ -233,6 +240,7 @@ __all__ = [
     "GetTestDataTestsWithCountTestsTestSuite",
     "GetTestSuiteData",
     "GetTestSuiteDataTestSuite",
+    "GetTestSuiteDataTestSuiteProject",
     "GetTestSuitesWithCount",
     "GetTestSuitesWithCountTestSuitesWithCount",
     "GetTestSuitesWithCountTestSuitesWithCountTestSuites",
@@ -272,6 +280,7 @@ __all__ = [
     "PullRun",
     "PullRunRun",
     "PullRunRunPassRate",
+    "PullRunRunProject",
     "PullRunRunQaSet",
     "PullRunRunSuccessRate",
     "PullRunRunTestSuite",

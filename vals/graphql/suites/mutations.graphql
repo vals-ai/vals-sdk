@@ -15,6 +15,9 @@ mutation createOrUpdateTestSuite(
       id
       org
       title
+      project { 
+        slug
+      }
     }
   }
 }

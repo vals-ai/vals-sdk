@@ -130,6 +130,7 @@ class Suite(BaseModel):
 
         suite = cls(
             id=suite_id,
+            project_id=suite_data.project.slug,
             title=title,
             description=description,
             global_checks=global_checks,
@@ -237,7 +238,7 @@ class Suite(BaseModel):
 
     @property
     def url(self):
-        return f"{fe_host()}/suites/{self.id}"
+        return f"{fe_host()}/project/{self.project_id}/suites/{self.id}"
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -318,6 +319,7 @@ class Suite(BaseModel):
         if suite.update_test_suite is None:
             raise Exception("Unable to update the test suite.")
         self.id = suite.update_test_suite.test_suite.id
+        self.project_id = suite.update_test_suite.test_suite.project.slug
 
         await self._upload_global_checks()
         await self._upload_files(max_upload_concurrency=max_upload_concurrency)

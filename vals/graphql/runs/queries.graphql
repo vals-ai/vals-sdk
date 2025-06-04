@@ -42,6 +42,9 @@ query PullRun($runId: String!) {
       id
       title
     }
+    project {
+      slug
+    }
   }
 }
 
