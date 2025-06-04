@@ -1,6 +1,4 @@
 import asyncio
-import aiohttp
-import aiofiles
 import concurrent.futures._base
 import inspect
 import json
@@ -8,11 +6,14 @@ import os
 from time import time
 from typing import Any, Callable, cast, overload
 
+import aiofiles
+import aiohttp
 import requests
-import vals.sdk.patch as patch
 from pydantic import BaseModel, PrivateAttr
 from tqdm import tqdm
 from tqdm.asyncio import tqdm as asyncio_tqdm
+
+import vals.sdk.patch as patch
 from vals.graphql_client.client import UNSET, Client
 from vals.graphql_client.get_operators import GetOperatorsOperators
 from vals.graphql_client.input_types import (
@@ -30,6 +31,7 @@ from vals.sdk.types import (
     ModelFunctionType,
     ModelFunctionWithFilesAndContextType,
     OperatorInput,
+    OutputObject,
     QuestionAnswerPair,
     RunParameters,
     RunStatus,
@@ -44,7 +46,6 @@ from vals.sdk.util import (
     fe_host,
     get_ariadne_client,
     md5_hash,
-    parse_file_id,
     read_files,
 )
 
@@ -444,7 +445,7 @@ class Suite(BaseModel):
                     run_id=run_id, status=RunStatus.ERROR.value.upper()
                 )
             raise
-        except Exception as e:
+        except Exception:
             if run_id:
                 await self._client.update_run_status(
                     run_id=run_id, status=RunStatus.ERROR.value.upper()
@@ -1211,7 +1212,7 @@ class Suite(BaseModel):
 
     async def _process_model_output(
         self,
-        output: str | dict | QuestionAnswerPairInputType,
+        output: str | dict | QuestionAnswerPairInputType | OutputObject,
         test: Test,
         file_ids: list[str],
         time_start: float,
@@ -1222,10 +1223,26 @@ class Suite(BaseModel):
         out_tokens_end: int,
     ) -> QuestionAnswerPairInputType:
         """Helper function to process model output into a QuestionAnswerPairInputType.
-        The output can be either a string, a dict, or a QuestionAnswerPairInputType.
+        The output can now be either a string, a dict, a QuestionAnswerPairInputType, or an OutputObject, so we need to handle all cases.
         """
         if isinstance(output, QuestionAnswerPairInputType):
             return output
+
+        # If output is an OutputObject, extract fields
+        if isinstance(output, OutputObject):
+            return QuestionAnswerPairInputType(
+                input_under_test=test.input_under_test,
+                file_ids=file_ids,
+                context=test.context,
+                llm_output=output.llm_output,
+                output_context=output.output_context,
+                metadata=MetadataType(
+                    in_tokens=output.in_tokens or (in_tokens_end - in_tokens_start),
+                    out_tokens=output.out_tokens or (out_tokens_end - out_tokens_start),
+                    duration_seconds=output.duration or (time_end - time_start),
+                ),
+                test_id=test._id,
+            )
 
         # If output is just a string, treat it as llm_output
         if isinstance(output, str):
