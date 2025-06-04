@@ -24,6 +24,9 @@ class Run(BaseModel):
     id: str
     """Unique identifier for the run."""
 
+    project_id: str
+    """Project ID of the run."""
+
     name: str
     """Name of the run."""
 
@@ -112,6 +115,7 @@ class Run(BaseModel):
 
         return Run(
             id=run_id,
+            project_id=result.run.project.slug,
             name=result.run.name,
             qa_set_id=result.run.qa_set.id if result.run.qa_set else None,
             model=model,
@@ -149,8 +153,18 @@ class Run(BaseModel):
         suite_id: str | None = None,
         show_archived: bool = False,
         search: str = "",
+        project_id: str | None = None,
     ) -> list["RunMetadata"]:
-        """List runs associated with this organization"""
+        """List runs associated with this organization
+
+        Args:
+            limit: Maximum number of runs to return
+            offset: Number of runs to skip
+            suite_id: Filter by specific suite ID
+            show_archived: Include archived runs
+            search: Search string for filtering runs
+            project_id: Optional project ID to filter runs by project
+        """
         client = get_ariadne_client()
         result = await client.list_runs(
             limit=limit,
@@ -158,6 +172,7 @@ class Run(BaseModel):
             suite_id=suite_id,
             archived=show_archived,
             search=search,
+            project_id=project_id,
         )
         return [
             RunMetadata.from_graphql(run) for run in result.runs_with_count.run_results
@@ -171,7 +186,7 @@ class Run(BaseModel):
 
     @property
     def url(self) -> str:
-        return f"{fe_host()}/results/{self.id}"
+        return f"{fe_host()}/project/{self.project_id}/results/{self.id}"
 
     def to_dict(self) -> dict[str, Any]:
         """Converts the run to a dictionary."""
@@ -243,7 +258,7 @@ class Run(BaseModel):
         await asyncio.sleep(1)
         status = RunStatus.IN_PROGRESS
         start_time = time.time()
-        while status == RunStatus.IN_PROGRESS:
+        while status in [RunStatus.IN_PROGRESS, RunStatus.PENDING]:
             status = await self.run_status()
 
             # Sleep longer between polls, the longer the run goes.
@@ -367,3 +382,10 @@ class Run(BaseModel):
             remaining_tests=list(remaining_tests.values()),
             uploaded_qa_pairs=uploaded_qa_pairs,
         )
+
+    @staticmethod
+    async def get_status_from_id(run_id: str) -> RunStatus:
+        """Get the status of a run directly from its ID without instantiating a Run object."""
+        client = get_ariadne_client()
+        result = await client.run_status(run_id=run_id)
+        return RunStatus(result.run.status.lower())

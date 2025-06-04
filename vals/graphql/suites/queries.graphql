@@ -2,6 +2,9 @@ query getTestSuiteData($suiteId: String!) {
   testSuite(testSuiteId: $suiteId) {
     description
     id
+    project {
+      slug
+    }
     org
     title
     created
@@ -31,9 +34,9 @@ query getTestData($suiteId: String!, $offset: Int, $limit: Int) {
   }
 }
 
-query getTestSuitesWithCount($offset: Int, $limit: Int, $search: String) {
+query getTestSuitesWithCount($offset: Int, $limit: Int, $search: String, $projectId: String) {
   testSuitesWithCount(
-    filterOptions: { offset: $offset, limit: $limit, search: $search }
+    filterOptions: { offset: $offset, limit: $limit, search: $search, projectId: $projectId }
   ) {
     testSuites {
       id
@@ -72,14 +75,5 @@ query GetActiveCustomOperators($offset: Int!, $limit: Int!) {
       archived
     }
     count
-  }
-}
-
-query getRagSuites {
-  ragSuites {
-    id
-    org
-    path
-    query
   }
 }

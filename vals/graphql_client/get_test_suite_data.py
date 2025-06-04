@@ -16,10 +16,16 @@ class GetTestSuiteData(BaseModel):
 class GetTestSuiteDataTestSuite(BaseModel):
     description: str
     id: str
+    project: "GetTestSuiteDataTestSuiteProject"
     org: str
     title: str
     created: datetime
     global_checks: Any = Field(alias="globalChecks")
 
 
+class GetTestSuiteDataTestSuiteProject(BaseModel):
+    slug: str
+
+
 GetTestSuiteData.model_rebuild()
+GetTestSuiteDataTestSuite.model_rebuild()

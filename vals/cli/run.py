@@ -3,6 +3,7 @@ from io import TextIOWrapper
 
 import click
 from tabulate import tabulate
+
 from vals.sdk.run import Run
 
 
@@ -38,14 +39,20 @@ def pull(run_id: str, file: TextIOWrapper, csv: bool, json: bool):
 
 
 async def list_async(
-    limit: int, offset: int, suite_id: str | None, show_archived: bool, search: str
+    limit: int, offset: int, suite_id: str | None, show_archived: bool, search: str, project_id: str | None
 ):
+    if project_id:
+        click.echo(f"Listing runs for project: {project_id}")
+    else:
+        click.echo("Listing runs for default project")
+    
     run_results = await Run.list_runs(
         limit=limit,
         offset=offset - 1,
         show_archived=show_archived,
         suite_id=suite_id,
         search=search,
+        project_id=project_id,
     )
 
     column_names = ["#", "Run Name", "Id", "Status", "Model", "Pass Rate", "Timestamp"]
@@ -100,13 +107,14 @@ async def list_async(
     default="",
     help="Search for a run based off its name, model or test suite title",
 )
+@click.option("--project-id", type=str, help="Project ID to filter runs by (e.g., test-y10n61). If unset, uses the default project.")
 def list(
-    limit: int, offset: int, suite_id: str | None, show_archived: bool, search: str
+    limit: int, offset: int, suite_id: str | None, show_archived: bool, search: str, project_id: str | None
 ):
     """
     List runs associated with this organization
     """
-    asyncio.run(list_async(limit, offset, suite_id, show_archived, search))
+    asyncio.run(list_async(limit, offset, suite_id, show_archived, search, project_id))
 
 
 run_group.add_command(pull)

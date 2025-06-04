@@ -47,10 +47,11 @@ $ vals
 
 Use the `--help` flag at the top and subcommand level for guidance.
 
-Commands must be run from the pip environment the cli was installed in. Commands are split up into subcommand. Currently there are two subcommands:
+Commands must be run from the pip environment the cli was installed in. Commands are split up into subcommands. Currently there are three main subcommands:
 
 - `vals suite --help`: relating to creating / updating tests and suites
-- `vals run --help`: relating to creating and querying runs and run results.
+- `vals run --help`: relating to creating and querying runs and run results
+- `vals project --help`: relating to listing and managing projects
 
 Full documentation of the CLI usage can be found in our documentation at [https://www.platform.vals.ai/docs/index.html#/cli](https://www.platform.vals.ai/docs/index.html#/cli)
 

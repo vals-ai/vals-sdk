@@ -25,8 +25,8 @@ class GetSingleRunReviewSingleRunReview(BaseModel):
     flagged_rate: Optional[float] = Field(alias="flaggedRate")
     agreement_rate: Optional[float] = Field(alias="agreementRate")
     completed_time: Optional[datetime] = Field(alias="completedTime")
-    number_of_reviews: Optional[int] = Field(alias="numberOfReviews")
-    assigned_reviewers: Any = Field(alias="assignedReviewers")
+    number_of_reviews: int = Field(alias="numberOfReviews")
+    assigned_reviewers: List[str] = Field(alias="assignedReviewers")
     rereview_auto_eval: bool = Field(alias="rereviewAutoEval")
     run: "GetSingleRunReviewSingleRunReviewRun"
     custom_review_templates: List[
