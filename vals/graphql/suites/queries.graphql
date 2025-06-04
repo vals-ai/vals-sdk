@@ -2,6 +2,9 @@ query getTestSuiteData($suiteId: String!) {
   testSuite(testSuiteId: $suiteId) {
     description
     id
+    project {
+      slug
+    }
     org
     title
     created

@@ -529,6 +529,9 @@ class Client(AsyncBaseClient):
                   id
                   title
                 }
+                project {
+                  slug
+                }
               }
             }
             """
@@ -681,6 +684,9 @@ class Client(AsyncBaseClient):
                   id
                   org
                   title
+                  project {
+                    slug
+                  }
                 }
               }
             }
@@ -857,6 +863,9 @@ class Client(AsyncBaseClient):
               testSuite(testSuiteId: $suiteId) {
                 description
                 id
+                project {
+                  slug
+                }
                 org
                 title
                 created

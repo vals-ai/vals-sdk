@@ -24,6 +24,9 @@ class Run(BaseModel):
     id: str
     """Unique identifier for the run."""
 
+    project_id: str
+    """Project ID of the run."""
+
     name: str
     """Name of the run."""
 
@@ -112,6 +115,7 @@ class Run(BaseModel):
 
         return Run(
             id=run_id,
+            project_id=result.run.project.slug,
             name=result.run.name,
             qa_set_id=result.run.qa_set.id if result.run.qa_set else None,
             model=model,
@@ -182,7 +186,7 @@ class Run(BaseModel):
 
     @property
     def url(self) -> str:
-        return f"{fe_host()}/results/{self.id}"
+        return f"{fe_host()}/project/{self.project_id}/results/{self.id}"
 
     def to_dict(self) -> dict[str, Any]:
         """Converts the run to a dictionary."""

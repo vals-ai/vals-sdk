@@ -25,7 +25,13 @@ class CreateOrUpdateTestSuiteUpdateTestSuiteTestSuite(BaseModel):
     id: str
     org: str
     title: str
+    project: "CreateOrUpdateTestSuiteUpdateTestSuiteTestSuiteProject"
+
+
+class CreateOrUpdateTestSuiteUpdateTestSuiteTestSuiteProject(BaseModel):
+    slug: str
 
 
 CreateOrUpdateTestSuite.model_rebuild()
 CreateOrUpdateTestSuiteUpdateTestSuite.model_rebuild()
+CreateOrUpdateTestSuiteUpdateTestSuiteTestSuite.model_rebuild()
