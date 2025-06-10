@@ -507,14 +507,17 @@ class Suite(BaseModel):
             model = model.get_custom_model()
 
         parameter_json = parameters.model_dump()
-        del parameter_json[
-            "parallelism"
-        ]  # Need to explicitly map parallelism to maximum_threads
+        del parameter_json[ "parallelism"]
+        del parameter_json["eval_model"]
+        default_parameters = await self._client.get_default_parameters()
         parameter_input = ParameterInputType(
             **parameter_json,
             detect_refusals=False,
             model_under_test="",
             maximum_threads=parameters.parallelism,
+            eval_model=parameter_json.get(
+                "eval_model", default_parameters.default_parameters.eval_model
+            ),
         )
 
         # Collate the local output pairs if we're using a model function.

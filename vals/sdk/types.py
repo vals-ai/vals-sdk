@@ -290,8 +290,12 @@ class Test(BaseModel):
 class RunParameters(BaseModel):
     """Parameters for a run."""
 
-    eval_model: str = "gpt-4o"
-    """Model to use for the LLM as judge - this is *not* the model being tested."""
+    eval_model: str | None = None
+    """
+    "Model to use for the LLM as judge - this is *not* the model being tested.
+    
+    Defaults to the default eval model for your organization, which is generally gpt-4o.
+    """
 
     parallelism: int = 10
     """How many tests to run in parallel"""

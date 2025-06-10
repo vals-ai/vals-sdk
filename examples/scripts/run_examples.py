@@ -198,13 +198,13 @@ async def pull_run(run_id: str):
 
 
 async def all():
-    await run_with_local_eval()
-    await run_with_model_under_test()
+    # await run_with_local_eval()
+    # await run_with_model_under_test()
     await run_with_function()
-    await run_with_function_context_and_files()
-    await run_with_qa_pairs()
-    await run_with_qa_pairs_and_context()
-    await pull_run("ee42eedf-8fe1-4149-a980-58faa4dae1b7")
+    # await run_with_function_context_and_files()
+    # await run_with_qa_pairs()
+    # await run_with_qa_pairs_and_context()
+    # await pull_run("ee42eedf-8fe1-4149-a980-58faa4dae1b7")
 
 
 if __name__ == "__main__":
