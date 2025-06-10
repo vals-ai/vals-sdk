@@ -77,3 +77,20 @@ query GetActiveCustomOperators($offset: Int!, $limit: Int!) {
     count
   }
 }
+
+query GetDefaultParameters {
+  defaultParameters {
+    evalModel
+    maximumThreads
+    runGoldenEval
+    runConfidenceEvaluation
+    newLineStopOption
+    createTextSummary
+    detectRefusals
+    modelUnderTest
+    temperature
+    maxOutputTokens
+    heavyweightFactor
+    systemPrompt
+  }
+}

@@ -12,6 +12,7 @@ from .create_question_answer_set import CreateQuestionAnswerSet
 from .delete_test_suite import DeleteTestSuite
 from .enums import RunStatus
 from .get_active_custom_operators import GetActiveCustomOperators
+from .get_default_parameters import GetDefaultParameters
 from .get_operators import GetOperators
 from .get_single_run_review import GetSingleRunReview
 from .get_test_data import GetTestData
@@ -1023,3 +1024,34 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return GetActiveCustomOperators.model_validate(data)
+
+    async def get_default_parameters(self, **kwargs: Any) -> GetDefaultParameters:
+        query = gql(
+            """
+            query GetDefaultParameters {
+              defaultParameters {
+                evalModel
+                maximumThreads
+                runGoldenEval
+                runConfidenceEvaluation
+                newLineStopOption
+                createTextSummary
+                detectRefusals
+                modelUnderTest
+                temperature
+                maxOutputTokens
+                heavyweightFactor
+                systemPrompt
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {}
+        response = await self.execute(
+            query=query,
+            operation_name="GetDefaultParameters",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return GetDefaultParameters.model_validate(data)
