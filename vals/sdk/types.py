@@ -246,14 +246,12 @@ class Test(BaseModel):
     @classmethod
     def model_validate(
         cls,
-        obj: Any,
+        obj: dict,
         **kwargs
     ) -> "Test":
-        """Override model_validate to handle GraphQL field name mapping."""
-        if isinstance(obj, dict):
-            data = obj.copy()
+        data = obj.copy()
 
-        data["_id"] = data.pop("id") # pop early or it gets replaced
+        data["_id"] = data.pop("id")
 
         # We map these ourselves
         field_mappings = {
