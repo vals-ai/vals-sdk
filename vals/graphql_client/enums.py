@@ -31,7 +31,9 @@ class RunStatus(str, Enum):
     SUCCESS = "SUCCESS"
     PAUSE = "PAUSE"
     PENDING = "PENDING"
+    AWAITING_BATCH = "AWAITING_BATCH"
     CANCELLED = "CANCELLED"
+    PAUSING = "PAUSING"
 
 
 class AppTestResultStatusChoices(str, Enum):
