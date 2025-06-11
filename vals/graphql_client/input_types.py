@@ -171,6 +171,7 @@ class ParameterInputType(BaseModel):
     max_output_tokens: int = Field(alias="maxOutputTokens")
     system_prompt: str = Field(alias="systemPrompt")
     new_line_stop_option: bool = Field(alias="newLineStopOption")
+    as_batch: bool = Field(alias="asBatch")
 
 
 class FixedOutputInputType(BaseModel):
