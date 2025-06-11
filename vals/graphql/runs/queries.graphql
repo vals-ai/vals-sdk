@@ -1,3 +1,5 @@
+#import TestFragment from "../fragments/test.graphql"
+
 query RunStatus($runId: String!) {
   run(runId: $runId) {
     status
@@ -65,9 +67,7 @@ query PullTestResultsWithCount($runId: String!, $offset: Int, $limit: Int) {
         errorMessage
       }
       test {
-        testId
-        inputUnderTest
-        context
+        ...TestFragment
       }
       metadata
     }
