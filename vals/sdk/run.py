@@ -17,7 +17,7 @@ from vals.sdk.types import (
     RunStatus,
     TestResult,
 )
-from vals.sdk.util import _get_auth_token, be_host, fe_host, get_ariadne_client
+from vals.sdk.util import _get_auth_token, be_host, fe_host, get_ariadne_client, get_auth_headers
 
 
 class Run(BaseModel):
@@ -277,7 +277,7 @@ class Run(BaseModel):
         """Same as to_csv, but returns a string instead of writing to a file."""
         response = requests.post(
             url=f"{be_host()}/export_results_to_file/?run_id={self.id}",
-            headers={"Authorization": _get_auth_token()},
+            headers=get_auth_headers(),
         )
 
         if response.status_code != 200:
@@ -289,7 +289,7 @@ class Run(BaseModel):
 
         response = requests.post(
             url=f"{be_host()}/export_run_to_json/?run_id={self.id}",
-            headers={"Authorization": _get_auth_token()},
+            headers=get_auth_headers(),
         )
 
         if response.status_code != 200:

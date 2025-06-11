@@ -45,6 +45,7 @@ from vals.sdk.util import (
     download_files_bulk,
     fe_host,
     get_ariadne_client,
+    get_auth_headers,
     md5_hash,
     read_files,
 )
@@ -264,7 +265,7 @@ class Suite(BaseModel):
         url = f"{be_host()}/export_tests_to_file/?suite_id={self.id}"
         response = requests.post(
             url,
-            headers={"Authorization": _get_auth_token()},
+            headers=get_auth_headers(),
         )
         if response.status_code != 200:
             raise Exception(f"Failed to export tests: {response.text}")
@@ -281,7 +282,7 @@ class Suite(BaseModel):
         url = f"{be_host()}/export_tests_to_json/?suite_id={self.id}"
         response = requests.post(
             url,
-            headers={"Authorization": _get_auth_token()},
+            headers=get_auth_headers(),
         )
 
         if response.status_code != 200:
@@ -1201,7 +1202,7 @@ class Suite(BaseModel):
             async with session.post(
                 f"{be_host()}/upload_file/?test_suite_id={suite_id}",
                 data=form,
-                headers={"Authorization": _get_auth_token()},
+                headers=get_auth_headers(),
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()

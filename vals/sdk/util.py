@@ -4,6 +4,7 @@ import hashlib
 import os
 from collections import defaultdict
 from io import BytesIO
+from typing import Any
 
 import httpx
 import requests
@@ -77,6 +78,11 @@ def fe_host():
     return "https://platform.vals.ai"
 
 
+def get_auth_headers() -> dict[str, str]:
+    """Get authentication headers for API requests."""
+    return {"Authorization": _get_auth_token()}
+
+
 def get_ariadne_client() -> AriadneClient:
     """
     Use the new codegen-based client
@@ -92,7 +98,7 @@ def get_ariadne_client() -> AriadneClient:
     )
 
 
-def md5_hash(file) -> str:
+def md5_hash(file: BytesIO) -> str:
     """Produces an md5 hash of the file."""
     hasher = hashlib.md5()
     while chunk := file.read(8192):  # Read in 8 KB chunks
@@ -120,7 +126,7 @@ def parse_file_id(file_id: str) -> tuple[str, str, str | None]:
 def read_files(file_ids: list[str]) -> dict[str, BytesIO]:
     response = requests.post(
         url=f"{be_host()}/download_files_bulk/",
-        headers={"Authorization": _get_auth_token()},
+        headers=get_auth_headers(),
         json={"file_ids": file_ids},
     )
 
@@ -130,11 +136,11 @@ def read_files(file_ids: list[str]) -> dict[str, BytesIO]:
     }
 
 
-async def _download_file_async(file_id: str, client: httpx.AsyncClient):
+async def _download_file_async(file_id: str, client: httpx.AsyncClient) -> dict[str, Any]:
     """Helper function to download a single file asynchronously"""
     response = await client.post(
         f"{be_host()}/download_files_bulk/",
-        headers={"Authorization": _get_auth_token()},
+        headers=get_auth_headers(),
         json={"file_ids": [file_id]},
     )
 
@@ -148,7 +154,7 @@ async def _download_file_async(file_id: str, client: httpx.AsyncClient):
     return result
 
 
-async def _download_files_chunk_async(file_ids_chunk: list[str]):
+async def _download_files_chunk_async(file_ids_chunk: list[str]) -> list[dict[str, Any] | Exception]:
     """Download a chunk of files asynchronously"""
     async with httpx.AsyncClient(timeout=60) as client:
         tasks = [_download_file_async(file_id, client) for file_id in file_ids_chunk]

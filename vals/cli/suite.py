@@ -21,16 +21,21 @@ def suite_group():
     pass
 
 
-async def create_commmand_async(file: TextIOWrapper, project_id: str | None):
+async def create_command_async(file: TextIOWrapper, project_id: str | None):
+    try:
+        suite = await Suite.from_dict(json.loads(file.read()))
+        if project_id:
+            suite.project_id = project_id
+        await suite.create()
 
-    suite = await Suite.from_dict(json.loads(file.read()))
-    if project_id:
-        suite.project_id = project_id
-    await suite.create()
+        click.secho("Successfully created test suite.", fg="green")
+        click.secho(f"ID: {suite.id}")
+        click.secho(suite.url, bold=True)
 
-    click.secho("Successfully created test suite.", fg="green")
-    click.secho(f"ID: {suite.id}")
-    click.secho(suite.url, bold=True)
+    except ValsException as e:
+        click.secho(e.message, fg="red")
+    except Exception as e:
+        click.secho("Suite Creation Failed. Error:" + str(e), fg="red")
 
 
 @click.command(name="create")
@@ -42,7 +47,7 @@ def create_command(file: TextIOWrapper, project_id: str | None):
 
     See the documentation for information on the format.
     """
-    asyncio.run(create_commmand_async(file, project_id))
+    asyncio.run(create_command_async(file, project_id))
 
 
 async def update_command_async(file: TextIOWrapper, suite_id: str):
