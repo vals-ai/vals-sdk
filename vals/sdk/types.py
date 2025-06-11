@@ -327,6 +327,9 @@ class RunParameters(BaseModel):
     retry_failed_calls_indefinitely: bool = False
     """ If true, when receiving an error from the model, will retry indefinitely until it receives a success."""
 
+    as_batch: bool = False
+    """ If true, suite will run the QA stage using the Batch API if it's available for the current model."""
+
 
 class RunStatus(str, Enum):
     """Status of a run."""
@@ -336,6 +339,9 @@ class RunStatus(str, Enum):
     SUCCESS = "success"
     PAUSE = "pause"
     PENDING = "pending"
+    AWAITING_BATCH = "awaiting_batch"
+    CANCELLED = "cancelled"
+    PAUSING = "pausing"
 
 
 class RunMetadata(BaseModel):
