@@ -187,6 +187,7 @@ class QuestionAnswerPairInputType(BaseModel):
     llm_output: str = Field(alias="llmOutput")
     metadata: Optional["MetadataType"] = None
     test_id: Optional[str] = Field(alias="testId", default=None)
+    status: str = Field(alias="status", default="in_progress")
 
 
 class MetadataType(BaseModel):
