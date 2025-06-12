@@ -1245,6 +1245,7 @@ class Suite(BaseModel):
                     duration_seconds=output.duration or (time_end - time_start),
                 ),
                 test_id=test._id,
+                status="success",
             )
 
         # If output is just a string, treat it as llm_output
@@ -1260,6 +1261,7 @@ class Suite(BaseModel):
                     duration_seconds=time_end - time_start,
                 ),
                 test_id=test._id,
+                status="success",
             )
 
         # If output is a dict, use provided values or defaults
@@ -1289,4 +1291,5 @@ class Suite(BaseModel):
                 duration_seconds=duration_seconds,
             ),
             test_id=test._id,
+            status="success",
         )
