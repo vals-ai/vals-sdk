@@ -1,3 +1,5 @@
+#import TestFragment from "../fragments/test.graphql"
+
 query getTestSuiteData($suiteId: String!) {
   testSuite(testSuiteId: $suiteId) {
     description
@@ -18,25 +20,25 @@ query getTestData($suiteId: String!, $offset: Int, $limit: Int) {
     filterOptions: { offset: $offset, limit: $limit }
   ) {
     tests {
-      checks
-      testId
-      crossVersionId
-      fileIds
-      inputUnderTest
-      tags
-      context
-      goldenOutput
-      testSuite {
-        id
-      }
+      ...TestFragment
     }
     count
   }
 }
 
-query getTestSuitesWithCount($offset: Int, $limit: Int, $search: String, $projectId: String) {
+query getTestSuitesWithCount(
+  $offset: Int
+  $limit: Int
+  $search: String
+  $projectId: String
+) {
   testSuitesWithCount(
-    filterOptions: { offset: $offset, limit: $limit, search: $search, projectId: $projectId }
+    filterOptions: {
+      offset: $offset
+      limit: $limit
+      search: $search
+      projectId: $projectId
+    }
   ) {
     testSuites {
       id

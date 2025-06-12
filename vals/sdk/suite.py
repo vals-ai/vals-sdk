@@ -120,8 +120,8 @@ class Suite(BaseModel):
         while not have_pulled_all_tests:
             test_data = await client.get_test_data(suite_id, offset, page_size)
 
-            for graphql_test in test_data.tests_with_count.tests:
-                test = Test.from_graphql_test(graphql_test)
+            for test in test_data.tests_with_count.tests:
+                test = Test.model_validate(test.model_dump())
                 tests.append(test)
 
             if len(tests) >= test_data.tests_with_count.count:
@@ -831,7 +831,7 @@ class Suite(BaseModel):
                 pbar.update(len(batch))
 
         # Update the local suite with the new tests to ensure everything is in sync.
-        self.tests = [Test.from_graphql_test(test) for test in created_tests]
+        self.tests = [Test.model_validate(test) for test in created_tests]
 
     async def _validate_checks(
         self, check: Check, operators_dict: dict[str, GetOperatorsOperators]
