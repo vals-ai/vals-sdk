@@ -53,14 +53,6 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQLClientInvalidResponseError,
 )
-from .fragments import (
-    TestFragment,
-    TestFragmentTestSuite,
-    TestFragmentTypedChecks,
-    TestFragmentTypedChecksModifiers,
-    TestFragmentTypedChecksModifiersConditional,
-    TestFragmentTypedChecksModifiersExamples,
-)
 from .get_active_custom_operators import (
     GetActiveCustomOperators,
     GetActiveCustomOperatorsCustomOperators,
@@ -81,6 +73,7 @@ from .get_test_data import (
     GetTestData,
     GetTestDataTestsWithCount,
     GetTestDataTestsWithCountTests,
+    GetTestDataTestsWithCountTestsTestSuite,
 )
 from .get_test_suite_data import (
     GetTestSuiteData,
@@ -250,6 +243,7 @@ __all__ = [
     "GetTestData",
     "GetTestDataTestsWithCount",
     "GetTestDataTestsWithCountTests",
+    "GetTestDataTestsWithCountTestsTestSuite",
     "GetTestSuiteData",
     "GetTestSuiteDataTestSuite",
     "GetTestSuiteDataTestSuiteProject",
@@ -339,12 +333,6 @@ __all__ = [
     "StartRunStartRun",
     "TemplateType",
     "TestFilterOptions",
-    "TestFragment",
-    "TestFragmentTestSuite",
-    "TestFragmentTypedChecks",
-    "TestFragmentTypedChecksModifiers",
-    "TestFragmentTypedChecksModifiersConditional",
-    "TestFragmentTypedChecksModifiersExamples",
     "TestMutationInfo",
     "TestResultCheckErrorEnum",
     "TestResultFilterOptions",

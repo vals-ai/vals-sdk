@@ -570,43 +570,13 @@ class Client(AsyncBaseClient):
                     errorMessage
                   }
                   test {
-                    ...TestFragment
+                    testId
+                    inputUnderTest
+                    context
                   }
                   metadata
                 }
                 count
-              }
-            }
-
-            fragment TestFragment on TestType {
-              id
-              inputUnderTest
-              typedContext
-              typedTags
-              crossVersionId
-              goldenOutput
-              typedFileIds
-              typedChecks {
-                operator
-                criteria
-                modifiers {
-                  optional
-                  severity
-                  examples {
-                    type
-                    text
-                  }
-                  extractor
-                  conditional {
-                    operator
-                    criteria
-                  }
-                  category
-                  displayMetrics
-                }
-              }
-              testSuite {
-                id
               }
             }
             """
@@ -930,41 +900,19 @@ class Client(AsyncBaseClient):
                 filterOptions: {offset: $offset, limit: $limit}
               ) {
                 tests {
-                  ...TestFragment
+                  checks
+                  testId
+                  crossVersionId
+                  fileIds
+                  inputUnderTest
+                  tags
+                  context
+                  goldenOutput
+                  testSuite {
+                    id
+                  }
                 }
                 count
-              }
-            }
-
-            fragment TestFragment on TestType {
-              id
-              inputUnderTest
-              typedContext
-              typedTags
-              crossVersionId
-              goldenOutput
-              typedFileIds
-              typedChecks {
-                operator
-                criteria
-                modifiers {
-                  optional
-                  severity
-                  examples {
-                    type
-                    text
-                  }
-                  extractor
-                  conditional {
-                    operator
-                    criteria
-                  }
-                  category
-                  displayMetrics
-                }
-              }
-              testSuite {
-                id
               }
             }
             """

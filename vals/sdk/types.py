@@ -13,6 +13,7 @@ from typing import Any, Callable, Literal, Optional
 
 from pydantic import BaseModel
 
+from vals.graphql_client.get_test_data import GetTestDataTestsWithCountTests
 from vals.graphql_client.get_test_suites_with_count import (
     GetTestSuitesWithCountTestSuitesWithCountTestSuites,
 )
@@ -37,17 +38,17 @@ from vals.sdk.operator_type import OperatorType
 class OutputObject(BaseModel):
     """
     Structured output for model functions with optional metadata.
-
+    
     This class provides a type-safe way to return model outputs along with
     additional context and metadata. It's especially useful for RAG applications,
     chain-of-thought reasoning, and model monitoring.
-
+    
     Example:
         ```python
         def my_model(input: str) -> OutputObject:
             response = generate_response(input)
             sources = retrieve_sources(input)
-
+            
             return OutputObject(
                 llm_output=response,
                 output_context={
@@ -60,11 +61,9 @@ class OutputObject(BaseModel):
             )
         ```
     """
-
+    
     llm_output: str  # Required: The actual model output
-    output_context: Optional[dict[str, Any]] = (
-        None  # Optional: Arbitrary metadata about the output
-    )
+    output_context: Optional[dict[str, Any]] = None  # Optional: Arbitrary metadata about the output
     duration: Optional[float] = None  # Optional: Generation time in seconds
     in_tokens: Optional[int] = None  # Optional: Input token count
     out_tokens: Optional[int] = None  # Optional: Output token count
@@ -213,11 +212,11 @@ class File(BaseModel):
 
 
 class Test(BaseModel):
-    id: str | None = None
-    """Displayed id for the test. DO NOT REPLACE _id with this since it will break creation of tests. This will be refactored in the future."""
-
     _id: str = "0"
     """Internal id of the test. 0 signifies it hasn't been created yet."""
+
+    _cross_version_id: str = ""
+    """Internal id that stays constant across versions."""
 
     _test_suite_id: str = ""
     """Maintain internal representation of which Test Suite the test originally belonged to"""
@@ -225,10 +224,10 @@ class Test(BaseModel):
     input_under_test: str
     """Input to the LLM"""
 
-    checks: list[Check] = []
+    checks: list[Check]
     """List of checks to apply to the LLM's output"""
 
-    right_answer: str = ""
+    golden_output: str = ""
     """ Expected output of the LLM - can be used instead of or in-conjuction with checks"""
 
     tags: list[str] = []
@@ -244,49 +243,31 @@ class Test(BaseModel):
     """This is the *internal* representation of a file, as stored on the server. You generally should not edit or use these. """
 
     @classmethod
-    def model_validate(
-        cls,
-        obj: dict,
-        **kwargs
-    ) -> "Test":
-        data = obj.copy()
-
-        data["_id"] = data.pop("id")
-
-        # We map these ourselves
-        field_mappings = {
-            "cross_version_id": "id",
-            "input_under_test": "input_under_test",
-            "typed_checks": "checks",
-            "golden_output": "right_answer",
-            "typed_tags": "tags",
-            "typed_context": "context", 
-            "typed_file_ids": "_file_ids",
-        }
-
-        for graphql_name, python_name in field_mappings.items():
-
-            # Move over the graphql dict fields to the pydantic fields
-            if data.get(graphql_name, None) is not None:
-                data[python_name] = data.pop(graphql_name)
-
-        # fields we could not map over because they are too different
-        data["_test_suite_id"] = data.pop("test_suite", {}).get("id", "")
-
-        files = data.get("_file_ids", [])
-    
-        data["files_under_test"] = [
-            File(
-                file_name=file_id.split("-", 1)[-1],
-                file_id=file_id,
-                hash=file_id.split("-", 1)[0].split("/", 1)[-1],
-                path=None,
-            )
-            for file_id in files
-        ]
-
-    
-        return Test(**data)
+    def from_graphql_test(cls, graphql_test: GetTestDataTestsWithCountTests) -> "Test":
+        """Internal method to translate from what we receive from GraphQL to the Test class displayed to the user."""
+        test = cls(
+            input_under_test=graphql_test.input_under_test,
+            tags=json.loads(graphql_test.tags),
+            context=json.loads(graphql_test.context),
+            golden_output=graphql_test.golden_output,
+            checks=[
+                Check.from_graphql(check) for check in json.loads(graphql_test.checks)
+            ],
+            files_under_test=[
+                File(
+                    file_name=file.split("-", 1)[-1],
+                    file_id=file,
+                    hash=file.split("-", 1)[0].split("/", 1)[-1],
+                    path=None,
+                )
+                for file in json.loads(graphql_test.file_ids)
+            ],
+        )
+        test._file_ids = json.loads(graphql_test.file_ids)
+        test._id = graphql_test.test_id
+        test._cross_version_id = graphql_test.cross_version_id
+        test._test_suite_id = graphql_test.test_suite.id
+        return test
 
     def to_test_mutation_info(self, test_suite_id: str) -> TestMutationInfo:
         """Internal method to translate from the Test class to the TestMutationInfo class."""
@@ -300,7 +281,7 @@ class Test(BaseModel):
             input_under_test=self.input_under_test,
             checks=[check.to_graphql_input() for check in self.checks],
             tags=self.tags,
-            context=self.context,
+            context=json.dumps(self.context),
             golden_output=self.golden_output,
             file_ids=file_ids,
         )
@@ -452,7 +433,7 @@ class TestResult(BaseModel):
     """Result of evaluation for a single test."""
 
     _id: str
-    test: Test
+    test_id: str
     input_under_test: str
 
     context: dict[str, Any]
@@ -487,12 +468,12 @@ class TestResult(BaseModel):
         if graphql_test_result.qa_pair:
             output_context = graphql_test_result.qa_pair.output_context
             context = graphql_test_result.qa_pair.context
-            if len(context) == 0 and graphql_test_result.test.typed_context is not None:
-                context = graphql_test_result.test.typed_context
+            if len(context) == 0 and graphql_test_result.test.context is not None:
+                context = json.loads(graphql_test_result.test.context)
 
         return cls(
             _id=graphql_test_result.id,
-            test=Test.model_validate(graphql_test_result.test.model_dump()),
+            test_id=graphql_test_result.test.test_id,
             input_under_test=graphql_test_result.test.input_under_test,
             context=context,
             output_context=output_context,
@@ -633,9 +614,7 @@ class CustomModelOutput(BaseModel):
 
 SimpleModelFunctionType = Callable[[str], str | OutputObject]
 
-ModelFunctionWithFilesAndContextType = Callable[
-    [str, dict[str, BytesIO], dict[str, Any]], str | dict[str, Any] | OutputObject
-]
+ModelFunctionWithFilesAndContextType = Callable[[str, dict[str, BytesIO], dict[str, Any]], str | dict[str, Any] | OutputObject]
 
 ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType
 
