@@ -341,6 +341,9 @@ class RunParameters(BaseModel):
     retry_failed_calls_indefinitely: bool = False
     """ If true, when receiving an error from the model, will retry indefinitely until it receives a success."""
 
+    as_batch: bool = False
+    """If true, will run the tests as a batch"""
+
 
 class RunStatus(str, Enum):
     """Status of a run."""
