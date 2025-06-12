@@ -143,6 +143,9 @@ class Client(AsyncBaseClient):
                   fileIds
                   context
                   outputContext
+                  test {
+                    id
+                  }
                 }
               }
             }
@@ -218,7 +221,7 @@ class Client(AsyncBaseClient):
                     createdAt
                   }
                   test {
-                    testId
+                    id
                   }
                 }
                 count
@@ -320,7 +323,7 @@ class Client(AsyncBaseClient):
                     errorMessage
                   }
                   test {
-                    testId
+                    id
                     inputUnderTest
                     typedContext
                   }

@@ -42,6 +42,8 @@ async def run_with_function():
     )
     await suite.create()
 
+    print("tests", suite.tests[0]._id)
+
     def function(input_under_test: str) -> str:
         # This would be replaced with your custom model.
         return input_under_test + "!!!"
@@ -82,6 +84,8 @@ async def run_with_local_eval():
         ],
     )
     await suite.create()
+
+    print("suite.tests", suite.tests[0]._id)
 
     run = await suite.run(
         model=custom_model,

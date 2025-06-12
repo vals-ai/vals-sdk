@@ -11,7 +11,7 @@ from enum import Enum
 from io import BytesIO
 from typing import Any, Callable, Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from vals.graphql_client.get_test_suites_with_count import (
     GetTestSuitesWithCountTestSuitesWithCountTestSuites,
@@ -213,6 +213,7 @@ class File(BaseModel):
 
 
 class Test(BaseModel):
+
     id: str | None = None
     """Displayed id for the test. DO NOT REPLACE _id with this since it will break creation of tests. This will be refactored in the future."""
 
@@ -261,7 +262,6 @@ class Test(BaseModel):
         }
 
         for graphql_name, python_name in field_mappings.items():
-
             # Move over the graphql dict fields to the pydantic fields
             if data.get(graphql_name, None) is not None:
                 data[python_name] = data.pop(graphql_name)
@@ -281,11 +281,14 @@ class Test(BaseModel):
             for file_id in files
         ]
 
-        return Test(**data)
+        test = Test(**data)
+
+        test._id = data["_id"]
+
+        return test
 
     def to_test_mutation_info(self, test_suite_id: str) -> TestMutationInfo:
         """Internal method to translate from the Test class to the TestMutationInfo class."""
-
         file_ids = [file.file_id for file in self.files_under_test]
 
         return TestMutationInfo(
@@ -554,7 +557,7 @@ class QuestionAnswerPair(BaseModel):
             context=graphql_qa_pair.context or {},
             output_context=graphql_qa_pair.output_context or {},
             metadata=metadata,
-            test_id=graphql_qa_pair.test.test_id if graphql_qa_pair.test else None,
+            test_id=graphql_qa_pair.test.id if graphql_qa_pair.test else None,
             local_evals=(
                 [
                     LocalEvalUploadInputType(

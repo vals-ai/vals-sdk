@@ -22,7 +22,7 @@ query ListQuestionAnswerPairs($qaSetId: String!, $offset: Int, $limit: Int) {
         createdAt
       }
       test {
-        testId
+        id
       }
     }
     count

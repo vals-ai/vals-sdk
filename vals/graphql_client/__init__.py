@@ -11,6 +11,7 @@ from .batch_add_question_answer_pairs import (
     BatchAddQuestionAnswerPairs,
     BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairs,
     BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairs,
+    BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairsTest,
 )
 from .client import Client
 from .create_or_update_test_suite import (
@@ -214,6 +215,7 @@ __all__ = [
     "BatchAddQuestionAnswerPairs",
     "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairs",
     "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairs",
+    "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairsTest",
     "CheckInputType",
     "CheckModifiersInputType",
     "Client",
