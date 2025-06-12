@@ -244,11 +244,7 @@ class Test(BaseModel):
     """This is the *internal* representation of a file, as stored on the server. You generally should not edit or use these. """
 
     @classmethod
-    def model_validate(
-        cls,
-        obj: dict,
-        **kwargs
-    ) -> "Test":
+    def model_validate(cls, obj: dict, **kwargs) -> "Test":
         data = obj.copy()
 
         data["_id"] = data.pop("id")
@@ -260,7 +256,7 @@ class Test(BaseModel):
             "typed_checks": "checks",
             "golden_output": "right_answer",
             "typed_tags": "tags",
-            "typed_context": "context", 
+            "typed_context": "context",
             "typed_file_ids": "_file_ids",
         }
 
@@ -274,7 +270,7 @@ class Test(BaseModel):
         data["_test_suite_id"] = data.pop("test_suite", {}).get("id", "")
 
         files = data.get("_file_ids", [])
-    
+
         data["files_under_test"] = [
             File(
                 file_name=file_id.split("-", 1)[-1],
@@ -285,7 +281,6 @@ class Test(BaseModel):
             for file_id in files
         ]
 
-    
         return Test(**data)
 
     def to_test_mutation_info(self, test_suite_id: str) -> TestMutationInfo:
@@ -300,8 +295,8 @@ class Test(BaseModel):
             input_under_test=self.input_under_test,
             checks=[check.to_graphql_input() for check in self.checks],
             tags=self.tags,
-            context=self.context,
-            golden_output=self.golden_output,
+            typed_context=self.context,
+            golden_output=self.right_answer,
             file_ids=file_ids,
         )
 

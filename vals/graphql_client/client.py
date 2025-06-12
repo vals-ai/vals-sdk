@@ -746,18 +746,40 @@ class Client(AsyncBaseClient):
             mutation addBatchTests($tests: [TestMutationInfo!]!, $createOnly: Boolean!) {
               batchUpdateTest(tests: $tests, createOnly: $createOnly) {
                 tests {
-                  checks
-                  testId
-                  crossVersionId
-                  fileIds
-                  inputUnderTest
-                  tags
-                  context
-                  goldenOutput
-                  testSuite {
-                    id
-                  }
+                  ...TestFragment
                 }
+              }
+            }
+
+            fragment TestFragment on TestType {
+              id
+              inputUnderTest
+              typedContext
+              typedTags
+              crossVersionId
+              goldenOutput
+              typedFileIds
+              typedChecks {
+                operator
+                criteria
+                modifiers {
+                  optional
+                  severity
+                  examples {
+                    type
+                    text
+                  }
+                  extractor
+                  conditional {
+                    operator
+                    criteria
+                  }
+                  category
+                  displayMetrics
+                }
+              }
+              testSuite {
+                id
               }
             }
             """

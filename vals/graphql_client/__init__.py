@@ -4,7 +4,6 @@ from .add_batch_tests import (
     AddBatchTests,
     AddBatchTestsBatchUpdateTest,
     AddBatchTestsBatchUpdateTestTests,
-    AddBatchTestsBatchUpdateTestTestsTestSuite,
 )
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel, Upload
@@ -206,7 +205,6 @@ __all__ = [
     "AddBatchTests",
     "AddBatchTestsBatchUpdateTest",
     "AddBatchTestsBatchUpdateTestTests",
-    "AddBatchTestsBatchUpdateTestTestsTestSuite",
     "AppPairwiseTestResultReviewWinningRunChoices",
     "AppQuestionAnswerPairStatusChoices",
     "AppQuestionAnswerSetCreationMethodChoices",

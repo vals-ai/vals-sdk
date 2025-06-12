@@ -137,7 +137,7 @@ class Suite(BaseModel):
             global_checks=global_checks,
             tests=tests,
         )
-        
+
         if download_files:
             files = []
             path = suite.title if download_path is None else download_path
@@ -149,7 +149,7 @@ class Suite(BaseModel):
                 file_id_to_file_path = await download_files_bulk(
                     files, path, max_concurrent_downloads=max_concurrent_downloads
                 )
-                
+
                 for test in suite.tests:
                     for file in test.files_under_test:
                         file.path = file_id_to_file_path[file.file_id]
@@ -507,7 +507,7 @@ class Suite(BaseModel):
             model = model.get_custom_model()
 
         parameter_json = parameters.model_dump()
-        del parameter_json[ "parallelism"]
+        del parameter_json["parallelism"]
         del parameter_json["eval_model"]
         default_parameters = await self._client.get_default_parameters()
         parameter_input = ParameterInputType(
@@ -831,7 +831,7 @@ class Suite(BaseModel):
                 pbar.update(len(batch))
 
         # Update the local suite with the new tests to ensure everything is in sync.
-        self.tests = [Test.model_validate(test) for test in created_tests]
+        self.tests = [Test.model_validate(test.model_dump()) for test in created_tests]
 
     async def _validate_checks(
         self, check: Check, operators_dict: dict[str, GetOperatorsOperators]
