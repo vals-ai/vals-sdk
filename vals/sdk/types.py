@@ -217,7 +217,7 @@ class Test(BaseModel):
     id: str | None = None
     """Displayed id for the test. DO NOT REPLACE _id with this since it will break creation of tests. This will be refactored in the future."""
 
-    _id: str = "0"
+    _id: str = ""
     """Internal id of the test. 0 signifies it hasn't been created yet."""
 
     _test_suite_id: str = ""
@@ -248,7 +248,7 @@ class Test(BaseModel):
     def model_validate(cls, obj: dict, **kwargs) -> "Test":
         data = obj.copy()
 
-        data["_id"] = data.pop("id")
+        data["_id"] = data.pop("id", "0")
 
         # We map these ourselves
         field_mappings = {
