@@ -303,6 +303,9 @@ class RunParameters(BaseModel):
     run_golden_eval: bool = False
     """Compares the output to the golden ansewr, if provided"""
 
+    custom_parameters: dict[str, str | int | float | bool] = {}
+    """Additional model-specific parameters to pass """
+
     run_confidence_evaluation: bool = True
     """ If false, don't produce confidence scores for checks """
 
@@ -450,8 +453,8 @@ class TestResult(BaseModel):
     pass_percentage: float
     """Percent of passing checks for the test"""
 
-    pass_percentage_with_optional: float
-    """Percent of passing checks including optional checks"""
+    pass_percentage_with_weight: float
+    """ Percentage of passing checks, taking into account the weight of each check. """
 
     check_results: list[CheckResult]
     """Results for every check"""
@@ -479,7 +482,7 @@ class TestResult(BaseModel):
             output_context=output_context,
             llm_output=graphql_test_result.llm_output,
             pass_percentage=graphql_test_result.pass_percentage,
-            pass_percentage_with_optional=graphql_test_result.pass_percentage_with_optional,
+            pass_percentage_with_weight=graphql_test_result.pass_percentage_with_weight,
             error_message=(
                 graphql_test_result.qa_pair.error_message
                 if graphql_test_result.qa_pair

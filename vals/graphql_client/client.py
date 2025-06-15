@@ -562,7 +562,7 @@ class Client(AsyncBaseClient):
                   id
                   llmOutput
                   passPercentage
-                  passPercentageWithOptional
+                  passPercentageWithWeight
                   resultJson
                   qaPair {
                     context
