@@ -7,6 +7,8 @@ from pydantic import Field
 
 from .base_model import BaseModel
 from .enums import (
+    ChartMetric,
+    ChartType,
     CustomMetricReviewType,
     RunResultSortField,
     RunReviewStatusEnum,
@@ -187,7 +189,7 @@ class QuestionAnswerPairInputType(BaseModel):
     llm_output: str = Field(alias="llmOutput")
     metadata: Optional["MetadataType"] = None
     test_id: Optional[str] = Field(alias="testId", default=None)
-    status: str = Field(alias="status", default="in_progress")
+    status: Optional[str] = None
 
 
 class MetadataType(BaseModel):
@@ -227,7 +229,24 @@ class HumanReviewTemplateInput(BaseModel):
     comparative: Optional[bool] = None
 
 
+class ChartConfigInput(BaseModel):
+    id: str
+    title: str
+    subtitle: Optional[str] = None
+    metric: ChartMetric
+    filters: "ChartFilterInput"
+    chart_type: ChartType = Field(alias="chartType")
+
+
+class ChartFilterInput(BaseModel):
+    test_suite_id: Optional[str] = Field(alias="testSuiteId", default=None)
+    model_name: Optional[str] = Field(alias="modelName", default=None)
+    run_count: int = Field(alias="runCount")
+    run_ids: Optional[List[Optional[str]]] = Field(alias="runIds", default=None)
+
+
 CheckInputType.model_rebuild()
 CheckModifiersInputType.model_rebuild()
 TestMutationInfo.model_rebuild()
 QuestionAnswerPairInputType.model_rebuild()
+ChartConfigInput.model_rebuild()

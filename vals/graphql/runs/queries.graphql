@@ -57,7 +57,7 @@ query PullTestResultsWithCount($runId: String!, $offset: Int, $limit: Int) {
       id
       llmOutput
       passPercentage
-      passPercentageWithOptional
+      passPercentageWithWeight
       resultJson
       qaPair {
         context
