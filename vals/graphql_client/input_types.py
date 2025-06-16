@@ -7,6 +7,7 @@ from pydantic import Field
 
 from .base_model import BaseModel
 from .enums import (
+    CustomMetricReviewType,
     RunResultSortField,
     RunReviewStatusEnum,
     RunReviewTableSortField,
@@ -24,6 +25,7 @@ class CustomOperatorFilterOptions(BaseModel):
     archived: Optional[bool] = None
     limit: int
     offset: int
+    project_id: Optional[str] = Field(alias="projectId", default=None)
 
 
 class ResolveApiKeysFilterOptions(BaseModel):
@@ -35,6 +37,8 @@ class HumanReviewTemplateFilterOptionsInput(BaseModel):
     limit: Optional[int] = None
     offset: Optional[int] = None
     archived: Optional[bool] = None
+    comparative: Optional[bool] = None
+    project_id: Optional[str] = Field(alias="projectId", default=None)
 
 
 class RunReviewTableFilterOptionsInput(BaseModel):
@@ -44,6 +48,7 @@ class RunReviewTableFilterOptionsInput(BaseModel):
     sort_by: Optional[RunReviewTableSortField] = Field(alias="sortBy", default=None)
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
     status: Optional[RunReviewStatusEnum] = None
+    project_id: Optional[str] = Field(alias="projectId", default=None)
 
 
 class TestReviewFilterOptionsInput(BaseModel):
@@ -56,6 +61,7 @@ class TestReviewFilterOptionsInput(BaseModel):
 
 
 class RunResultFilterOptionsInput(BaseModel):
+    project_id: Optional[str] = Field(alias="projectId", default=None)
     limit: Optional[int] = None
     offset: Optional[int] = None
     search: Optional[str] = None
@@ -96,11 +102,19 @@ class FilterOptionsInput(BaseModel):
     test_suite_id: Optional[str] = Field(alias="testSuiteId", default=None)
     sort_by: Optional[TestSuiteSortField] = Field(alias="sortBy", default=None)
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+    project_id: Optional[str] = Field(alias="projectId", default=None)
 
 
 class TestFilterOptions(BaseModel):
     search: Optional[str] = None
     tags: Optional[List[Optional[str]]] = None
+    offset: Optional[int] = None
+    limit: Optional[int] = None
+
+
+class ProjectsWithCountFilterType(BaseModel):
+    search: Optional[str] = None
+    archived: Optional[bool] = None
     offset: Optional[int] = None
     limit: Optional[int] = None
 
@@ -114,6 +128,7 @@ class CheckInputType(BaseModel):
 class CheckModifiersInputType(BaseModel):
     optional: bool
     severity: Optional[float] = None
+    display_metrics: bool = Field(alias="displayMetrics")
     examples: List["ExampleInputType"]
     extractor: Optional[str] = None
     conditional: Optional["ConditionalCheckInputType"] = None
@@ -156,6 +171,7 @@ class ParameterInputType(BaseModel):
     max_output_tokens: int = Field(alias="maxOutputTokens")
     system_prompt: str = Field(alias="systemPrompt")
     new_line_stop_option: bool = Field(alias="newLineStopOption")
+    as_batch: bool = Field(alias="asBatch")
 
 
 class FixedOutputInputType(BaseModel):
@@ -171,6 +187,7 @@ class QuestionAnswerPairInputType(BaseModel):
     llm_output: str = Field(alias="llmOutput")
     metadata: Optional["MetadataType"] = None
     test_id: Optional[str] = Field(alias="testId", default=None)
+    status: str = Field(alias="status", default="in_progress")
 
 
 class MetadataType(BaseModel):
@@ -189,6 +206,7 @@ class LocalEvalUploadInputType(BaseModel):
 class CustomHumanReviewValueInputType(BaseModel):
     template_id: str = Field(alias="templateId")
     value: str
+    review_type: CustomMetricReviewType = Field(alias="reviewType")
 
 
 class PerCheckTestReviewInputType(BaseModel):
@@ -197,28 +215,16 @@ class PerCheckTestReviewInputType(BaseModel):
     is_flagged: Optional[bool] = Field(alias="isFlagged", default=None)
 
 
-class CategoricalReviewTemplateInput(BaseModel):
-    type: TemplateType
-    name: str
-    instructions: str
-    optional: bool
-    categories: List[str]
-
-
-class NumericalReviewTemplateInput(BaseModel):
-    type: TemplateType
+class HumanReviewTemplateInput(BaseModel):
+    id: Optional[str] = None
     name: str
     instructions: str
     optional: bool
     min_value: Optional[int] = Field(alias="minValue", default=None)
     max_value: Optional[int] = Field(alias="maxValue", default=None)
-
-
-class FreeTextReviewTemplateInput(BaseModel):
+    categories: Optional[List[Optional[str]]] = None
     type: TemplateType
-    name: str
-    instructions: str
-    optional: bool
+    comparative: Optional[bool] = None
 
 
 CheckInputType.model_rebuild()

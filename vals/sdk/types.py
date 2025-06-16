@@ -9,9 +9,10 @@ import datetime
 import json
 from enum import Enum
 from io import BytesIO
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Literal, Optional
 
 from pydantic import BaseModel
+
 from vals.graphql_client.get_test_data import GetTestDataTestsWithCountTests
 from vals.graphql_client.get_test_suites_with_count import (
     GetTestSuitesWithCountTestSuitesWithCountTestSuites,
@@ -32,6 +33,40 @@ from vals.graphql_client.pull_test_results_with_count import (
     PullTestResultsWithCountTestResultsWithCountTestResults,
 )
 from vals.sdk.operator_type import OperatorType
+
+
+class OutputObject(BaseModel):
+    """
+    Structured output for model functions with optional metadata.
+    
+    This class provides a type-safe way to return model outputs along with
+    additional context and metadata. It's especially useful for RAG applications,
+    chain-of-thought reasoning, and model monitoring.
+    
+    Example:
+        ```python
+        def my_model(input: str) -> OutputObject:
+            response = generate_response(input)
+            sources = retrieve_sources(input)
+            
+            return OutputObject(
+                llm_output=response,
+                output_context={
+                    "sources": sources,
+                    "confidence": 0.95
+                },
+                in_tokens=100,
+                out_tokens=50,
+                duration=1.5
+            )
+        ```
+    """
+    
+    llm_output: str  # Required: The actual model output
+    output_context: Optional[dict[str, Any]] = None  # Optional: Arbitrary metadata about the output
+    duration: Optional[float] = None  # Optional: Generation time in seconds
+    in_tokens: Optional[int] = None  # Optional: Input token count
+    out_tokens: Optional[int] = None  # Optional: Output token count
 
 
 class TestSuiteMetadata(BaseModel):
@@ -108,6 +143,9 @@ class CheckModifiers(BaseModel):
     category: str | None = None
     """Override the default category of the check (correctness, formatting, etc.)"""
 
+    display_metrics: bool = False
+    """If true, will display the metrics for the check in the UI"""
+
     @classmethod
     def from_graphql(cls, modifiers_dict: dict) -> "CheckModifiers":
         """Internal method to translate from what we receive from GraphQL to the CheckModifiers class."""
@@ -129,6 +167,7 @@ class CheckModifiers(BaseModel):
             extractor=modifiers_dict.get("extractor"),
             conditional=conditional,
             category=modifiers_dict.get("category"),
+            display_metrics=modifiers_dict.get("displayMetrics", False),
         )
 
 
@@ -251,8 +290,12 @@ class Test(BaseModel):
 class RunParameters(BaseModel):
     """Parameters for a run."""
 
-    eval_model: str = "gpt-4o"
-    """Model to use for the LLM as judge - this is *not* the model being tested."""
+    eval_model: str | None = None
+    """
+    "Model to use for the LLM as judge - this is *not* the model being tested.
+    
+    Defaults to the default eval model for your organization, which is generally gpt-4o.
+    """
 
     parallelism: int = 10
     """How many tests to run in parallel"""
@@ -284,14 +327,21 @@ class RunParameters(BaseModel):
     retry_failed_calls_indefinitely: bool = False
     """ If true, when receiving an error from the model, will retry indefinitely until it receives a success."""
 
+    as_batch: bool = False
+    """ If true, suite will run the QA stage using the Batch API if it's available for the current model."""
+
 
 class RunStatus(str, Enum):
-    """Status of a run: 'in_progress', 'error', or 'success'."""
+    """Status of a run."""
 
     IN_PROGRESS = "in_progress"
     ERROR = "error"
     SUCCESS = "success"
-    RERUNNING = "rerunning"
+    PAUSE = "pause"
+    PENDING = "pending"
+    AWAITING_BATCH = "awaiting_batch"
+    CANCELLED = "cancelled"
+    PAUSING = "pausing"
 
 
 class RunMetadata(BaseModel):
@@ -562,9 +612,9 @@ class CustomModelOutput(BaseModel):
     }
 
 
-SimpleModelFunctionType = Callable[[str], str]
+SimpleModelFunctionType = Callable[[str], str | OutputObject]
 
-ModelFunctionWithFilesAndContextType = Callable[[CustomModelInput], CustomModelOutput]
+ModelFunctionWithFilesAndContextType = Callable[[str, dict[str, BytesIO], dict[str, Any]], str | dict[str, Any] | OutputObject]
 
 ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType
 

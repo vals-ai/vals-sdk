@@ -2,17 +2,22 @@ mutation createOrUpdateTestSuite(
   $testSuiteId: String!
   $title: String!
   $description: String!
+  $projectId: String
 ) {
   updateTestSuite(
     testSuiteId: $testSuiteId
     title: $title
     description: $description
+    projectId: $projectId
   ) {
     testSuite {
       description
       id
       org
       title
+      project { 
+        slug
+      }
     }
   }
 }
@@ -53,15 +58,6 @@ mutation updateGlobalChecks(
 mutation removeOldTests($testSuiteId: String!, $inUseTests: [String!]!) {
   removeUnusedTests(testSuiteId: $testSuiteId, inUseTests: $inUseTests) {
     success
-  }
-}
-
-mutation createRagSuite($query: String!, $filePath: String!) {
-  updateRagSuite(ragSuiteId: "0", query: $query, filePath: $filePath) {
-    ragSuite {
-      id
-      query
-    }
   }
 }
 

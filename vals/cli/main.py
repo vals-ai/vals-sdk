@@ -2,7 +2,7 @@ import sys
 
 import click
 
-from .rag import rag_group
+from .project import project_group
 from .run import run_group
 from .suite import suite_group
 from .util import display_error_and_exit
@@ -25,4 +25,4 @@ def cli():
 
 cli.add_command(suite_group)
 cli.add_command(run_group)
-cli.add_command(rag_group)
+cli.add_command(project_group)

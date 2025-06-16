@@ -42,6 +42,9 @@ query PullRun($runId: String!) {
       id
       title
     }
+    project {
+      slug
+    }
   }
 }
 
@@ -75,6 +78,7 @@ query PullTestResultsWithCount($runId: String!, $offset: Int, $limit: Int) {
 query ListRuns(
   $archived: Boolean
   $suiteId: String
+  $projectId: String
   $limit: Int
   $offset: Int
   $search: String
@@ -83,6 +87,7 @@ query ListRuns(
     filterOptions: {
       archived: $archived
       suiteId: $suiteId
+      projectId: $projectId
       limit: $limit
       offset: $offset
       sortBy: STARTED_AT
