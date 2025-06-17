@@ -573,6 +573,7 @@ class QuestionAnswerPair(BaseModel):
                 MetadataType(**self.metadata.model_dump()) if self.metadata else None
             ),
             test_id=self.test_id,
+            status = "success"
         )
 
 

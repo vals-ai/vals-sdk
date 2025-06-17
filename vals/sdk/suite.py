@@ -352,9 +352,11 @@ class Suite(BaseModel):
                 "This suite has not been created yet, so there's nothing to update"
             )
 
-        await self._client.create_or_update_test_suite(
+        suite = await self._client.create_or_update_test_suite(
             self.id, self.title, self.description
         )
+        self.project_id = suite.update_test_suite.test_suite.project.slug
+
 
         path = self.title if upload_files_path is None else upload_files_path
 
@@ -560,6 +562,7 @@ class Suite(BaseModel):
             uploaded_qa_pairs = []
             for i in range(0, len(uploadable_qa_pairs), upload_concurrency):
                 batch_to_upload = uploadable_qa_pairs[i : i + upload_concurrency]
+
                 response = await self._client.batch_add_question_answer_pairs(
                     qa_set_id, batch_to_upload
                 )
