@@ -461,7 +461,7 @@ class Suite(BaseModel):
         run_name: str | None = None,
         wait_for_completion: bool = False,
         parameters: RunParameters | None = None,
-        upload_concurrency: int | None = None,
+        upload_concurrency: int = 3,
         custom_operators: list[ModelCustomOperatorFunctionType] | None = None,
         eval_model_name: str | None = None,
         run_id: str | None = None,
@@ -473,9 +473,15 @@ class Suite(BaseModel):
         Base method for running the test suite. See overloads for documentation.
 
         Args:
-            upload_concurrency: How frequently to upload QA pairs to the server.
-                         Defaults to parameters.parallelism.
+            model: One of either a string (e.g. "gpt-4o"), a function to generate outputs, or a list of question-answer pairs. See our docs for more details.
+            model_name: If using a function or a list of question-answer pairs, this is the name of the model that will be displayed in the frontend. 
+            run_name: A unique way for your run to disambiguate in the frontend.
+            wait_for_completion: Block until the run has finished (not just started). Note: If using a function, it will block until
+                outputs have been collected and uploaded, regardless of the value of this parameter. 
             custom_operator: A custom operator function that takes in an OperatorInput and returns an OperatorOutput.
+            upload_concurrency: How frequently to upload outputs to the server. Defaults to every three tests. 
+            custom_operators: Allows you to provide additional custom local operators. See our docs for more usage details. 
+
         """
         if self.id is None:
             raise Exception(
@@ -489,9 +495,6 @@ class Suite(BaseModel):
 
         if eval_model_name is not None:
             parameters.eval_model = eval_model_name
-
-        if upload_concurrency is None:
-            upload_concurrency = parameters.parallelism
 
         if uploaded_qa_pairs is None:
             uploaded_qa_pairs = []
