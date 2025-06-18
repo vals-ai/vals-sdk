@@ -81,7 +81,8 @@ def _get_auth_token():
 
     if (
         "access_expiry" not in global_auth_dict
-        or time.time() > global_auth_dict["access_expiry"]
+        # Refresh token 1 minute before it expires 
+        or time.time() + 60 > global_auth_dict["access_expiry"]
     ):
         descopeClient = get_descope_client()
 
