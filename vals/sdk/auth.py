@@ -47,8 +47,10 @@ def get_descope_client():
     region = _get_region()
     if region == "eu-north-1":
         project_id = "P2lXkjgPTaW5f8ZlhBzCpnxeqlpj"
-    elif VALS_ENV == "LOCAL" or VALS_ENV == "DEV" or VALS_ENV == "BENCH":
+    elif VALS_ENV == "DEV" or VALS_ENV == "BENCH":
         project_id = "P2ktNOjz5Tgzs9wwS3VpShnCbmik"
+    elif VALS_ENV == "LOCAL":
+        project_id = "P2xKhP7i7uQCa2YC3JaSf44h4Fll"
     elif VALS_ENV == "PROD":
         project_id = "P2lXkZaPuDqCzGxoxGHseomQi7ac"
 
@@ -81,7 +83,7 @@ def _get_auth_token():
 
     if (
         "access_expiry" not in global_auth_dict
-        # Refresh token 1 minute before it expires 
+        # Refresh token 1 minute before it expires
         or time.time() + 60 > global_auth_dict["access_expiry"]
     ):
         descopeClient = get_descope_client()
