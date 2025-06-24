@@ -112,7 +112,7 @@ async def run_with_custom_parameters():
         model="gpt-4o-mini",
         wait_for_completion=True,
         parameters=RunParameters(
-            parallelism=3, max_output_tokens=2048, custom_parameters={"fruit": "banana"}
+            parallelism=3, max_output_tokens=2048, custom_parameters={"top_p": 0.5}
         ),
     )
 
