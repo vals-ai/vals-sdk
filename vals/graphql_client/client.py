@@ -517,6 +517,7 @@ class Client(AsyncBaseClient):
                   maxOutputTokens
                   systemPrompt
                   newLineStopOption
+                  customParameters
                 }
                 passRate {
                   value
