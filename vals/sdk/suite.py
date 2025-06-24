@@ -137,7 +137,7 @@ class Suite(BaseModel):
             global_checks=global_checks,
             tests=tests,
         )
-        
+
         if download_files:
             files = []
             path = suite.title if download_path is None else download_path
@@ -149,7 +149,7 @@ class Suite(BaseModel):
                 file_id_to_file_path = await download_files_bulk(
                     files, path, max_concurrent_downloads=max_concurrent_downloads
                 )
-                
+
                 for test in suite.tests:
                     for file in test.files_under_test:
                         file.path = file_id_to_file_path[file.file_id]
@@ -357,7 +357,6 @@ class Suite(BaseModel):
         )
         self.project_id = suite.update_test_suite.test_suite.project.slug
 
-
         path = self.title if upload_files_path is None else upload_files_path
 
         await self._upload_files(path, max_upload_concurrency)
@@ -474,13 +473,13 @@ class Suite(BaseModel):
 
         Args:
             model: One of either a string (e.g. "gpt-4o"), a function to generate outputs, or a list of question-answer pairs. See our docs for more details.
-            model_name: If using a function or a list of question-answer pairs, this is the name of the model that will be displayed in the frontend. 
+            model_name: If using a function or a list of question-answer pairs, this is the name of the model that will be displayed in the frontend.
             run_name: A unique way for your run to disambiguate in the frontend.
             wait_for_completion: Block until the run has finished (not just started). Note: If using a function, it will block until
-                outputs have been collected and uploaded, regardless of the value of this parameter. 
+                outputs have been collected and uploaded, regardless of the value of this parameter.
             custom_operator: A custom operator function that takes in an OperatorInput and returns an OperatorOutput.
-            upload_concurrency: How frequently to upload outputs to the server. Defaults to every three tests. 
-            custom_operators: Allows you to provide additional custom local operators. See our docs for more usage details. 
+            upload_concurrency: How frequently to upload outputs to the server. Defaults to every three tests.
+            custom_operators: Allows you to provide additional custom local operators. See our docs for more usage details.
 
         """
         if self.id is None:
@@ -512,7 +511,7 @@ class Suite(BaseModel):
             model = model.get_custom_model()
 
         parameter_json = parameters.model_dump()
-        del parameter_json[ "parallelism"]
+        del parameter_json["parallelism"]
         del parameter_json["eval_model"]
         default_parameters = await self._client.get_default_parameters()
         parameter_input = ParameterInputType(
@@ -616,6 +615,11 @@ class Suite(BaseModel):
             await run.wait_for_run_completion()
 
         await run.pull()
+
+        if run.status == "error":
+            if not run.test_results:
+                raise Exception("Run failed without any test results")
+            raise Exception(f"Run failed: {run.test_results[0].error_message}")
 
         return run
 
