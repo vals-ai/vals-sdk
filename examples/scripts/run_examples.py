@@ -121,6 +121,38 @@ async def run_with_custom_parameters():
     print(f"Pass percentage: {run.pass_percentage}")
 
 
+async def run_with_custom_parameters_and_function():
+    suite = Suite(
+        title="Test Suite",
+        global_checks=[Check(operator="grammar")],
+        tests=[
+            Test(
+                input_under_test="What is QSBS?",
+                checks=[Check(operator="equals", criteria="QSBS")],
+            ),
+        ],
+    )
+    await suite.create()
+
+    def my_function(input: str) -> str:
+        return input + "!!!"
+
+    run = await suite.run(
+        model=my_function,
+        wait_for_completion=True,
+        parameters=RunParameters(
+            parallelism=3,
+            max_output_tokens=2048,
+            custom_parameters={
+                "number_of_documents_to_retrieve": 10,
+            },
+        ),
+    )
+
+    print(f"Run URL: {run.url}")
+    print(f"Pass percentage: {run.pass_percentage}")
+
+
 async def run_with_function_context_and_files():
     """Run the suite with context and files."""
     suite = Suite(
@@ -226,6 +258,7 @@ async def pull_run(run_id: str):
 async def all():
     await run_with_local_eval()
     await run_with_custom_parameters()
+    await run_with_custom_parameters_and_function()
     await run_with_model_under_test()
     await run_with_function()
     await run_with_function_context_and_files()
