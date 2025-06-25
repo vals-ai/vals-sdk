@@ -467,6 +467,7 @@ class Suite(BaseModel):
         qa_set_id: str | None = None,
         remaining_tests: list[Test] | None = None,
         uploaded_qa_pairs: list[QuestionAnswerPairInputType] | None = None,
+        except_on_error: bool = False,
     ) -> Run:
         """
         Base method for running the test suite. See overloads for documentation.
@@ -616,7 +617,7 @@ class Suite(BaseModel):
 
         await run.pull()
 
-        if run.status == "error":
+        if except_on_error and run.status == "error":
             if not run.test_results:
                 raise Exception("Run failed without any test results")
             raise Exception(f"Run failed: {run.test_results[0].error_message}")

@@ -114,6 +114,7 @@ async def run_with_custom_parameters():
         parameters=RunParameters(
             parallelism=3, max_output_tokens=2048, custom_parameters={"top_p": 0.5}
         ),
+        except_on_error=True,
     )
 
     print(f"Run URL: {run.url}")
