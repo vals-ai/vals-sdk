@@ -29,6 +29,7 @@ query PullRun($runId: String!) {
       maxOutputTokens
       systemPrompt
       newLineStopOption
+      customParameters
     }
     passRate {
       value

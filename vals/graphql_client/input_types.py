@@ -174,6 +174,7 @@ class ParameterInputType(BaseModel):
     system_prompt: str = Field(alias="systemPrompt")
     new_line_stop_option: bool = Field(alias="newLineStopOption")
     as_batch: bool = Field(alias="asBatch")
+    custom_parameters: Any = Field(alias="customParameters")
 
 
 class FixedOutputInputType(BaseModel):
