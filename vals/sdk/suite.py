@@ -352,9 +352,10 @@ class Suite(BaseModel):
                 "This suite has not been created yet, so there's nothing to update"
             )
 
-        await self._client.create_or_update_test_suite(
+        suite = await self._client.create_or_update_test_suite(
             self.id, self.title, self.description
         )
+        self.project_id = suite.update_test_suite.test_suite.project.slug
 
         path = self.title if upload_files_path is None else upload_files_path
 
@@ -459,21 +460,28 @@ class Suite(BaseModel):
         run_name: str | None = None,
         wait_for_completion: bool = False,
         parameters: RunParameters | None = None,
-        upload_concurrency: int | None = None,
+        upload_concurrency: int = 3,
         custom_operators: list[ModelCustomOperatorFunctionType] | None = None,
         eval_model_name: str | None = None,
         run_id: str | None = None,
         qa_set_id: str | None = None,
         remaining_tests: list[Test] | None = None,
         uploaded_qa_pairs: list[QuestionAnswerPairInputType] | None = None,
+        except_on_error: bool = False,
     ) -> Run:
         """
         Base method for running the test suite. See overloads for documentation.
 
         Args:
-            upload_concurrency: How frequently to upload QA pairs to the server.
-                         Defaults to parameters.parallelism.
+            model: One of either a string (e.g. "gpt-4o"), a function to generate outputs, or a list of question-answer pairs. See our docs for more details.
+            model_name: If using a function or a list of question-answer pairs, this is the name of the model that will be displayed in the frontend.
+            run_name: A unique way for your run to disambiguate in the frontend.
+            wait_for_completion: Block until the run has finished (not just started). Note: If using a function, it will block until
+                outputs have been collected and uploaded, regardless of the value of this parameter.
             custom_operator: A custom operator function that takes in an OperatorInput and returns an OperatorOutput.
+            upload_concurrency: How frequently to upload outputs to the server. Defaults to every three tests.
+            custom_operators: Allows you to provide additional custom local operators. See our docs for more usage details.
+
         """
         if self.id is None:
             raise Exception(
@@ -487,9 +495,6 @@ class Suite(BaseModel):
 
         if eval_model_name is not None:
             parameters.eval_model = eval_model_name
-
-        if upload_concurrency is None:
-            upload_concurrency = parameters.parallelism
 
         if uploaded_qa_pairs is None:
             uploaded_qa_pairs = []
@@ -560,6 +565,7 @@ class Suite(BaseModel):
             uploaded_qa_pairs = []
             for i in range(0, len(uploadable_qa_pairs), upload_concurrency):
                 batch_to_upload = uploadable_qa_pairs[i : i + upload_concurrency]
+
                 response = await self._client.batch_add_question_answer_pairs(
                     qa_set_id, batch_to_upload
                 )
@@ -610,6 +616,11 @@ class Suite(BaseModel):
             await run.wait_for_run_completion()
 
         await run.pull()
+
+        if except_on_error and run.status == "error":
+            if not run.test_results:
+                raise Exception("Run failed without any test results")
+            raise Exception(f"Run failed: {run.test_results[0].error_message}")
 
         return run
 
@@ -1245,6 +1256,7 @@ class Suite(BaseModel):
                     duration_seconds=output.duration or (time_end - time_start),
                 ),
                 test_id=test._id,
+                status="success",
             )
 
         # If output is just a string, treat it as llm_output
@@ -1260,6 +1272,7 @@ class Suite(BaseModel):
                     duration_seconds=time_end - time_start,
                 ),
                 test_id=test._id,
+                status="success",
             )
 
         # If output is a dict, use provided values or defaults
@@ -1289,4 +1302,5 @@ class Suite(BaseModel):
                 duration_seconds=duration_seconds,
             ),
             test_id=test._id,
+            status="success",
         )

@@ -320,6 +320,9 @@ class RunParameters(BaseModel):
     run_golden_eval: bool = False
     """Compares the output to the golden ansewr, if provided"""
 
+    custom_parameters: dict[str, str | int | float | bool] = {}
+    """Additional model-specific parameters to pass """
+
     run_confidence_evaluation: bool = True
     """ If false, don't produce confidence scores for checks """
 
@@ -345,7 +348,7 @@ class RunParameters(BaseModel):
     """ If true, when receiving an error from the model, will retry indefinitely until it receives a success."""
 
     as_batch: bool = False
-    """If true, will run the tests as a batch"""
+    """ If true, suite will run the QA stage using the Batch API if it's available for the current model."""
 
 
 class RunStatus(str, Enum):
@@ -356,6 +359,9 @@ class RunStatus(str, Enum):
     SUCCESS = "success"
     PAUSE = "pause"
     PENDING = "pending"
+    AWAITING_BATCH = "awaiting_batch"
+    CANCELLED = "cancelled"
+    PAUSING = "pausing"
 
 
 class RunMetadata(BaseModel):
@@ -464,8 +470,8 @@ class TestResult(BaseModel):
     pass_percentage: float
     """Percent of passing checks for the test"""
 
-    pass_percentage_with_optional: float
-    """Percent of passing checks including optional checks"""
+    pass_percentage_with_weight: float
+    """ Percentage of passing checks, taking into account the weight of each check. """
 
     check_results: list[CheckResult]
     """Results for every check"""
@@ -493,7 +499,7 @@ class TestResult(BaseModel):
             output_context=output_context,
             llm_output=graphql_test_result.llm_output,
             pass_percentage=graphql_test_result.pass_percentage,
-            pass_percentage_with_optional=graphql_test_result.pass_percentage_with_optional,
+            pass_percentage_with_weight=graphql_test_result.pass_percentage_with_weight,
             error_message=(
                 graphql_test_result.qa_pair.error_message
                 if graphql_test_result.qa_pair
@@ -584,6 +590,7 @@ class QuestionAnswerPair(BaseModel):
                 MetadataType(**self.metadata.model_dump()) if self.metadata else None
             ),
             test_id=self.test_id,
+            status = "success"
         )
 
 

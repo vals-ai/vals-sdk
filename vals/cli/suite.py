@@ -274,6 +274,7 @@ async def run_command_async(
 @click.option(
     "--new-line-stop-option", is_flag=True, default=None, help="Stop on new line"
 )
+@click.option("--as-batch", is_flag=True, default=False, help="Run suite as a batch")
 def run_command(
     suite_id: str, model: str, run_name: str, wait_for_completion: bool, **params
 ):

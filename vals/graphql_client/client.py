@@ -520,6 +520,7 @@ class Client(AsyncBaseClient):
                   maxOutputTokens
                   systemPrompt
                   newLineStopOption
+                  customParameters
                 }
                 passRate {
                   value
@@ -565,7 +566,7 @@ class Client(AsyncBaseClient):
                   id
                   llmOutput
                   passPercentage
-                  passPercentageWithOptional
+                  passPercentageWithWeight
                   resultJson
                   qaPair {
                     context

@@ -46,6 +46,7 @@ class PullRunRunTypedParameters(BaseModel):
     max_output_tokens: int = Field(alias="maxOutputTokens")
     system_prompt: str = Field(alias="systemPrompt")
     new_line_stop_option: bool = Field(alias="newLineStopOption")
+    custom_parameters: Any = Field(alias="customParameters")
 
 
 class PullRunRunPassRate(BaseModel):

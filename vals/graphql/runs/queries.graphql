@@ -31,6 +31,7 @@ query PullRun($runId: String!) {
       maxOutputTokens
       systemPrompt
       newLineStopOption
+      customParameters
     }
     passRate {
       value
@@ -59,7 +60,7 @@ query PullTestResultsWithCount($runId: String!, $offset: Int, $limit: Int) {
       id
       llmOutput
       passPercentage
-      passPercentageWithOptional
+      passPercentageWithWeight
       resultJson
       qaPair {
         context

@@ -4,6 +4,20 @@
 from enum import Enum
 
 
+class ChartMetric(str, Enum):
+    passRate = "passRate"
+    successRate = "successRate"
+    refusalRate = "refusalRate"
+    tokenUsage = "tokenUsage"
+    lowConfidenceChecks = "lowConfidenceChecks"
+
+
+class ChartType(str, Enum):
+    line = "line"
+    bar = "bar"
+    table = "table"
+
+
 class DropdownSectionEnum(str, Enum):
     CONSTITUTIONAL = "CONSTITUTIONAL"
     SEMANTIC = "SEMANTIC"
@@ -109,6 +123,7 @@ class TestResultCheckErrorEnum(str, Enum):
     ALL_CHECKS_FAILED = "ALL_CHECKS_FAILED"
     ALL_CHECKS_PASSED = "ALL_CHECKS_PASSED"
     TESTS_WITH_OUTPUT_ERRORS = "TESTS_WITH_OUTPUT_ERRORS"
+    SOME_LOW_CONFIDENCE_CHECKS = "SOME_LOW_CONFIDENCE_CHECKS"
 
 
 class TestSuiteSortField(str, Enum):

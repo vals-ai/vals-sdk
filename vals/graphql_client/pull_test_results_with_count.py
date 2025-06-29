@@ -26,7 +26,7 @@ class PullTestResultsWithCountTestResultsWithCountTestResults(BaseModel):
     id: str
     llm_output: str = Field(alias="llmOutput")
     pass_percentage: float = Field(alias="passPercentage")
-    pass_percentage_with_optional: float = Field(alias="passPercentageWithOptional")
+    pass_percentage_with_weight: float = Field(alias="passPercentageWithWeight")
     result_json: Any = Field(alias="resultJson")
     qa_pair: Optional[
         "PullTestResultsWithCountTestResultsWithCountTestResultsQaPair"

@@ -31,6 +31,8 @@ from .enums import (
     AppQuestionAnswerPairStatusChoices,
     AppQuestionAnswerSetCreationMethodChoices,
     AppTestResultStatusChoices,
+    ChartMetric,
+    ChartType,
     CustomMetricReviewType,
     DropdownSectionEnum,
     RunResultSortField,
@@ -95,6 +97,8 @@ from .get_test_suites_with_count import (
 )
 from .get_user_options import GetUserOptions
 from .input_types import (
+    ChartConfigInput,
+    ChartFilterInput,
     CheckInputType,
     CheckModifiersInputType,
     ConditionalCheckInputType,
@@ -216,6 +220,10 @@ __all__ = [
     "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairs",
     "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairs",
     "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairsTest",
+    "ChartConfigInput",
+    "ChartFilterInput",
+    "ChartMetric",
+    "ChartType",
     "CheckInputType",
     "CheckModifiersInputType",
     "Client",
