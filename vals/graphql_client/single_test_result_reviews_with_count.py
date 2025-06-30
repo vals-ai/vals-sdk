@@ -77,7 +77,7 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
 class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTest(
     BaseModel
 ):
-    test_id: str = Field(alias="testId")
+    id: str
     input_under_test: str = Field(alias="inputUnderTest")
     typed_context: Any = Field(alias="typedContext")
 

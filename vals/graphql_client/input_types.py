@@ -241,9 +241,15 @@ class ChartConfigInput(BaseModel):
 
 class ChartFilterInput(BaseModel):
     test_suite_id: Optional[str] = Field(alias="testSuiteId", default=None)
+    comparison_test_suite_ids: Optional[List[Optional[str]]] = Field(
+        alias="comparisonTestSuiteIds", default=None
+    )
     model_name: Optional[str] = Field(alias="modelName", default=None)
-    run_count: int = Field(alias="runCount")
+    comparison_model_names: Optional[List[Optional[str]]] = Field(
+        alias="comparisonModelNames", default=None
+    )
     run_ids: Optional[List[Optional[str]]] = Field(alias="runIds", default=None)
+    run_count: int = Field(alias="runCount")
 
 
 CheckInputType.model_rebuild()

@@ -35,6 +35,9 @@ mutation BatchAddQuestionAnswerPairs(
       fileIds
       context
       outputContext
+      test {
+        id
+      }
     }
   }
 }

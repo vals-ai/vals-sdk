@@ -143,6 +143,9 @@ class Client(AsyncBaseClient):
                   fileIds
                   context
                   outputContext
+                  test {
+                    id
+                  }
                 }
               }
             }
@@ -218,7 +221,7 @@ class Client(AsyncBaseClient):
                     createdAt
                   }
                   test {
-                    testId
+                    id
                   }
                 }
                 count
@@ -320,7 +323,7 @@ class Client(AsyncBaseClient):
                     errorMessage
                   }
                   test {
-                    testId
+                    id
                     inputUnderTest
                     typedContext
                   }
@@ -571,13 +574,43 @@ class Client(AsyncBaseClient):
                     errorMessage
                   }
                   test {
-                    testId
-                    inputUnderTest
-                    context
+                    ...TestFragment
                   }
                   metadata
                 }
                 count
+              }
+            }
+
+            fragment TestFragment on TestType {
+              id
+              inputUnderTest
+              typedContext
+              typedTags
+              crossVersionId
+              goldenOutput
+              typedFileIds
+              typedChecks {
+                operator
+                criteria
+                modifiers {
+                  optional
+                  severity
+                  examples {
+                    type
+                    text
+                  }
+                  extractor
+                  conditional {
+                    operator
+                    criteria
+                  }
+                  category
+                  displayMetrics
+                }
+              }
+              testSuite {
+                id
               }
             }
             """
@@ -717,18 +750,40 @@ class Client(AsyncBaseClient):
             mutation addBatchTests($tests: [TestMutationInfo!]!, $createOnly: Boolean!) {
               batchUpdateTest(tests: $tests, createOnly: $createOnly) {
                 tests {
-                  checks
-                  testId
-                  crossVersionId
-                  fileIds
-                  inputUnderTest
-                  tags
-                  context
-                  goldenOutput
-                  testSuite {
-                    id
-                  }
+                  ...TestFragment
                 }
+              }
+            }
+
+            fragment TestFragment on TestType {
+              id
+              inputUnderTest
+              typedContext
+              typedTags
+              crossVersionId
+              goldenOutput
+              typedFileIds
+              typedChecks {
+                operator
+                criteria
+                modifiers {
+                  optional
+                  severity
+                  examples {
+                    type
+                    text
+                  }
+                  extractor
+                  conditional {
+                    operator
+                    criteria
+                  }
+                  category
+                  displayMetrics
+                }
+              }
+              testSuite {
+                id
               }
             }
             """
@@ -901,19 +956,41 @@ class Client(AsyncBaseClient):
                 filterOptions: {offset: $offset, limit: $limit}
               ) {
                 tests {
-                  checks
-                  testId
-                  crossVersionId
-                  fileIds
-                  inputUnderTest
-                  tags
-                  context
-                  goldenOutput
-                  testSuite {
-                    id
-                  }
+                  ...TestFragment
                 }
                 count
+              }
+            }
+
+            fragment TestFragment on TestType {
+              id
+              inputUnderTest
+              typedContext
+              typedTags
+              crossVersionId
+              goldenOutput
+              typedFileIds
+              typedChecks {
+                operator
+                criteria
+                modifiers {
+                  optional
+                  severity
+                  examples {
+                    type
+                    text
+                  }
+                  extractor
+                  conditional {
+                    operator
+                    criteria
+                  }
+                  category
+                  displayMetrics
+                }
+              }
+              testSuite {
+                id
               }
             }
             """

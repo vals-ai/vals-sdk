@@ -6,6 +6,7 @@ from typing import Any, List, Optional
 from pydantic import Field
 
 from .base_model import BaseModel
+from .fragments import TestFragment
 
 
 class PullTestResultsWithCount(BaseModel):
@@ -40,10 +41,8 @@ class PullTestResultsWithCountTestResultsWithCountTestResultsQaPair(BaseModel):
     error_message: str = Field(alias="errorMessage")
 
 
-class PullTestResultsWithCountTestResultsWithCountTestResultsTest(BaseModel):
-    test_id: str = Field(alias="testId")
-    input_under_test: str = Field(alias="inputUnderTest")
-    context: Any
+class PullTestResultsWithCountTestResultsWithCountTestResultsTest(TestFragment):
+    pass
 
 
 PullTestResultsWithCount.model_rebuild()

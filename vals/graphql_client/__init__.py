@@ -4,7 +4,6 @@ from .add_batch_tests import (
     AddBatchTests,
     AddBatchTestsBatchUpdateTest,
     AddBatchTestsBatchUpdateTestTests,
-    AddBatchTestsBatchUpdateTestTestsTestSuite,
 )
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel, Upload
@@ -12,6 +11,7 @@ from .batch_add_question_answer_pairs import (
     BatchAddQuestionAnswerPairs,
     BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairs,
     BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairs,
+    BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairsTest,
 )
 from .client import Client
 from .create_or_update_test_suite import (
@@ -55,6 +55,14 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQLClientInvalidResponseError,
 )
+from .fragments import (
+    TestFragment,
+    TestFragmentTestSuite,
+    TestFragmentTypedChecks,
+    TestFragmentTypedChecksModifiers,
+    TestFragmentTypedChecksModifiersConditional,
+    TestFragmentTypedChecksModifiersExamples,
+)
 from .get_active_custom_operators import (
     GetActiveCustomOperators,
     GetActiveCustomOperatorsCustomOperators,
@@ -75,7 +83,6 @@ from .get_test_data import (
     GetTestData,
     GetTestDataTestsWithCount,
     GetTestDataTestsWithCountTests,
-    GetTestDataTestsWithCountTestsTestSuite,
 )
 from .get_test_suite_data import (
     GetTestSuiteData,
@@ -203,7 +210,6 @@ __all__ = [
     "AddBatchTests",
     "AddBatchTestsBatchUpdateTest",
     "AddBatchTestsBatchUpdateTestTests",
-    "AddBatchTestsBatchUpdateTestTestsTestSuite",
     "AppPairwiseTestResultReviewWinningRunChoices",
     "AppQuestionAnswerPairStatusChoices",
     "AppQuestionAnswerSetCreationMethodChoices",
@@ -213,6 +219,7 @@ __all__ = [
     "BatchAddQuestionAnswerPairs",
     "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairs",
     "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairs",
+    "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairsTest",
     "ChartConfigInput",
     "ChartFilterInput",
     "ChartMetric",
@@ -251,7 +258,6 @@ __all__ = [
     "GetTestData",
     "GetTestDataTestsWithCount",
     "GetTestDataTestsWithCountTests",
-    "GetTestDataTestsWithCountTestsTestSuite",
     "GetTestSuiteData",
     "GetTestSuiteDataTestSuite",
     "GetTestSuiteDataTestSuiteProject",
@@ -341,6 +347,12 @@ __all__ = [
     "StartRunStartRun",
     "TemplateType",
     "TestFilterOptions",
+    "TestFragment",
+    "TestFragmentTestSuite",
+    "TestFragmentTypedChecks",
+    "TestFragmentTypedChecksModifiers",
+    "TestFragmentTypedChecksModifiersConditional",
+    "TestFragmentTypedChecksModifiersExamples",
     "TestMutationInfo",
     "TestResultCheckErrorEnum",
     "TestResultFilterOptions",

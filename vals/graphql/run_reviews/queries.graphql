@@ -55,7 +55,7 @@ query SingleTestResultReviewsWithCount(
         errorMessage
       }
       test {
-        testId
+        id
         inputUnderTest
         typedContext
       }

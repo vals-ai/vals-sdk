@@ -1,0 +1,31 @@
+fragment TestFragment on TestType {
+  id
+  inputUnderTest
+  typedContext
+  typedTags
+  crossVersionId
+  goldenOutput
+  typedFileIds
+  typedChecks {
+    operator
+    criteria
+    modifiers {
+      optional
+      severity
+      examples {
+        type
+        text
+      }
+      extractor
+      conditional {
+        operator
+        criteria
+      }
+      category
+      displayMetrics
+    }
+  }
+  testSuite {
+    id
+  }
+}

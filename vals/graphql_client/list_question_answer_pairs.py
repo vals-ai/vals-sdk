@@ -60,7 +60,7 @@ class ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsLoca
 class ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTest(
     BaseModel
 ):
-    test_id: str = Field(alias="testId")
+    id: str
 
 
 ListQuestionAnswerPairs.model_rebuild()
