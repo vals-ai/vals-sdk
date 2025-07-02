@@ -25,7 +25,7 @@ We've provided a set of examples in `examples/`. They are organized as follows:
 
 Make an account at [https://platform.vals.ai](https://platform.vals.ai) and confirm your email.
 
-Then, go to [https://platform.vals.ai/auth](https://platform.vals.ai/auth) and create an API key.
+Then, go to [https://platform.vals.ai/project/default-project/settings/api-keys](https://platform.vals.ai/project/default-project/settings/api-keys) and create an API key. If using a different project, navigate to that project's settings instead.
 
 If you are using the command line, you should set the following:
 
@@ -53,14 +53,14 @@ Commands must be run from the pip environment the cli was installed in. Commands
 - `vals run --help`: relating to creating and querying runs and run results
 - `vals project --help`: relating to listing and managing projects
 
-Full documentation of the CLI usage can be found in our documentation at [https://www.platform.vals.ai/docs/index.html#/cli](https://www.platform.vals.ai/docs/index.html#/cli)
+Full documentation of the CLI usage can be found in our documentation at [https://docs.vals.ai/cli_sdk/cli](https://docs.vals.ai/cli_sdk/cli)
 
 ## SDK Usage
 
 All of the functionality that is in the CLI can also be accessed via Python functions,
 as well as features only available in the SDK.
 
-See usage documentation in our docs: [https://www.platform.vals.ai/docs/index.html#/sdk](https://www.platform.vals.ai/docs/index.html#/sdk)
+See usage documentation in our docs: [https://docs.vals.ai/cli_sdk/sdk](https://docs.vals.ai/cli_sdk/sdk)
 
 # Development
 
