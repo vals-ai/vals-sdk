@@ -49,16 +49,13 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def list_projects(
-        self,
-        offset: Union[Optional[int], UnsetType] = UNSET,
-        limit: Union[Optional[int], UnsetType] = UNSET,
-        **kwargs: Any
+        self, offset: int, limit: int, search: str, **kwargs: Any
     ) -> ListProjects:
         query = gql(
             """
-            query listProjects($offset: Int, $limit: Int) {
+            query listProjects($offset: Int!, $limit: Int!, $search: String!) {
               projectsWithCount(
-                filterOptions: {offset: $offset, limit: $limit, archived: false}
+                filterOptions: {offset: $offset, limit: $limit, archived: false, search: $search}
               ) {
                 projects {
                   id
@@ -72,7 +69,11 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"offset": offset, "limit": limit}
+        variables: Dict[str, object] = {
+            "offset": offset,
+            "limit": limit,
+            "search": search,
+        }
         response = await self.execute(
             query=query, operation_name="listProjects", variables=variables, **kwargs
         )
@@ -254,9 +255,9 @@ class Client(AsyncBaseClient):
                 createdBy
                 createdAt
                 status
-                passRate
+                passRateHumanEval
                 flaggedRate
-                agreementRate
+                agreementRateAutoEval
                 completedTime
                 numberOfReviews
                 assignedReviewers
