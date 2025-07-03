@@ -24,6 +24,7 @@ from vals.graphql_client.input_types import (
 )
 from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.run import Run
+from vals.graphql_client.enums import RunStatus
 from vals.sdk.types import (
     Check,
     File,
@@ -34,7 +35,6 @@ from vals.sdk.types import (
     OutputObject,
     QuestionAnswerPair,
     RunParameters,
-    RunStatus,
     SimpleModelFunctionType,
     Test,
     TestSuiteMetadata,
@@ -443,13 +443,13 @@ class Suite(BaseModel):
         ):
             if run_id:
                 await self._client.update_run_status(
-                    run_id=run_id, status=RunStatus.ERROR.value.upper()
+                    run_id=run_id, status=RunStatus.ERROR
                 )
             raise
         except Exception:
             if run_id:
                 await self._client.update_run_status(
-                    run_id=run_id, status=RunStatus.ERROR.value.upper()
+                    run_id=run_id, status=RunStatus.ERROR
                 )
             raise
 

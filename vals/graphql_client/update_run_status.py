@@ -6,6 +6,7 @@ from typing import Optional
 from pydantic import Field
 
 from .base_model import BaseModel
+from .enums import RunStatus
 
 
 class UpdateRunStatus(BaseModel):
@@ -20,7 +21,7 @@ class UpdateRunStatusUpdateRunStatus(BaseModel):
 
 class UpdateRunStatusUpdateRunStatusRun(BaseModel):
     run_id: str = Field(alias="runId")
-    status: str
+    status: RunStatus
 
 
 UpdateRunStatus.model_rebuild()

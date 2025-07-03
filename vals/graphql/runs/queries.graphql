@@ -1,6 +1,6 @@
 #import TestFragment from "../fragments/test.graphql"
 
-query RunStatus($runId: String!) {
+query GetRunStatus($runId: String!) {
   run(runId: $runId) {
     status
   }
