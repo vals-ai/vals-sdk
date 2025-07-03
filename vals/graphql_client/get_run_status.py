@@ -5,12 +5,12 @@ from .base_model import BaseModel
 from .enums import RunStatus
 
 
-class RunStatus(BaseModel):
-    run: "RunStatusRun"
+class GetRunStatus(BaseModel):
+    run: "GetRunStatusRun"
 
 
-class RunStatusRun(BaseModel):
+class GetRunStatusRun(BaseModel):
     status: RunStatus
 
 
-RunStatus.model_rebuild()
+GetRunStatus.model_rebuild()

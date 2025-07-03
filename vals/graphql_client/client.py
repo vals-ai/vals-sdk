@@ -14,6 +14,7 @@ from .enums import RunStatus
 from .get_active_custom_operators import GetActiveCustomOperators
 from .get_default_parameters import GetDefaultParameters
 from .get_operators import GetOperators
+from .get_run_status import GetRunStatus
 from .get_single_run_review import GetSingleRunReview
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
@@ -35,7 +36,6 @@ from .pull_run import PullRun
 from .pull_test_results_with_count import PullTestResultsWithCount
 from .remove_old_tests import RemoveOldTests
 from .rerun_tests import RerunTests
-from .run_status import RunStatus
 from .single_test_result_reviews_with_count import SingleTestResultReviewsWithCount
 from .start_run import StartRun
 from .update_global_checks import UpdateGlobalChecks
@@ -476,10 +476,10 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return UpdateRunStatus.model_validate(data)
 
-    async def run_status(self, run_id: str, **kwargs: Any) -> RunStatus:
+    async def get_run_status(self, run_id: str, **kwargs: Any) -> GetRunStatus:
         query = gql(
             """
-            query RunStatus($runId: String!) {
+            query GetRunStatus($runId: String!) {
               run(runId: $runId) {
                 status
               }
@@ -488,10 +488,10 @@ class Client(AsyncBaseClient):
         )
         variables: Dict[str, object] = {"runId": run_id}
         response = await self.execute(
-            query=query, operation_name="RunStatus", variables=variables, **kwargs
+            query=query, operation_name="GetRunStatus", variables=variables, **kwargs
         )
         data = self.get_data(response)
-        return RunStatus.model_validate(data)
+        return GetRunStatus.model_validate(data)
 
     async def pull_run(self, run_id: str, **kwargs: Any) -> PullRun:
         query = gql(

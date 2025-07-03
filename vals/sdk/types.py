@@ -13,6 +13,7 @@ from typing import Any, Callable, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
 
+from vals.graphql_client.enums import RunStatus
 from vals.graphql_client.get_test_suites_with_count import (
     GetTestSuitesWithCountTestSuitesWithCountTestSuites,
 )
@@ -351,18 +352,6 @@ class RunParameters(BaseModel):
     """ If true, suite will run the QA stage using the Batch API if it's available for the current model."""
 
 
-class RunStatus(str, Enum):
-    """Status of a run."""
-
-    IN_PROGRESS = "in_progress"
-    ERROR = "error"
-    SUCCESS = "success"
-    PAUSE = "pause"
-    PENDING = "pending"
-    AWAITING_BATCH = "awaiting_batch"
-    CANCELLED = "cancelled"
-    PAUSING = "pausing"
-
 
 class RunMetadata(BaseModel):
     id: str
@@ -401,7 +390,7 @@ class RunMetadata(BaseModel):
             success_rate_error=(
                 graphql_run.success_rate.error if graphql_run.success_rate else None
             ),
-            status=RunStatus(graphql_run.status),
+            status=graphql_run.status,
             text_summary=graphql_run.text_summary,
             timestamp=graphql_run.timestamp,
             completed_at=graphql_run.completed_at,
