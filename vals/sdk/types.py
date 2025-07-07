@@ -11,7 +11,7 @@ from enum import Enum
 from io import BytesIO
 from typing import Any, Callable, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from vals.graphql_client.get_test_suites_with_count import (
     GetTestSuitesWithCountTestSuitesWithCountTestSuites,
@@ -93,7 +93,6 @@ class TestSuiteMetadata(BaseModel):
     def from_graphql(
         cls, graphql_suite: GetTestSuitesWithCountTestSuitesWithCountTestSuites
     ) -> "TestSuiteMetadata":
-
         return cls(
             id=graphql_suite.id,
             title=graphql_suite.title,
@@ -213,7 +212,6 @@ class File(BaseModel):
 
 
 class Test(BaseModel):
-
     id: str | None = None
     """Displayed id for the test. DO NOT REPLACE _id with this since it will break creation of tests. This will be refactored in the future."""
 
@@ -590,7 +588,7 @@ class QuestionAnswerPair(BaseModel):
                 MetadataType(**self.metadata.model_dump()) if self.metadata else None
             ),
             test_id=self.test_id,
-            status = "success"
+            status="success",
         )
 
 

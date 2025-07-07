@@ -1,1 +1,2 @@
-from vals.sdk.suite import *  # For backwards compatability
+# For backwards compatability
+from vals.sdk.suite import *  # noqa: F403

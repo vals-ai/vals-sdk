@@ -507,7 +507,7 @@ class Suite(BaseModel):
         if isinstance(model, InspectWrapper):
             model_name = model.model_name
             eval_model_name = model.eval_model_name
-            inspect_wrapper = model
+            _inspect_wrapper = model
             custom_operators = model.get_custom_operators()
             model = model.get_custom_model()
 
