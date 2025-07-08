@@ -22,7 +22,6 @@ def suite_group():
 
 
 async def create_commmand_async(file: TextIOWrapper, project_id: str | None):
-
     suite = await Suite.from_dict(json.loads(file.read()))
     if project_id:
         suite.project_id = project_id
@@ -70,13 +69,17 @@ def update_command(file: TextIOWrapper, suite_id: str):
     asyncio.run(update_command_async(file, suite_id))
 
 
-async def list_command_async(limit: int, offset: int, search: str, project_id: str | None):
+async def list_command_async(
+    limit: int, offset: int, search: str, project_id: str | None
+):
     if project_id:
         click.echo(f"Listing suites for project: {project_id}")
     else:
         click.echo("Listing suites for default project")
-    
-    suites = await Suite.list_suites(limit=limit, offset=offset - 1, search=search, project_id=project_id)
+
+    suites = await Suite.list_suites(
+        limit=limit, offset=offset - 1, search=search, project_id=project_id
+    )
     headers = ["#", "Title", "Suite ID", "Last Modified"]
     rows = []
     for i, suite in enumerate(suites, start=offset):
@@ -94,7 +97,11 @@ async def list_command_async(limit: int, offset: int, search: str, project_id: s
     "-o", "--offset", type=int, default=1, help="Start table at this row (1-indexed)"
 )
 @click.option("--search", type=str, default="", help="Search for a suite by title")
-@click.option("--project-id", type=str, help="Project ID to filter suites by. If unset, uses the default project.")
+@click.option(
+    "--project-id",
+    type=str,
+    help="Project ID to filter suites by. If unset, uses the default project.",
+)
 def list_command(
     limit: int,
     offset: int,
@@ -125,7 +132,12 @@ async def pull_command_async(
     path_output_suite = os.path.join(path_output, os.path.basename(file))
     path_documents = os.path.join(path_output, "documents")
 
-    suite = await Suite.from_id(suite_id, download_files=download_files, download_path=path_documents, max_concurrent_downloads=max_concurrent_downloads)
+    suite = await Suite.from_id(
+        suite_id,
+        download_files=download_files,
+        download_path=path_documents,
+        max_concurrent_downloads=max_concurrent_downloads,
+    )
 
     if to_csv:
         with open(path_output_suite, "w") as f:
@@ -133,7 +145,9 @@ async def pull_command_async(
     else:
         if download_files:
             for test in suite.tests:
-                test.files_under_test = [file.path for file in test.files_under_test if file.path is not None]
+                test.files_under_test = [
+                    file.path for file in test.files_under_test if file.path is not None
+                ]
         suite_dict = suite.to_dict()
         json_string = json.dumps(suite_dict, indent=2)
         with open(path_output_suite, "w") as f:
@@ -144,12 +158,19 @@ async def pull_command_async(
 
 @click.command(name="pull")
 @click.argument("suite_id", type=str, required=True)
-@click.option("--file", type=str, required=True, help="Name of the file to save the suite to")
+@click.option(
+    "--file", type=str, required=True, help="Name of the file to save the suite to"
+)
 @click.option("--csv", is_flag=True, help="Output in CSV format")
 @click.option("--json", is_flag=True, help="Output in JSON format")
-@click.option("--no-download-files", is_flag=True, help="Do not download files from the suite")
 @click.option(
-    "--download-path", type=str, default=None, help="Path to write the suite file and associated files to"
+    "--no-download-files", is_flag=True, help="Do not download files from the suite"
+)
+@click.option(
+    "--download-path",
+    type=str,
+    default=None,
+    help="Path to write the suite file and associated files to",
 )
 @click.option(
     "--max-concurrent-downloads",

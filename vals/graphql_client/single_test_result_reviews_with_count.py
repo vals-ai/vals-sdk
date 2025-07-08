@@ -11,9 +11,9 @@ from .enums import TemplateType, TestResultReviewStatusEnum
 
 
 class SingleTestResultReviewsWithCount(BaseModel):
-    test_result_reviews_with_count: (
-        "SingleTestResultReviewsWithCountTestResultReviewsWithCount"
-    ) = Field(alias="testResultReviewsWithCount")
+    test_result_reviews_with_count: "SingleTestResultReviewsWithCountTestResultReviewsWithCount" = Field(
+        alias="testResultReviewsWithCount"
+    )
 
 
 class SingleTestResultReviewsWithCountTestResultReviewsWithCount(BaseModel):
@@ -43,9 +43,9 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
         "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsQaPair"
     ] = Field(alias="qaPair")
     test: "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTest"
-    typed_metadata: (
-        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedMetadata"
-    ) = Field(alias="typedMetadata")
+    typed_metadata: "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedMetadata" = Field(
+        alias="typedMetadata"
+    )
     aggregated_custom_metrics: Optional[
         List[
             "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsAggregatedCustomMetrics"
@@ -141,9 +141,9 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
     per_check_test_review_typed: List[
         "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsPerCheckTestReviewTyped"
     ] = Field(alias="perCheckTestReviewTyped")
-    test_result: (
-        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResult"
-    ) = Field(alias="testResult")
+    test_result: "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResult" = Field(
+        alias="testResult"
+    )
     custom_review_values: List[
         "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsCustomReviewValues"
     ] = Field(alias="customReviewValues")

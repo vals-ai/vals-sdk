@@ -1,5 +1,5 @@
 """
-Internal script to regenerate the operator_type.py file. 
+Internal script to regenerate the operator_type.py file.
 
 Run with python generate_operator_type.py.
 """
@@ -20,7 +20,6 @@ async def generate_operator_type():
     template_text = template_text.replace("<REPLACE>", ",\n\t".join(list_of_names))
 
     with open("operator_type.py", "w") as f:
-
         f.write(template_text)
 
 

@@ -11,9 +11,9 @@ from .enums import TemplateType, TestResultReviewStatusEnum
 
 
 class GetSingleTestReviewsWithCount(BaseModel):
-    single_test_reviews_with_count: (
-        "GetSingleTestReviewsWithCountSingleTestReviewsWithCount"
-    ) = Field(alias="singleTestReviewsWithCount")
+    single_test_reviews_with_count: "GetSingleTestReviewsWithCountSingleTestReviewsWithCount" = Field(
+        alias="singleTestReviewsWithCount"
+    )
 
 
 class GetSingleTestReviewsWithCountSingleTestReviewsWithCount(BaseModel):
@@ -41,9 +41,9 @@ class GetSingleTestReviewsWithCountSingleTestReviewsWithCountSingleTestReviews(
     per_check_test_review_typed: List[
         "GetSingleTestReviewsWithCountSingleTestReviewsWithCountSingleTestReviewsPerCheckTestReviewTyped"
     ] = Field(alias="perCheckTestReviewTyped")
-    test_result: (
-        "GetSingleTestReviewsWithCountSingleTestReviewsWithCountSingleTestReviewsTestResult"
-    ) = Field(alias="testResult")
+    test_result: "GetSingleTestReviewsWithCountSingleTestReviewsWithCountSingleTestReviewsTestResult" = Field(
+        alias="testResult"
+    )
     custom_review_values: List[
         "GetSingleTestReviewsWithCountSingleTestReviewsWithCountSingleTestReviewsCustomReviewValues"
     ] = Field(alias="customReviewValues")
