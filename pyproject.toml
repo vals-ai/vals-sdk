@@ -45,3 +45,9 @@ include = ["vals*"]
 [tool.setuptools_scm]
 version_scheme = "guess-next-dev"
 local_scheme = "node-and-date"
+
+[tool.ruff]
+exclude = ["examples", "vals/graphql_client"]
+
+[tool.basedpyright]
+exclude = ["examples", "vals/graphql_client"]
