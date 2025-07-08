@@ -22,7 +22,6 @@ def suite_group():
 
 
 async def create_commmand_async(file: TextIOWrapper, project_id: str | None):
-
     suite = await Suite.from_dict(json.loads(file.read()))
     if project_id:
         suite.project_id = project_id
@@ -34,7 +33,7 @@ async def create_commmand_async(file: TextIOWrapper, project_id: str | None):
 
 
 @click.command(name="create")
-@click.argument("file", type=click.File("r"))
+@click.option("-f", "--file", type=click.File("r"), required=True)
 @click.option("--project-id", type=str, help="Project ID to create the suite in")
 def create_command(file: TextIOWrapper, project_id: str | None):
     """
@@ -61,8 +60,8 @@ async def update_command_async(file: TextIOWrapper, suite_id: str):
 
 
 @click.command(name="update")
-@click.argument("file", type=click.File("r"))
-@click.argument("suite_id", type=str)
+@click.option("-f", "--file", type=click.File("r"), required=True)
+@click.option("-s", "--suite-id", type=str, required=True)
 def update_command(file: TextIOWrapper, suite_id: str):
     """
     Update the test and checks of an already existing suite
@@ -75,8 +74,10 @@ async def list_command_async(limit: int, offset: int, search: str, project_id: s
         click.echo(f"Listing suites for project: {project_id}")
     else:
         click.echo("Listing suites for default project")
-    
-    suites = await Suite.list_suites(limit=limit, offset=offset - 1, search=search, project_id=project_id)
+
+    suites = await Suite.list_suites(
+        limit=limit, offset=offset - 1, search=search, project_id=project_id
+    )
     headers = ["#", "Title", "Suite ID", "Last Modified"]
     rows = []
     for i, suite in enumerate(suites, start=offset):
@@ -90,11 +91,13 @@ async def list_command_async(limit: int, offset: int, search: str, project_id: s
 
 @click.command(name="list")
 @click.option("-l", "--limit", type=int, default=25, help="Number of rows to return")
-@click.option(
-    "-o", "--offset", type=int, default=1, help="Start table at this row (1-indexed)"
-)
+@click.option("-o", "--offset", type=int, default=1, help="Start table at this row (1-indexed)")
 @click.option("--search", type=str, default="", help="Search for a suite by title")
-@click.option("--project-id", type=str, help="Project ID to filter suites by. If unset, uses the default project.")
+@click.option(
+    "--project-id",
+    type=str,
+    help="Project ID to filter suites by. If unset, uses the default project.",
+)
 def list_command(
     limit: int,
     offset: int,
@@ -125,7 +128,12 @@ async def pull_command_async(
     path_output_suite = os.path.join(path_output, os.path.basename(file))
     path_documents = os.path.join(path_output, "documents")
 
-    suite = await Suite.from_id(suite_id, download_files=download_files, download_path=path_documents, max_concurrent_downloads=max_concurrent_downloads)
+    suite = await Suite.from_id(
+        suite_id,
+        download_files=download_files,
+        download_path=path_documents,
+        max_concurrent_downloads=max_concurrent_downloads,
+    )
 
     if to_csv:
         with open(path_output_suite, "w") as f:
@@ -133,7 +141,9 @@ async def pull_command_async(
     else:
         if download_files:
             for test in suite.tests:
-                test.files_under_test = [file.path for file in test.files_under_test if file.path is not None]
+                test.files_under_test = [
+                    file.path for file in test.files_under_test if file.path is not None
+                ]
         suite_dict = suite.to_dict()
         json_string = json.dumps(suite_dict, indent=2)
         with open(path_output_suite, "w") as f:
@@ -143,19 +153,22 @@ async def pull_command_async(
 
 
 @click.command(name="pull")
-@click.argument("suite_id", type=str, required=True)
-@click.option("--file", type=str, required=True, help="Name of the file to save the suite to")
+@click.option("-f", "--file", type=str, required=True, help="Name of the file to save the suite to")
+@click.option("-s", "--suite-id", type=str, required=True)
 @click.option("--csv", is_flag=True, help="Output in CSV format")
 @click.option("--json", is_flag=True, help="Output in JSON format")
 @click.option("--no-download-files", is_flag=True, help="Do not download files from the suite")
 @click.option(
-    "--download-path", type=str, default=None, help="Path to write the suite file and associated files to"
+    "--download-path",
+    type=str,
+    default=None,
+    help="Path to write the suite file and associated files to",
 )
 @click.option(
     "--max-concurrent-downloads",
     type=int,
     default=50,
-    help="Maximum number of concurrent downloads",
+    help="Maximum number of concurrent files to download.",
 )
 def pull_command(
     suite_id: str,
@@ -217,7 +230,7 @@ async def run_command_async(
 
 
 @click.command(name="run")
-@click.argument("suite_id", type=str, required=True)
+@click.option("-s", "--suite-id", type=str, required=True)
 @click.option("--model", type=str, required=True, help="Model to run the tests with")
 @click.option(
     "--run-name",
@@ -231,9 +244,7 @@ async def run_command_async(
     default=False,
     help="Wait for the run to complete before returning",
 )
-@click.option(
-    "--eval-model", type=str, default=None, help="Model to use for evaluation"
-)
+@click.option("--eval-model", type=str, default=None, help="Model to use for evaluation")
 @click.option(
     "--parallelism",
     type=int,
@@ -264,26 +275,16 @@ async def run_command_async(
     default=None,
     help="Create text summary of results",
 )
-@click.option(
-    "--temperature", type=float, default=None, help="Temperature parameter for model"
-)
-@click.option(
-    "--max-output-tokens", type=int, default=None, help="Maximum tokens in model output"
-)
+@click.option("--temperature", type=float, default=None, help="Temperature parameter for model")
+@click.option("--max-output-tokens", type=int, default=None, help="Maximum tokens in model output")
 @click.option("--system-prompt", type=str, default=None, help="System prompt for model")
-@click.option(
-    "--new-line-stop-option", is_flag=True, default=None, help="Stop on new line"
-)
+@click.option("--new-line-stop-option", is_flag=True, default=None, help="Stop on new line")
 @click.option("--as-batch", is_flag=True, default=False, help="Run suite as a batch")
-def run_command(
-    suite_id: str, model: str, run_name: str, wait_for_completion: bool, **params
-):
+def run_command(suite_id: str, model: str, run_name: str, wait_for_completion: bool, **params):
     """
     Run a test suite
     """
-    asyncio.run(
-        run_command_async(suite_id, model, run_name, wait_for_completion, params)
-    )
+    asyncio.run(run_command_async(suite_id, model, run_name, wait_for_completion, params))
 
 
 suite_group.add_command(create_command)
