@@ -49,16 +49,13 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def list_projects(
-        self,
-        offset: Union[Optional[int], UnsetType] = UNSET,
-        limit: Union[Optional[int], UnsetType] = UNSET,
-        **kwargs: Any
+        self, offset: int, limit: int, **kwargs: Any
     ) -> ListProjects:
         query = gql(
             """
-            query listProjects($offset: Int, $limit: Int) {
+            query listProjects($offset: Int!, $limit: Int!) {
               projectsWithCount(
-                filterOptions: {offset: $offset, limit: $limit, archived: false}
+                filterOptions: {offset: $offset, limit: $limit, archived: false, search: ""}
               ) {
                 projects {
                   id
@@ -254,9 +251,9 @@ class Client(AsyncBaseClient):
                 createdBy
                 createdAt
                 status
-                passRate
+                passRateHumanEval
                 flaggedRate
-                agreementRate
+                agreementRateAutoEval
                 completedTime
                 numberOfReviews
                 assignedReviewers
@@ -511,7 +508,6 @@ class Client(AsyncBaseClient):
                 typedParameters {
                   evalModel
                   maximumThreads
-                  runGoldenEval
                   runConfidenceEvaluation
                   heavyweightFactor
                   createTextSummary
@@ -519,7 +515,6 @@ class Client(AsyncBaseClient):
                   temperature
                   maxOutputTokens
                   systemPrompt
-                  newLineStopOption
                   customParameters
                 }
                 passRate {
@@ -665,7 +660,6 @@ class Client(AsyncBaseClient):
                   typedParameters {
                     evalModel
                     maximumThreads
-                    runGoldenEval
                     runConfidenceEvaluation
                     heavyweightFactor
                     createTextSummary
@@ -673,7 +667,6 @@ class Client(AsyncBaseClient):
                     temperature
                     maxOutputTokens
                     systemPrompt
-                    newLineStopOption
                   }
                   testSuite {
                     title
@@ -1110,9 +1103,7 @@ class Client(AsyncBaseClient):
               defaultParameters {
                 evalModel
                 maximumThreads
-                runGoldenEval
                 runConfidenceEvaluation
-                newLineStopOption
                 createTextSummary
                 detectRefusals
                 modelUnderTest

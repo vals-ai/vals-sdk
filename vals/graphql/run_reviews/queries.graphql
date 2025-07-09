@@ -4,9 +4,9 @@ query GetSingleRunReview($runReviewId: String!) {
     createdBy
     createdAt
     status
-    passRate
+    passRateHumanEval
     flaggedRate
-    agreementRate
+    agreementRateAutoEval
     completedTime
     numberOfReviews
     assignedReviewers

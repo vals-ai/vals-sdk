@@ -115,10 +115,10 @@ class TestFilterOptions(BaseModel):
 
 
 class ProjectsWithCountFilterType(BaseModel):
-    search: Optional[str] = None
-    archived: Optional[bool] = None
-    offset: Optional[int] = None
-    limit: Optional[int] = None
+    search: str
+    archived: bool
+    offset: int
+    limit: int
 
 
 class CheckInputType(BaseModel):
@@ -162,7 +162,6 @@ class TestMutationInfo(BaseModel):
 class ParameterInputType(BaseModel):
     eval_model: str = Field(alias="evalModel")
     maximum_threads: int = Field(alias="maximumThreads")
-    run_golden_eval: bool = Field(alias="runGoldenEval")
     run_confidence_evaluation: bool = Field(alias="runConfidenceEvaluation")
     heavyweight_factor: int = Field(alias="heavyweightFactor")
     create_text_summary: bool = Field(alias="createTextSummary")
@@ -172,7 +171,6 @@ class ParameterInputType(BaseModel):
     temperature: float
     max_output_tokens: int = Field(alias="maxOutputTokens")
     system_prompt: str = Field(alias="systemPrompt")
-    new_line_stop_option: bool = Field(alias="newLineStopOption")
     as_batch: bool = Field(alias="asBatch")
     custom_parameters: Any = Field(alias="customParameters")
 
