@@ -84,9 +84,7 @@ query GetDefaultParameters {
   defaultParameters {
     evalModel
     maximumThreads
-    runGoldenEval
     runConfidenceEvaluation
-    newLineStopOption
     createTextSummary
     detectRefusals
     modelUnderTest

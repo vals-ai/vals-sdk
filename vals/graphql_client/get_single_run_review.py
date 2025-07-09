@@ -21,9 +21,9 @@ class GetSingleRunReviewSingleRunReview(BaseModel):
     created_by: str = Field(alias="createdBy")
     created_at: datetime = Field(alias="createdAt")
     status: Optional[RunReviewStatusEnum]
-    pass_rate: Optional[float] = Field(alias="passRate")
+    pass_rate_human_eval: Optional[float] = Field(alias="passRateHumanEval")
     flagged_rate: Optional[float] = Field(alias="flaggedRate")
-    agreement_rate: Optional[float] = Field(alias="agreementRate")
+    agreement_rate_auto_eval: Optional[float] = Field(alias="agreementRateAutoEval")
     completed_time: Optional[datetime] = Field(alias="completedTime")
     number_of_reviews: int = Field(alias="numberOfReviews")
     assigned_reviewers: List[str] = Field(alias="assignedReviewers")
