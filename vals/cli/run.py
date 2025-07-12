@@ -27,11 +27,11 @@ async def pull_async(run_id: str, file: TextIOWrapper, csv: bool, _json: bool):
 
 
 @click.command
-@click.argument("file", type=click.File("w"), required=True)
-@click.argument("run-id", type=click.STRING, required=True)
+@click.option("-f", "--file", type=click.File("w"), required=True)
+@click.option("-r", "--run-id", type=click.STRING, required=True)
 @click.option("--csv", is_flag=True, default=False, help="Save as a CSV")
 @click.option("--json", is_flag=True, default=False, help="Save as a JSON")
-def pull(run_id: str, file: TextIOWrapper, csv: bool, json: bool):
+def pull(file: TextIOWrapper, run_id: str, csv: bool, json: bool):
     """
     Pull results of a run and save it to a file.
     """
@@ -39,13 +39,18 @@ def pull(run_id: str, file: TextIOWrapper, csv: bool, json: bool):
 
 
 async def list_async(
-    limit: int, offset: int, suite_id: str | None, show_archived: bool, search: str, project_id: str | None
+    limit: int,
+    offset: int,
+    suite_id: str | None,
+    show_archived: bool,
+    search: str,
+    project_id: str | None,
 ):
     if project_id:
         click.echo(f"Listing runs for project: {project_id}")
     else:
         click.echo("Listing runs for default project")
-    
+
     run_results = await Run.list_runs(
         limit=limit,
         offset=offset - 1,
@@ -60,9 +65,7 @@ async def list_async(
     rows = []
     for i, run in enumerate(run_results, start=offset):
         date_str = run.timestamp.strftime("%Y/%m/%d %H:%M")
-        pass_percentage_str = (
-            f"{run.pass_rate:.2f}%" if run.pass_rate is not None else "N/A"
-        )
+        pass_percentage_str = f"{run.pass_rate:.2f}%" if run.pass_rate is not None else "N/A"
         rows.append(
             [
                 i,
@@ -107,9 +110,18 @@ async def list_async(
     default="",
     help="Search for a run based off its name, model or test suite title",
 )
-@click.option("--project-id", type=str, help="Project ID to filter runs by (e.g., test-y10n61). If unset, uses the default project.")
+@click.option(
+    "--project-id",
+    type=str,
+    help="Project ID to filter runs by (e.g., test-y10n61). If unset, uses the default project.",
+)
 def list(
-    limit: int, offset: int, suite_id: str | None, show_archived: bool, search: str, project_id: str | None
+    limit: int,
+    offset: int,
+    suite_id: str | None,
+    show_archived: bool,
+    search: str,
+    project_id: str | None,
 ):
     """
     List runs associated with this organization
