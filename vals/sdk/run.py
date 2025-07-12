@@ -311,7 +311,7 @@ class Run(BaseModel):
         self,
         model: str | ModelFunctionType | list[QuestionAnswerPair] | InspectWrapper,
         wait_for_completion: bool = False,
-        upload_concurrency: int | None = None,
+        upload_concurrency: int = 3,
         custom_operators: list[ModelCustomOperatorFunctionType] | None = None,
         parallelism: int | None = None,
     ) -> None:
