@@ -1,4 +1,7 @@
-"""Tests for rerun_checks functionality in SDK and CLI."""
+"""
+Tests for rerun_checks functionality in SDK and CLI.
+requires VALS_ENV = 'DEV' w VALS_API_KEY configured.
+"""
 
 import os
 import pytest
