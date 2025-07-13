@@ -22,7 +22,7 @@ class TestRerunChecks:
         assert vals_api_key is not None, "VALS_API_KEY environment variable must be set"
         
         # Use the specific run ID provided
-        run_id = "77cab3a5-f892-4b1b-a576-b117fd2e7408"
+        run_id = "57d78d38-a19c-4f52-95f2-2eb4b4615b76"
         
         try:
             # Get the original run
@@ -44,10 +44,10 @@ class TestRerunChecks:
             # Check that all test results pass
             assert len(new_run.test_results) > 0, "Run should have test results"
             
-            # Verify at least one check passes
+            # Verify at least one check passes (auto_eval = 1.0 means pass)
             passing_checks = sum(
                 1 for test_result in new_run.test_results 
-                if any(check.passed for check in test_result.checks)
+                if any(check.auto_eval == 1.0 for check in test_result.check_results)
             )
             assert passing_checks > 0, "At least one check should pass"
             
@@ -76,7 +76,7 @@ class TestRerunChecksEdgeCases:
         assert os.getenv('VALS_ENV') == 'DEV', "VALS_ENV must be set to 'DEV'"
         assert os.getenv('VALS_API_KEY') is not None, "VALS_API_KEY must be set"
         
-        run_id = "77cab3a5-f892-4b1b-a576-b117fd2e7408"
+        run_id = "b5016745-3911-4ab1-b708-cd38ddbd5304"
         
         try:
             original_run = await Run.from_id(run_id)
