@@ -208,12 +208,13 @@ class Run(BaseModel):
     async def get_qa_pairs(
         self, offset: int = 0, remaining_limit: int = 200
     ) -> list[QuestionAnswerPair]:
-        """Get all QA pairs for a run."""
+        """Get up to `remaining_limit` QA pairs for a run.
+        set `remaining_limit = -1` to get all QA pairs."""
         qa_pairs = []
         current_offset = offset
         batch_size = 200
 
-        while remaining_limit > 0:
+        while remaining_limit != 0:
             # Calculate the current batch size
             current_batch_size = min(batch_size, remaining_limit)
 
