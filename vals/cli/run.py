@@ -117,5 +117,22 @@ def list(
     asyncio.run(list_async(limit, offset, suite_id, show_archived, search, project_id))
 
 
+async def rerun_checks_async(run_id: str):
+    run = await Run.from_id(run_id)
+    new_run = await run.rerun_all_checks()
+    click.secho(f"Created new run: {new_run.id}", fg="green")
+    return new_run.id
+
+
+@click.command()
+@click.argument("run-id", type=str, required=True)
+def rerun_checks(run_id: str):
+    """
+    Rerun all checks for a specific run and create a new run
+    """
+    asyncio.run(rerun_checks_async(run_id))
+
+
 run_group.add_command(pull)
 run_group.add_command(list)
+run_group.add_command(rerun_checks)

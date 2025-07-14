@@ -383,6 +383,20 @@ class Run(BaseModel):
             uploaded_qa_pairs=uploaded_qa_pairs,
         )
 
+    async def rerun_all_checks(self) -> "Run":
+        """
+        Rerun all checks for a run.
+        returns new Run object
+        """
+
+        # Import Suite here to avoid circular import
+        from vals.sdk.suite import Suite
+
+        qa_pairs = await self.get_qa_pairs()
+        suite = await Suite.from_id(self.test_suite_id)
+        return await suite.run(qa_pairs)
+
+
     @staticmethod
     async def get_status_from_id(run_id: str) -> RunStatus:
         """Get the status of a run directly from its ID without instantiating a Run object."""
