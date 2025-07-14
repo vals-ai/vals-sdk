@@ -393,7 +393,7 @@ class Run(BaseModel):
         # Import Suite here to avoid circular import
         from vals.sdk.suite import Suite
 
-        qa_pairs = await self.get_qa_pairs()
+        qa_pairs = await self.get_qa_pairs(offset=0, remaining_limit=-1)
         suite = await Suite.from_id(self.test_suite_id)
         return await suite.run(qa_pairs)
 
