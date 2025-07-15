@@ -15,9 +15,7 @@ class GetDefaultParameters(BaseModel):
 class GetDefaultParametersDefaultParameters(BaseModel):
     eval_model: str = Field(alias="evalModel")
     maximum_threads: int = Field(alias="maximumThreads")
-    run_golden_eval: bool = Field(alias="runGoldenEval")
     run_confidence_evaluation: bool = Field(alias="runConfidenceEvaluation")
-    new_line_stop_option: bool = Field(alias="newLineStopOption")
     create_text_summary: bool = Field(alias="createTextSummary")
     detect_refusals: bool = Field(alias="detectRefusals")
     model_under_test: str = Field(alias="modelUnderTest")

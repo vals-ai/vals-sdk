@@ -1,6 +1,6 @@
-query listProjects($offset: Int, $limit: Int) {
+query listProjects($offset: Int!, $limit: Int!) {
   projectsWithCount(
-    filterOptions: { offset: $offset, limit: $limit, archived: false }
+    filterOptions: { offset: $offset, limit: $limit, archived: false, search: ""}
   ) {
     projects {
       id
