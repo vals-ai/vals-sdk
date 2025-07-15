@@ -216,7 +216,7 @@ class Run(BaseModel):
 
         while remaining_limit != 0:
             # Calculate the current batch size
-            current_batch_size = min(batch_size, remaining_limit)
+            current_batch_size = min(batch_size, remaining_limit) if remaining_limit > 0 else batch_size
 
             result = await self._client.list_question_answer_pairs(
                 qa_set_id=self.qa_set_id,
