@@ -128,7 +128,8 @@ async def rerun_checks_async(run_id: str):
 @click.argument("run-id", type=str, required=True)
 def rerun_checks(run_id: str):
     """
-    Rerun all checks for a specific run and create a new run
+    Rerun all checks for a run, using existing QA pairs.
+    returns a new Run object, rather than modifying the existing one.
     """
     asyncio.run(rerun_checks_async(run_id))
 

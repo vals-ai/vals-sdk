@@ -76,10 +76,11 @@ class TestRerunChecksEdgeCases:
     async def test_rerun_all_checks_preserves_original_run(self):
         """Test that rerun_all_checks doesn't modify the original run."""
         # Assert environment variables are set
-        assert os.getenv('VALS_ENV') == 'DEV', "VALS_ENV must be set to 'DEV'"
+        assert os.getenv('VALS_ENV') == 'BENCH', "VALS_ENV must be set to 'BENCH'"
         assert os.getenv('VALS_API_KEY') is not None, "VALS_API_KEY must be set"
         
-        run_id = "b5016745-3911-4ab1-b708-cd38ddbd5304"
+        # run_id = "b5016745-3911-4ab1-b708-cd38ddbd5304" # small, DEV
+        run_id = 'e80d9cb2-d5de-4901-9c7c-4a0914e54149' # large, BENCH
         
         try:
             original_run = await Run.from_id(run_id)
