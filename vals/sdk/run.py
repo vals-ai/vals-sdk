@@ -208,14 +208,15 @@ class Run(BaseModel):
     async def get_qa_pairs(
         self, offset: int = 0, remaining_limit: int = 200
     ) -> list[QuestionAnswerPair]:
-        """Get all QA pairs for a run."""
+        """Get up to `remaining_limit` QA pairs for a run.
+        set `remaining_limit = -1` to get all QA pairs."""
         qa_pairs = []
         current_offset = offset
         batch_size = 200
 
-        while remaining_limit > 0:
+        while remaining_limit != 0:
             # Calculate the current batch size
-            current_batch_size = min(batch_size, remaining_limit)
+            current_batch_size = min(batch_size, remaining_limit) if remaining_limit > 0 else batch_size
 
             result = await self._client.list_question_answer_pairs(
                 qa_set_id=self.qa_set_id,
@@ -310,7 +311,7 @@ class Run(BaseModel):
         self,
         model: str | ModelFunctionType | list[QuestionAnswerPair] | InspectWrapper,
         wait_for_completion: bool = False,
-        upload_concurrency: int | None = None,
+        upload_concurrency: int = 3,
         custom_operators: list[ModelCustomOperatorFunctionType] | None = None,
         parallelism: int | None = None,
     ) -> None:
@@ -381,6 +382,20 @@ class Run(BaseModel):
             remaining_tests=list(remaining_tests.values()),
             uploaded_qa_pairs=uploaded_qa_pairs,
         )
+
+    async def rerun_all_checks(self) -> "Run":
+        """
+        Rerun all checks for a run, using existing QA pairs.
+        returns a new Run object, rather than modifying the existing one.
+        """
+
+        # Import Suite here to avoid circular import
+        from vals.sdk.suite import Suite
+
+        qa_pairs = await self.get_qa_pairs(offset=0, remaining_limit=-1)
+        suite = await Suite.from_id(self.test_suite_id)
+        return await suite.run(qa_pairs)
+
 
     @staticmethod
     async def get_status_from_id(run_id: str) -> RunStatus:
