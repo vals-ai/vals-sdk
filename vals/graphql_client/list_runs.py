@@ -7,6 +7,7 @@ from typing import List, Optional
 from pydantic import Field
 
 from .base_model import BaseModel
+from .enums import RunStatus
 
 
 class ListRuns(BaseModel):
@@ -27,7 +28,7 @@ class ListRunsRunsWithCountRunResults(BaseModel):
         alias="successRate"
     )
     name: str
-    status: str
+    status: RunStatus
     text_summary: str = Field(alias="textSummary")
     timestamp: datetime
     completed_at: Optional[datetime] = Field(alias="completedAt")

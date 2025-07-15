@@ -7,6 +7,7 @@ from typing import Any, Optional
 from pydantic import Field
 
 from .base_model import BaseModel
+from .enums import RunStatus
 
 
 class PullRun(BaseModel):
@@ -17,7 +18,7 @@ class PullRunRun(BaseModel):
     qa_set: Optional["PullRunRunQaSet"] = Field(alias="qaSet")
     run_id: str = Field(alias="runId")
     pass_percentage: Optional[float] = Field(alias="passPercentage")
-    status: str
+    status: RunStatus
     text_summary: str = Field(alias="textSummary")
     timestamp: datetime
     completed_at: Optional[datetime] = Field(alias="completedAt")

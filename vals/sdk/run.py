@@ -14,9 +14,9 @@ from vals.sdk.types import (
     QuestionAnswerPair,
     RunMetadata,
     RunParameters,
-    RunStatus,
     TestResult,
 )
+from vals.graphql_client.enums import RunStatus
 from vals.sdk.util import _get_auth_token, be_host, fe_host, get_ariadne_client
 
 
@@ -134,7 +134,7 @@ class Run(BaseModel):
             success_rate_error=(
                 result.run.success_rate.error if result.run.success_rate else None
             ),
-            status=RunStatus(result.run.status),
+            status=result.run.status,
             archived=result.run.archived,
             text_summary=result.run.text_summary,
             timestamp=result.run.timestamp,
@@ -243,9 +243,8 @@ class Run(BaseModel):
 
     async def run_status(self) -> RunStatus:
         """Get the status of a run"""
-        result = await self._client.run_status(run_id=self.id)
-        status = result.run.status
-        self.status = RunStatus(status.lower())
+        result = await self._client.get_run_status(run_id=self.id)
+        self.status = result.run.status
         return self.status
 
     async def wait_for_run_completion(
@@ -402,5 +401,5 @@ class Run(BaseModel):
     async def get_status_from_id(run_id: str) -> RunStatus:
         """Get the status of a run directly from its ID without instantiating a Run object."""
         client = get_ariadne_client()
-        result = await client.run_status(run_id=run_id)
-        return RunStatus(result.run.status.lower())
+        result = await client.get_run_status(run_id=run_id)
+        return result.run.status

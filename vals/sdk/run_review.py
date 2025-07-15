@@ -25,9 +25,9 @@ class SingleRunReview(BaseModel):
     created_by: str
     created_at: datetime
     status: RunReviewStatusEnum
-    pass_rate: float | None
+    pass_rate_human_eval: float | None
     flagged_rate: float | None
-    agreement_rate: float | None
+    agreement_rate_auto_eval: float | None
     completed_time: datetime | None
     number_of_reviews: int
     assigned_reviewers: list[str]
@@ -104,9 +104,9 @@ class SingleRunReview(BaseModel):
             created_by=run_review.created_by,
             created_at=run_review.created_at,
             status=run_review.status,
-            pass_rate=run_review.pass_rate or None,
+            pass_rate_human_eval=run_review.pass_rate_human_eval or None,
             flagged_rate=run_review.flagged_rate or None,
-            agreement_rate=run_review.agreement_rate or None,
+            agreement_rate_auto_eval=run_review.agreement_rate_auto_eval or None,
             completed_time=run_review.completed_time or None,
             number_of_reviews=run_review.number_of_reviews,
             assigned_reviewers=run_review.assigned_reviewers,
