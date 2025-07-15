@@ -386,8 +386,8 @@ class Run(BaseModel):
 
     async def rerun_all_checks(self) -> "Run":
         """
-        Rerun all checks for a run.
-        returns new Run object
+        Rerun all checks for a run, using existing QA pairs.
+        returns a new Run object, rather than modifying the existing one.
         """
 
         # Import Suite here to avoid circular import
