@@ -8,40 +8,99 @@ from pydantic import Field
 from .base_model import BaseModel
 
 
-class TestFragment(BaseModel):
-    id: str
-    input_under_test: str = Field(alias="inputUnderTest")
-    typed_context: Any = Field(alias="typedContext")
-    typed_tags: List[str] = Field(alias="typedTags")
-    cross_version_id: str = Field(alias="crossVersionId")
-    golden_output: str = Field(alias="goldenOutput")
-    typed_file_ids: List[str] = Field(alias="typedFileIds")
-    typed_checks: List["TestFragmentTypedChecks"] = Field(alias="typedChecks")
-    test_suite: "TestFragmentTestSuite" = Field(alias="testSuite")
-
-
-class TestFragmentTypedChecks(BaseModel):
-    operator: str
-    criteria: str
-    modifiers: "TestFragmentTypedChecksModifiers"
-
-
-class TestFragmentTypedChecksModifiers(BaseModel):
-    optional: bool
-    severity: Optional[float]
-    examples: List["TestFragmentTypedChecksModifiersExamples"]
-    extractor: Optional[str]
-    conditional: Optional["TestFragmentTypedChecksModifiersConditional"]
-    category: Optional[str]
-    display_metrics: bool = Field(alias="displayMetrics")
-
-
-class TestFragmentTypedChecksModifiersExamples(BaseModel):
+class ExampleOutputTypeFields(BaseModel):
     type: str
     text: str
 
 
-class TestFragmentTypedChecksModifiersConditional(BaseModel):
+class ConditionalCheckOutputTypeFields(BaseModel):
+    operator: str
+    criteria: str
+
+
+class CheckModifierOutputTypeFields(BaseModel):
+    optional: bool
+    severity: Optional[float]
+    display_metrics: bool = Field(alias="displayMetrics")
+    examples: List["CheckModifierOutputTypeFieldsExamples"]
+    extractor: Optional[str]
+    conditional: Optional["CheckModifierOutputTypeFieldsConditional"]
+    category: Optional[str]
+
+
+class CheckModifierOutputTypeFieldsExamples(ExampleOutputTypeFields):
+    pass
+
+
+class CheckModifierOutputTypeFieldsConditional(ConditionalCheckOutputTypeFields):
+    pass
+
+
+class CheckOutputTypeFields(BaseModel):
+    operator: str
+    criteria: str
+    modifiers: "CheckOutputTypeFieldsModifiers"
+
+
+class CheckOutputTypeFieldsModifiers(CheckModifierOutputTypeFields):
+    pass
+
+
+class MetadataOutputTypeFields(BaseModel):
+    in_tokens: int = Field(alias="inTokens")
+    out_tokens: int = Field(alias="outTokens")
+    duration_seconds: float = Field(alias="durationSeconds")
+
+
+class ResultJsonElementTypeFields(BaseModel):
+    operator: str
+    criteria: str
+    modifiers: "ResultJsonElementTypeFieldsModifiers"
+    auto_eval: float = Field(alias="autoEval")
+    feedback: str
+    eval_cont: float = Field(alias="evalCont")
+    is_global: bool = Field(alias="isGlobal")
+    severity: float
+
+
+class ResultJsonElementTypeFieldsModifiers(CheckModifierOutputTypeFields):
+    pass
+
+
+class TestFragment(BaseModel):
+    id: str
+    input_under_test: str = Field(alias="inputUnderTest")
+    context: Any
+    tags: List[str]
+    cross_version_id: str = Field(alias="crossVersionId")
+    golden_output: str = Field(alias="goldenOutput")
+    file_ids: List[str] = Field(alias="fileIds")
+    checks: List["TestFragmentChecks"]
+    test_suite: "TestFragmentTestSuite" = Field(alias="testSuite")
+
+
+class TestFragmentChecks(BaseModel):
+    operator: str
+    criteria: str
+    modifiers: "TestFragmentChecksModifiers"
+
+
+class TestFragmentChecksModifiers(BaseModel):
+    optional: bool
+    severity: Optional[float]
+    examples: List["TestFragmentChecksModifiersExamples"]
+    extractor: Optional[str]
+    conditional: Optional["TestFragmentChecksModifiersConditional"]
+    category: Optional[str]
+    display_metrics: bool = Field(alias="displayMetrics")
+
+
+class TestFragmentChecksModifiersExamples(BaseModel):
+    type: str
+    text: str
+
+
+class TestFragmentChecksModifiersConditional(BaseModel):
     operator: str
     criteria: str
 
@@ -50,4 +109,10 @@ class TestFragmentTestSuite(BaseModel):
     id: str
 
 
+ExampleOutputTypeFields.model_rebuild()
+ConditionalCheckOutputTypeFields.model_rebuild()
+CheckModifierOutputTypeFields.model_rebuild()
+CheckOutputTypeFields.model_rebuild()
+MetadataOutputTypeFields.model_rebuild()
+ResultJsonElementTypeFields.model_rebuild()
 TestFragment.model_rebuild()
