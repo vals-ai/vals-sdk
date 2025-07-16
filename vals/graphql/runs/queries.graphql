@@ -19,7 +19,7 @@ query PullRun($runId: String!) {
     completedAt
     archived
     name
-    typedParameters {
+    parameters {
       evalModel
       maximumThreads
       runGoldenEval
@@ -112,7 +112,7 @@ query ListRuns(
       timestamp
       completedAt
       archived
-      typedParameters {
+      parameters {
         evalModel
         maximumThreads
         runGoldenEval
