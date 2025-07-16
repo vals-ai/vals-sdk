@@ -107,8 +107,8 @@ class Suite(BaseModel):
         global_checks = []
         if suite_data.global_checks is not None:
             global_checks = [
-                Check.from_graphql(check)
-                for check in json.loads(suite_data.global_checks)
+                Check.from_graphql(check.dict())
+                for check in suite_data.global_checks
             ]
 
         tests = []

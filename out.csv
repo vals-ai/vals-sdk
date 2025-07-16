@@ -1,0 +1,19 @@
+Run Id,Test Suite Id,Test Suite Title,Run Status,Run Error Analysis,Completed At,Run Parameters,Percent Of Checks Passed,Amount Of Checks Passed,Standard Deviation For Checks Passed,Percent Of Tests Passed,Amount Of Tests Passed,Standard Deviation For Tests Passed,Needs Review Percentage
+b48f9a32-ea39-4fe5-8670-8775a8918f2d,d7883d18-8053-4c37-a765-6b1b334f8c9a,Test Suite,Success,"The feedback highlights a trend of insufficient detail in Text 2 compared to the comprehensive explanation in Text 1, leading to a lack of semantic equivalence.
+",2025-07-17 17:53:36.267108+00:00,"{'as_batch': False, 'eval_model': 'openai/gpt-4o', 'max_tokens': 512, 'temperature': 0.0, 'detect_refusals': False, 'maximum_threads': 10, 'run_golden_eval': False, 'model_under_test': 'gpt-4o-mini', 'max_output_tokens': 512, 'heavyweight_factor': 1, 'create_text_summary': True, 'new_line_stop_option': False, 'run_confidence_evaluation': True, 'retry_failed_calls_indefinitely': False}",0.5,2,35.36,0.0,1,0.0,0.0
+
+Test Result Id,Test Id,Test Status,Test Input,LLM Output,In Tokens,Out Tokens,Duration,Operator,Criteria,Auto Eval,Confidence Level,Feedback
+9805d576-f2b5-4003-a2bb-c4b14ac71ffa,dee0add1-6f78-4508-b15e-e58f84330074,Success,What is QSBS?,"QSBS stands for Qualified Small Business Stock. It refers to a specific type of stock that offers certain tax benefits under the Internal Revenue Code in the United States. Here are the key points about QSBS:
+
+1. **Eligibility**: To qualify as QSBS, the stock must be issued by a domestic C corporation that meets specific criteria, including having gross assets of $50 million or less at the time of issuance.
+
+2. **Holding Period**: Investors must hold the stock for at least five years to benefit from the tax advantages.
+
+3. **Tax Exemption**: If the stock qualifies, investors may be able to exclude a significant portion (up to 100%) of the capital gains from federal taxes when they sell the stock, subject to certain limits.
+
+4. **Investment Limits**: There are limits on the amount of gain that can be excluded, and the exclusion is capped at the greater of $10 million or 10 times the adjusted basis of the stock.
+
+5. **Purpose**: QSBS is designed to encourage investment in small businesses and startups by providing tax incentives to investors.
+
+Investors should consult with a tax professional to understand the specific requirements and implications of investing in QSBS.",12.0,244.0,7.33,equals,QSBS,Fail,High,"Text 1 provides a detailed explanation of QSBS, including eligibility, holding period, tax exemption, investment limits, and purpose, while Text 2 only mentions QSBS without any details. The lack of information in Text 2 means they are not semantically equivalent."
+,,,,,,,,grammar,,Pass,High,The text is grammatically correct and all words are spelled correctly. It provides a clear explanation of Qualified Small Business Stock (QSBS) and its tax benefits.

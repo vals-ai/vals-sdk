@@ -396,8 +396,8 @@ class RunMetadata(BaseModel):
             completed_at=graphql_run.completed_at,
             archived=graphql_run.archived,
             test_suite_title=graphql_run.test_suite.title,
-            model=graphql_run.typed_parameters.model_under_test,
-            parameters=RunParameters(**graphql_run.typed_parameters.model_dump()),
+            model=graphql_run.parameters.model_under_test,
+            parameters=RunParameters(**graphql_run.parameters.model_dump()),
         )
 
 
@@ -477,8 +477,10 @@ class TestResult(BaseModel):
         if graphql_test_result.qa_pair:
             output_context = graphql_test_result.qa_pair.output_context
             context = graphql_test_result.qa_pair.context
-            if len(context) == 0 and graphql_test_result.test.typed_context is not None:
-                context = graphql_test_result.test.typed_context
+            if len(context) == 0 and graphql_test_result.test.context is not None:
+                context = graphql_test_result.test.context
+
+        check_result_dicts = [check_result.dict() for check_result in graphql_test_result.result_json]
 
         return cls(
             _id=graphql_test_result.id,
@@ -510,10 +512,10 @@ class TestResult(BaseModel):
                         else 0.5
                     ),
                 )
-                for check_result in json.loads(graphql_test_result.result_json)
+                for check_result in check_result_dicts
             ],
             metadata=(
-                Metadata(**json.loads(graphql_test_result.metadata))
+                Metadata(**graphql_test_result.metadata.dict())
                 if graphql_test_result.metadata
                 else None
             ),
@@ -537,18 +539,18 @@ class QuestionAnswerPair(BaseModel):
         graphql_qa_pair: ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs,
     ) -> "QuestionAnswerPair":
         metadata = None
-        if graphql_qa_pair.typed_metadata:
+        if graphql_qa_pair.metadata:
             metadata = Metadata(
-                in_tokens=graphql_qa_pair.typed_metadata.in_tokens,
-                out_tokens=graphql_qa_pair.typed_metadata.out_tokens,
-                duration_seconds=graphql_qa_pair.typed_metadata.duration_seconds,
+                in_tokens=graphql_qa_pair.metadata.in_tokens,
+                out_tokens=graphql_qa_pair.metadata.out_tokens,
+                duration_seconds=graphql_qa_pair.metadata.duration_seconds,
             )
 
         return cls(
             id=graphql_qa_pair.id,
             input_under_test=graphql_qa_pair.input_under_test,
             llm_output=graphql_qa_pair.llm_output,
-            file_ids=graphql_qa_pair.typed_file_ids,
+            file_ids=graphql_qa_pair.file_ids,
             context=graphql_qa_pair.context or {},
             output_context=graphql_qa_pair.output_context or {},
             metadata=metadata,
