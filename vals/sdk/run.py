@@ -106,7 +106,7 @@ class Run(BaseModel):
             )
 
         # Map maximum_threads to parallelism for backwards compatibility
-        parameters_dict = result.run.typed_parameters.model_dump()
+        parameters_dict = result.run.parameters.model_dump()
         model = parameters_dict.pop("model_under_test", "")
 
         if "maximum_threads" in parameters_dict:
