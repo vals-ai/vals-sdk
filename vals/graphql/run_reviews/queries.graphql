@@ -44,7 +44,7 @@ query SingleTestResultReviewsWithCount(
       amountReviewed
       latestCompletedReview
       llmOutput
-      typedResultJson {
+      resultJson {
         autoEval
         criteria
         operator
@@ -57,9 +57,9 @@ query SingleTestResultReviewsWithCount(
       test {
         id
         inputUnderTest
-        typedContext
+        context
       }
-      typedMetadata {
+      metadata {
         inTokens
         outTokens
         durationSeconds
@@ -89,13 +89,13 @@ query SingleTestResultReviewsWithCount(
         startedAt
         createdBy
         status
-        perCheckTestReviewTyped {
+        perCheckTestReview {
           binaryHumanEval
           isFlagged
         }
         testResult {
           id
-          typedResultJson {
+          resultJson {
             autoEval
             criteria
             operator
