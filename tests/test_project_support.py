@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from vals.sdk.project import Project
 from vals.sdk.suite import Suite
 from vals.sdk.run import Run
-from vals.sdk.util import get_effective_project_id
 
 
 class TestProjectClass:
@@ -132,20 +131,6 @@ class TestRunProjectSupport:
             search="",
             project_id="test-proj",
         )
-
-
-class TestUtilityFunctions:
-    """Test utility functions for project support."""
-
-    def test_get_effective_project_id_with_parameter(self):
-        """Test get_effective_project_id with explicit parameter."""
-        result = get_effective_project_id("explicit-project-id")
-        assert result == "explicit-project-id"
-
-    def test_get_effective_project_id_without_parameter(self):
-        """Test get_effective_project_id without parameter returns None."""
-        result = get_effective_project_id(None)
-        assert result is None
 
 
 class TestCLIProjectSupport:
