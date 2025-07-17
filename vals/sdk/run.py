@@ -195,7 +195,7 @@ class Run(BaseModel):
     def to_json_file(self, file_path: str) -> None:
         """Converts the run to a JSON file."""
         with open(file_path, "w") as f:
-            f.write(self.to_json_string())
+            f.write(await self.to_json_string())
 
     async def pull(self) -> None:
         """Update this Run instance with latest data from vals servers."""
