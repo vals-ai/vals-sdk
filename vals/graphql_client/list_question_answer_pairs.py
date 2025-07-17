@@ -28,10 +28,10 @@ class ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs(Bas
     llm_output: str = Field(alias="llmOutput")
     context: Any
     output_context: Any = Field(alias="outputContext")
-    typed_metadata: "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTypedMetadata" = Field(
-        alias="typedMetadata"
+    metadata: (
+        "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsMetadata"
     )
-    typed_file_ids: List[str] = Field(alias="typedFileIds")
+    file_ids: List[str] = Field(alias="fileIds")
     local_evals: List[
         "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsLocalEvals"
     ] = Field(alias="localEvals")
@@ -40,7 +40,7 @@ class ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs(Bas
     ]
 
 
-class ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTypedMetadata(
+class ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsMetadata(
     BaseModel
 ):
     in_tokens: int = Field(alias="inTokens")

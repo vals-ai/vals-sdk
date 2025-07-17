@@ -32,7 +32,9 @@ async def list_command_async(limit: int, offset: int, search: str):
 @click.option(
     "-o", "--offset", type=int, default=0, help="Start table at this row (0-indexed)"
 )
-@click.option("-s", "--search", type=str, default="", help="Search query to filter projects")
+@click.option(
+    "-s", "--search", type=str, default="", help="Search query to filter projects"
+)
 def list_command(limit: int, offset: int, search: str):
     """
     List all projects in the organization

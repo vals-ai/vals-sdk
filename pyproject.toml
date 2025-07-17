@@ -27,6 +27,8 @@ dependencies = [
   "inspect-ai",
   "aiohttp",
   "aiofiles",
+  "pytest>=8.4.1",
+  "pytest-asyncio>=1.1.0",
 ]
 [dependency-groups]
 dev = ["ariadne-codegen", "ruff", "basedpyright"]
@@ -51,3 +53,5 @@ exclude = ["examples", "vals/graphql_client"]
 
 [tool.basedpyright]
 exclude = ["examples", "vals/graphql_client"]
+include = ["vals"]
+reportAny = false

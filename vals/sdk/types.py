@@ -6,7 +6,6 @@ These are meant to be user-facing.
 """
 
 import datetime
-import json
 from enum import Enum
 from io import BytesIO
 from typing import Any, Callable, Literal, Optional
@@ -63,7 +62,9 @@ class OutputObject(BaseModel):
     """
 
     llm_output: str  # Required: The actual model output
-    output_context: Optional[dict[str, Any]] = None  # Optional: Arbitrary metadata about the output
+    output_context: Optional[dict[str, Any]] = (
+        None  # Optional: Arbitrary metadata about the output
+    )
     duration: Optional[float] = None  # Optional: Generation time in seconds
     in_tokens: Optional[int] = None  # Optional: Input token count
     out_tokens: Optional[int] = None  # Optional: Output token count
@@ -75,6 +76,8 @@ class TestSuiteMetadata(BaseModel):
     list_test_suites() function - does not include tests, global
     checks, etc.
     """
+
+    __test__: bool = False
 
     id: str
     title: str
@@ -166,7 +169,7 @@ class CheckModifiers(BaseModel):
             extractor=modifiers_dict.get("extractor"),
             conditional=conditional,
             category=modifiers_dict.get("category"),
-            display_metrics=modifiers_dict.get("displayMetrics", False),
+            display_metrics=modifiers_dict.get("display_metrics", False),
         )
 
 
@@ -194,7 +197,9 @@ class Check(BaseModel):
         return CheckInputType(
             operator=self.operator,
             criteria=self.criteria,
-            modifiers=CheckModifiersInputType(**self.modifiers.model_dump(exclude_none=True)),
+            modifiers=CheckModifiersInputType(
+                **self.modifiers.model_dump(exclude_none=True)
+            ),
         )
 
 
@@ -365,14 +370,22 @@ class RunMetadata(BaseModel):
     parameters: RunParameters
 
     @classmethod
-    def from_graphql(cls, graphql_run: ListRunsRunsWithCountRunResults) -> "RunMetadata":
+    def from_graphql(
+        cls, graphql_run: ListRunsRunsWithCountRunResults
+    ) -> "RunMetadata":
         return cls(
             id=graphql_run.run_id,
             name=graphql_run.name,
-            pass_percentage=(graphql_run.pass_percentage if graphql_run.pass_percentage else None),
+            pass_percentage=(
+                graphql_run.pass_percentage if graphql_run.pass_percentage else None
+            ),
             pass_rate=graphql_run.pass_rate.value if graphql_run.pass_rate else None,
-            pass_rate_error=(graphql_run.pass_rate.error if graphql_run.pass_rate else None),
-            success_rate=(graphql_run.success_rate.value if graphql_run.success_rate else None),
+            pass_rate_error=(
+                graphql_run.pass_rate.error if graphql_run.pass_rate else None
+            ),
+            success_rate=(
+                graphql_run.success_rate.value if graphql_run.success_rate else None
+            ),
             success_rate_error=(
                 graphql_run.success_rate.error if graphql_run.success_rate else None
             ),
@@ -382,8 +395,8 @@ class RunMetadata(BaseModel):
             completed_at=graphql_run.completed_at,
             archived=graphql_run.archived,
             test_suite_title=graphql_run.test_suite.title,
-            model=graphql_run.typed_parameters.model_under_test,
-            parameters=RunParameters(**graphql_run.typed_parameters.model_dump()),
+            model=graphql_run.parameters.model_under_test,
+            parameters=RunParameters(**graphql_run.parameters.model_dump()),
         )
 
 
@@ -427,6 +440,8 @@ class CheckResult(BaseModel):
 class TestResult(BaseModel):
     """Result of evaluation for a single test."""
 
+    __test__: bool = False
+
     _id: str
     test: Test
     input_under_test: str
@@ -463,8 +478,13 @@ class TestResult(BaseModel):
         if graphql_test_result.qa_pair:
             output_context = graphql_test_result.qa_pair.output_context
             context = graphql_test_result.qa_pair.context
-            if len(context) == 0 and graphql_test_result.test.typed_context is not None:
-                context = graphql_test_result.test.typed_context
+            if len(context) == 0 and graphql_test_result.test.context is not None:
+                context = graphql_test_result.test.context
+
+        check_result_dicts = [
+            check_result.model_dump()
+            for check_result in graphql_test_result.result_json
+        ]
 
         return cls(
             _id=graphql_test_result.id,
@@ -476,13 +496,17 @@ class TestResult(BaseModel):
             pass_percentage=graphql_test_result.pass_percentage,
             pass_percentage_with_weight=graphql_test_result.pass_percentage_with_weight,
             error_message=(
-                graphql_test_result.qa_pair.error_message if graphql_test_result.qa_pair else ""
+                graphql_test_result.qa_pair.error_message
+                if graphql_test_result.qa_pair
+                else ""
             ),
             check_results=[
                 CheckResult(
                     operator=check_result["operator"],
                     criteria=check_result.get("criteria", ""),
-                    modifiers=CheckModifiers.from_graphql(check_result.get("modifiers", {})),
+                    modifiers=CheckModifiers.from_graphql(
+                        check_result.get("modifiers", {})
+                    ),
                     is_global=check_result.get("is_global", False),
                     auto_eval=check_result.get("auto_eval", 0),
                     feedback=check_result.get("feedback", ""),
@@ -492,10 +516,10 @@ class TestResult(BaseModel):
                         else 0.5
                     ),
                 )
-                for check_result in json.loads(graphql_test_result.result_json)
+                for check_result in check_result_dicts
             ],
             metadata=(
-                Metadata(**json.loads(graphql_test_result.metadata))
+                Metadata(**graphql_test_result.metadata.model_dump())
                 if graphql_test_result.metadata
                 else None
             ),
@@ -519,18 +543,18 @@ class QuestionAnswerPair(BaseModel):
         graphql_qa_pair: ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs,
     ) -> "QuestionAnswerPair":
         metadata = None
-        if graphql_qa_pair.typed_metadata:
+        if graphql_qa_pair.metadata:
             metadata = Metadata(
-                in_tokens=graphql_qa_pair.typed_metadata.in_tokens,
-                out_tokens=graphql_qa_pair.typed_metadata.out_tokens,
-                duration_seconds=graphql_qa_pair.typed_metadata.duration_seconds,
+                in_tokens=graphql_qa_pair.metadata.in_tokens,
+                out_tokens=graphql_qa_pair.metadata.out_tokens,
+                duration_seconds=graphql_qa_pair.metadata.duration_seconds,
             )
 
         return cls(
             id=graphql_qa_pair.id,
             input_under_test=graphql_qa_pair.input_under_test,
             llm_output=graphql_qa_pair.llm_output,
-            file_ids=graphql_qa_pair.typed_file_ids,
+            file_ids=graphql_qa_pair.file_ids,
             context=graphql_qa_pair.context or {},
             output_context=graphql_qa_pair.output_context or {},
             metadata=metadata,
@@ -557,7 +581,9 @@ class QuestionAnswerPair(BaseModel):
             context=self.context,
             output_context=self.output_context,
             llm_output=self.llm_output,
-            metadata=(MetadataType(**self.metadata.model_dump()) if self.metadata else None),
+            metadata=(
+                MetadataType(**self.metadata.model_dump()) if self.metadata else None
+            ),
             test_id=self.test_id,
             status="success",
         )

@@ -106,7 +106,7 @@ class Run(BaseModel):
             )
 
         # Map maximum_threads to parallelism for backwards compatibility
-        parameters_dict = result.run.typed_parameters.model_dump()
+        parameters_dict = result.run.parameters.model_dump()
         model = parameters_dict.pop("model_under_test", "")
 
         if "maximum_threads" in parameters_dict:
@@ -216,7 +216,9 @@ class Run(BaseModel):
 
         while remaining_limit != 0:
             # Calculate the current batch size
-            current_batch_size = min(batch_size, remaining_limit) if remaining_limit > 0 else batch_size
+            current_batch_size = (
+                min(batch_size, remaining_limit) if remaining_limit > 0 else batch_size
+            )
 
             result = await self._client.list_question_answer_pairs(
                 qa_set_id=self.qa_set_id,
@@ -394,7 +396,6 @@ class Run(BaseModel):
         qa_pairs = await self.get_qa_pairs(offset=0, remaining_limit=-1)
         suite = await Suite.from_id(self.test_suite_id)
         return await suite.run(qa_pairs)
-
 
     @staticmethod
     async def get_status_from_id(run_id: str) -> RunStatus:

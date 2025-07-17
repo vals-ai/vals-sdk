@@ -9,12 +9,12 @@ query ListQuestionAnswerPairs($qaSetId: String!, $offset: Int, $limit: Int) {
       llmOutput
       context
       outputContext
-      typedMetadata {
+      metadata {
         inTokens
         outTokens
         durationSeconds
       }
-      typedFileIds
+      fileIds
       localEvals {
         id
         score

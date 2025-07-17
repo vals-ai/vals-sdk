@@ -2,11 +2,12 @@
 # Source: vals/graphql/
 
 from datetime import datetime
-from typing import Any
+from typing import List
 
 from pydantic import Field
 
 from .base_model import BaseModel
+from .fragments import CheckOutputTypeFields
 
 
 class GetTestSuiteData(BaseModel):
@@ -20,11 +21,17 @@ class GetTestSuiteDataTestSuite(BaseModel):
     org: str
     title: str
     created: datetime
-    global_checks: Any = Field(alias="globalChecks")
+    global_checks: List["GetTestSuiteDataTestSuiteGlobalChecks"] = Field(
+        alias="globalChecks"
+    )
 
 
 class GetTestSuiteDataTestSuiteProject(BaseModel):
     slug: str
+
+
+class GetTestSuiteDataTestSuiteGlobalChecks(CheckOutputTypeFields):
+    pass
 
 
 GetTestSuiteData.model_rebuild()
