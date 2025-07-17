@@ -286,7 +286,6 @@ class Run(BaseModel):
         return response.text
 
     async def to_json_string(self) -> str:
-
         response = requests.post(
             url=f"{be_host()}/export_run_to_json/?run_id={self.id}",
             headers={"Authorization": _get_auth_token()},

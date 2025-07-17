@@ -1,5 +1,3 @@
-from dataclasses import Field
-import json
 from datetime import datetime
 from typing import Any
 
@@ -227,7 +225,6 @@ def create_single_test_result_reviews(
             auto_eval_review_values: list[AutoEvalReviewValue] = []
 
             if auto_eval_review:
-
                 for (
                     auto_eval_review_value,
                     auto_eval_value,
@@ -262,7 +259,6 @@ def create_single_test_result_reviews(
 def create_test_result(
     test_result_review: SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResults,
 ) -> TestResult:
-
     metadata = test_result_review.typed_metadata
 
     metadata_value = Metadata(

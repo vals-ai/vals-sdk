@@ -1,12 +1,13 @@
 """Project management functionality for vals SDK."""
 
-from typing import List, Optional
+from typing import List
 from pydantic import BaseModel
 from vals.sdk.util import get_ariadne_client
 
 
 class Project(BaseModel):
     """Represents a project in the vals platform."""
+
     id: str
     name: str
     slug: str
@@ -18,7 +19,7 @@ class Project(BaseModel):
     ) -> List["Project"]:
         """
         List all projects in the organization.
-        
+
         Args:
             limit: Maximum number of projects to return
             offset: Number of projects to skip
@@ -28,7 +29,7 @@ class Project(BaseModel):
         """
         client = get_ariadne_client()
         result = await client.list_projects(limit=limit, offset=offset, search=search)
-        
+
         projects = []
         for proj in result.projects_with_count.projects:
             projects.append(
@@ -40,4 +41,3 @@ class Project(BaseModel):
                 )
             )
         return projects
-    

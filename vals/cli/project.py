@@ -17,13 +17,12 @@ def project_group():
 async def list_command_async(limit: int, offset: int, search: str):
     """List all projects in the organization."""
     projects = await Project.list_projects(limit=limit, offset=offset, search=search)
-    
     headers = ["#", "Name", "ID", "Slug", "Default"]
     rows = []
     for i, project in enumerate(projects, start=offset):
         default_marker = "✓" if project.is_default else ""
         rows.append([i, project.name, project.id, project.slug, default_marker])
-    
+
     table = tabulate(rows, headers=headers, tablefmt="tsv")
     click.echo(table)
 

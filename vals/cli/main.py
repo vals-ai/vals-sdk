@@ -1,5 +1,3 @@
-import sys
-
 import click
 
 from .project import project_group

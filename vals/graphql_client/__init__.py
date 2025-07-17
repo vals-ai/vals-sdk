@@ -38,7 +38,6 @@ from .enums import (
     RunResultSortField,
     RunReviewStatusEnum,
     RunReviewTableSortField,
-    RunStatus,
     SortOrder,
     TemplateType,
     TestResultCheckErrorEnum,
