@@ -80,12 +80,16 @@ class TestFragment(BaseModel):
 
 
 class TestFragmentChecks(BaseModel):
+    __test__: bool = False
+
     operator: str
     criteria: str
     modifiers: "TestFragmentChecksModifiers"
 
 
 class TestFragmentChecksModifiers(BaseModel):
+    __test__: bool = False
+
     optional: bool
     severity: Optional[float]
     examples: List["TestFragmentChecksModifiersExamples"]
@@ -106,6 +110,8 @@ class TestFragmentChecksModifiersConditional(BaseModel):
 
 
 class TestFragmentTestSuite(BaseModel):
+    __test__: bool = False
+
     id: str
 
 

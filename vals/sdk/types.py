@@ -76,6 +76,7 @@ class TestSuiteMetadata(BaseModel):
     list_test_suites() function - does not include tests, global
     checks, etc.
     """
+    __test__: bool = False
 
     id: str
     title: str
@@ -167,7 +168,7 @@ class CheckModifiers(BaseModel):
             extractor=modifiers_dict.get("extractor"),
             conditional=conditional,
             category=modifiers_dict.get("category"),
-            display_metrics=modifiers_dict.get("displayMetrics", False),
+            display_metrics=modifiers_dict.get("display_metrics", False),
         )
 
 
@@ -439,6 +440,7 @@ class CheckResult(BaseModel):
 
 class TestResult(BaseModel):
     """Result of evaluation for a single test."""
+    __test__: bool = False
 
     _id: str
     test: Test
@@ -480,7 +482,7 @@ class TestResult(BaseModel):
                 context = graphql_test_result.test.context
 
         check_result_dicts = [
-            check_result.dict() for check_result in graphql_test_result.result_json
+            check_result.model_dump() for check_result in graphql_test_result.result_json
         ]
 
         return cls(
@@ -516,7 +518,7 @@ class TestResult(BaseModel):
                 for check_result in check_result_dicts
             ],
             metadata=(
-                Metadata(**graphql_test_result.metadata.dict())
+                Metadata(**graphql_test_result.metadata.model_dump())
                 if graphql_test_result.metadata
                 else None
             ),
