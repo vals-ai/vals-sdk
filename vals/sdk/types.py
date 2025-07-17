@@ -76,6 +76,7 @@ class TestSuiteMetadata(BaseModel):
     list_test_suites() function - does not include tests, global
     checks, etc.
     """
+
     __test__: bool = False
 
     id: str
@@ -438,6 +439,7 @@ class CheckResult(BaseModel):
 
 class TestResult(BaseModel):
     """Result of evaluation for a single test."""
+
     __test__: bool = False
 
     _id: str
@@ -480,7 +482,8 @@ class TestResult(BaseModel):
                 context = graphql_test_result.test.context
 
         check_result_dicts = [
-            check_result.model_dump() for check_result in graphql_test_result.result_json
+            check_result.model_dump()
+            for check_result in graphql_test_result.result_json
         ]
 
         return cls(
