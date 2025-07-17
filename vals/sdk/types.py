@@ -6,7 +6,6 @@ These are meant to be user-facing.
 """
 
 import datetime
-import json
 from enum import Enum
 from io import BytesIO
 from typing import Any, Callable, Literal, Optional
@@ -480,7 +479,9 @@ class TestResult(BaseModel):
             if len(context) == 0 and graphql_test_result.test.context is not None:
                 context = graphql_test_result.test.context
 
-        check_result_dicts = [check_result.dict() for check_result in graphql_test_result.result_json]
+        check_result_dicts = [
+            check_result.dict() for check_result in graphql_test_result.result_json
+        ]
 
         return cls(
             _id=graphql_test_result.id,
