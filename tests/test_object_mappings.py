@@ -2,9 +2,38 @@
 
 from datetime import datetime
 
-from vals.graphql_client import CheckModifierOutputTypeFields, CheckModifierOutputTypeFieldsConditional, CheckModifierOutputTypeFieldsExamples, CheckOutputTypeFields, CheckOutputTypeFieldsModifiers, GetTestSuitesWithCountTestSuitesWithCountTestSuites, GetTestSuitesWithCountTestSuitesWithCountTestSuitesFolder, ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs, ListRunsRunsWithCountRunResults, ListRunsRunsWithCountRunResultsParameters, ListRunsRunsWithCountRunResultsPassRate, ListRunsRunsWithCountRunResultsSuccessRate, ListRunsRunsWithCountRunResultsTestSuite, PullTestResultsWithCountTestResultsWithCountTestResults, PullTestResultsWithCountTestResultsWithCountTestResultsMetadata, PullTestResultsWithCountTestResultsWithCountTestResultsQaPair, PullTestResultsWithCountTestResultsWithCountTestResultsResultJson, PullTestResultsWithCountTestResultsWithCountTestResultsTest, ResultJsonElementTypeFieldsModifiers, TestFragmentChecks, TestFragmentChecksModifiers, TestFragmentTestSuite
+from vals.graphql_client import (
+    CheckModifierOutputTypeFields,
+    CheckModifierOutputTypeFieldsConditional,
+    CheckModifierOutputTypeFieldsExamples,
+    CheckOutputTypeFields,
+    CheckOutputTypeFieldsModifiers,
+    GetTestSuitesWithCountTestSuitesWithCountTestSuites,
+    GetTestSuitesWithCountTestSuitesWithCountTestSuitesFolder,
+    ListRunsRunsWithCountRunResults,
+    ListRunsRunsWithCountRunResultsParameters,
+    ListRunsRunsWithCountRunResultsPassRate,
+    ListRunsRunsWithCountRunResultsSuccessRate,
+    ListRunsRunsWithCountRunResultsTestSuite,
+    PullTestResultsWithCountTestResultsWithCountTestResults,
+    PullTestResultsWithCountTestResultsWithCountTestResultsMetadata,
+    PullTestResultsWithCountTestResultsWithCountTestResultsQaPair,
+    PullTestResultsWithCountTestResultsWithCountTestResultsResultJson,
+    PullTestResultsWithCountTestResultsWithCountTestResultsTest,
+    ResultJsonElementTypeFieldsModifiers,
+    TestFragmentChecks,
+    TestFragmentChecksModifiers,
+    TestFragmentTestSuite,
+)
 from vals.graphql_client.enums import RunStatus
-from vals.sdk.types import Check, CheckModifiers, RunMetadata, TestResult, TestSuiteMetadata
+from vals.sdk.types import (
+    Check,
+    CheckModifiers,
+    RunMetadata,
+    TestResult,
+    TestSuiteMetadata,
+)
+
 
 class TestObjectMappings:
     def test_test_suite_metadata(self):
@@ -17,12 +46,12 @@ class TestObjectMappings:
             creator="alice",
             lastModifiedBy="bob",
             lastModifiedAt=datetime(2024, 1, 2),
-            folder = GetTestSuitesWithCountTestSuitesWithCountTestSuitesFolder(
+            folder=GetTestSuitesWithCountTestSuitesWithCountTestSuitesFolder(
                 id="folder123",
                 name="My Folder",
-            )
+            ),
         )
-        
+
         result = TestSuiteMetadata.from_graphql(gql_suite)
 
         assert result.id == "suite123"
@@ -47,8 +76,7 @@ class TestObjectMappings:
         )
 
         gql_conditional = CheckModifierOutputTypeFieldsConditional(
-            operator="Operator",
-            criteria="Criteria"
+            operator="Operator", criteria="Criteria"
         )
 
         gql_check_modifiers = CheckModifierOutputTypeFields(
@@ -58,7 +86,7 @@ class TestObjectMappings:
             examples=[gql_example_pos, gql_example_neg],
             extractor="keyword",
             conditional=gql_conditional,
-            category="consistency"
+            category="consistency",
         )
 
         result = CheckModifiers.from_graphql(gql_check_modifiers.model_dump())  # pyright: ignore[reportUnknownMemberType]
@@ -79,7 +107,6 @@ class TestObjectMappings:
         assert result.conditional.operator == "Operator"
         assert result.conditional.criteria == "Criteria"
 
-
     def test_check(self):
         gql_example_pos = CheckModifierOutputTypeFieldsExamples(
             type="positive",
@@ -92,8 +119,7 @@ class TestObjectMappings:
         )
 
         gql_conditional = CheckModifierOutputTypeFieldsConditional(
-            operator="Operator",
-            criteria="Criteria"
+            operator="Operator", criteria="Criteria"
         )
 
         gql_check_modifiers = CheckOutputTypeFieldsModifiers(
@@ -103,7 +129,7 @@ class TestObjectMappings:
             examples=[gql_example_pos, gql_example_neg],
             extractor="keyword",
             conditional=gql_conditional,
-            category="consistency"
+            category="consistency",
         )
 
         gql_check = CheckOutputTypeFields(
@@ -135,7 +161,6 @@ class TestObjectMappings:
         assert cond is not None
         assert cond.operator == "Operator"
         assert cond.criteria == "Criteria"
-
 
     def test_run_metadata(self):
         mock_pass_rate = ListRunsRunsWithCountRunResultsPassRate(
@@ -205,7 +230,7 @@ class TestObjectMappings:
 
         params = result.parameters
         assert params.eval_model == "gpt-4"
-        #assert params.maximum_threads == 8
+        # assert params.maximum_threads == 8
         assert params.run_golden_eval is True
         assert params.run_confidence_evaluation is False
         assert params.heavyweight_factor == 2
@@ -228,15 +253,17 @@ class TestObjectMappings:
             category="formatting",
         )
 
-        mock_result_json = PullTestResultsWithCountTestResultsWithCountTestResultsResultJson(
-            operator="equals",
-            criteria="Output must contain keyword",
-            modifiers=mock_modifiers,
-            autoEval=0.95,
-            feedback="Passed automatically",
-            evalCont=0.85,
-            isGlobal=False,
-            severity=0.75,
+        mock_result_json = (
+            PullTestResultsWithCountTestResultsWithCountTestResultsResultJson(
+                operator="equals",
+                criteria="Output must contain keyword",
+                modifiers=mock_modifiers,
+                autoEval=0.95,
+                feedback="Passed automatically",
+                evalCont=0.85,
+                isGlobal=False,
+                severity=0.75,
+            )
         )
 
         mock_qa_pair = PullTestResultsWithCountTestResultsWithCountTestResultsQaPair(
@@ -252,11 +279,15 @@ class TestObjectMappings:
             tags=["tag1", "tag2"],
             crossVersionId="id123",
             goldenOutput="golden output",
-            checks=[TestFragmentChecks(
-                operator="equals",
-                criteria="Output must contain",
-                modifiers=TestFragmentChecksModifiers(**mock_modifiers.model_dump()),
-            )],
+            checks=[
+                TestFragmentChecks(
+                    operator="equals",
+                    criteria="Output must contain",
+                    modifiers=TestFragmentChecksModifiers(
+                        **mock_modifiers.model_dump()
+                    ),
+                )
+            ],
             fileIds=[],
             testSuite=TestFragmentTestSuite(id="testsuite123"),
         )
@@ -279,7 +310,7 @@ class TestObjectMappings:
         )
 
         result = TestResult.from_graphql(mock_test_result)
-        #assert result._id == "result123"
+        # assert result._id == "result123"
         assert result.input_under_test == "input under test"
         assert result.llm_output == "Paris is the capital of France."
         assert result.pass_percentage == 100.0
@@ -292,10 +323,10 @@ class TestObjectMappings:
         assert result.test.input_under_test == "input under test"
         assert result.test.context == {"context": "my context"}
         assert result.test.id == "id123"
-        #assert result.test.golden_output == "golden output"
+        # assert result.test.golden_output == "golden output"
         assert result.test.tags == ["tag1", "tag2"]
-        #assert result.test._file_ids == []
-        #assert result.test._test_suite_id == "testsuite123"
+        # assert result.test._file_ids == []
+        # assert result.test._test_suite_id == "testsuite123"
 
         assert len(result.check_results) == 1
         check_result = result.check_results[0]
@@ -304,7 +335,9 @@ class TestObjectMappings:
         assert check_result.is_global is False
         assert check_result.auto_eval == 0.95
         assert check_result.feedback == "Passed automatically"
-        assert check_result.confidence.value == 0.5  # because 0.85 is not in [0, 0.5, 1]
+        assert (
+            check_result.confidence.value == 0.5
+        )  # because 0.85 is not in [0, 0.5, 1]
 
         mod = check_result.modifiers
         assert mod.optional is True
