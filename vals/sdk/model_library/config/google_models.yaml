@@ -1,0 +1,327 @@
+base-config:
+  company: Google
+  documentation_url: https://cloud.google.com/vertex-ai/generative-ai/docs/learn/models
+  open_source: false
+  class_properties:
+    supports_images: true
+    available_as_evaluator: false
+    supports_metadata: true
+    supports_files: false
+    available_for_everyone: true
+    supports_batch_requests: true
+  properties:
+    reasoning_model: false
+
+gemini-models:
+  base-config:
+    properties:
+      context_window: 1_048_576
+      max_token_output: 8192
+      training_cutoff: "2024-05"
+
+  google/gemma-3-27b-it:
+    label: Gemma 3 27B it
+    description: Gemma 3 27B it
+    release_date: "2025-03-12"
+    properties:
+      context_window: 131_072
+      max_token_output: 8192
+      training_cutoff: "2023-09"
+    costs_per_million_token:
+      input: 0.075
+      output: 0.3
+
+  google/gemini-2.5-flash-preview-05-20:
+    label: Gemini 2.5 Flash Preview (Nonthinking)
+    description: Gemini 2.5 Flash Preview (Nonthinking)
+    release_date: "2025-05-20"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 65536
+      reasoning_model: false
+      training_cutoff: "2025-01"
+    costs_per_million_token:
+      input: 0.15
+      output: 0.60
+
+  google/gemini-2.5-flash-preview-05-20-thinking:
+    label: Gemini 2.5 Flash Preview (Thinking)
+    description: Gemini 2.5 Flash Preview (Thinking)
+    release_date: "2025-05-20"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 65536
+      reasoning_model: true
+      training_cutoff: "2025-01"
+    costs_per_million_token:
+      input: 0.15
+      output: 3.50
+
+  google/gemini-2.5-pro-preview-06-05:
+    label: Gemini 2.5 Pro Preview
+    description: Gemini 2.5 Pro Preview
+    release_date: "2025-06-05"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 65536
+      reasoning_model: true
+      training_cutoff: "2025-01"
+    class_properties:
+      supports_batch_requests: false
+    costs_per_million_token:
+      input: 1.25
+      output: 10.00
+      context_caching: 0.025
+
+  google/gemini-2.5-pro-preview-05-06:
+    label: Gemini 2.5 Pro Preview
+    description: Gemini 2.5 Pro Preview
+    release_date: "2025-05-06"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 65536
+      reasoning_model: true
+      available_for_everyone: false
+      training_cutoff: "2025-01"
+    costs_per_million_token:
+      input: 1.25
+      output: 10.00
+      context_caching: 0.025
+
+  google/gemini-2.5-flash-preview-04-17:
+    label: Gemini 2.5 Flash Preview (Nonthinking)
+    description: Gemini 2.5 Flash Preview (Nonthinking)
+    release_date: "2025-04-17"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 65536
+      training_cutoff: "2025-01"
+      reasoning_model: false
+    costs_per_million_token:
+      input: 0.15
+      output: 0.60
+  
+  google/gemini-2.5-flash-preview-04-17-thinking:
+    label: Gemini 2.5 Flash Preview (Thinking)
+    description: Gemini 2.5 Flash Preview (Thinking)
+    release_date: "2025-04-17"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 65536
+      training_cutoff: "2025-01"
+      reasoning_model: true
+    costs_per_million_token:
+      input: 0.15
+      output: 3.50
+      
+  google/gemini-2.5-pro-exp-03-25:
+    label: Gemini 2.5 Pro Exp
+    description: Gemini 2.5 Pro Exp
+    release_date: "2025-03-25"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 65536
+      training_cutoff: "2025-01"
+      reasoning_model: true
+      available_for_everyone: false
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 1.25
+      output: 10.00
+      context_caching: 0.025
+
+  google/gemini-2.5-pro-preview-03-25:
+    label: Gemini 2.5 Pro Preview
+    description: Gemini 2.5 Pro Preview
+    release_date: "2025-04-05"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 65536
+      training_cutoff: "2025-01"
+      reasoning_model: true
+      available_for_everyone: false
+    costs_per_million_token:
+      input: 1.25
+      output: 10.00
+      context_caching: 0.025
+
+  google/gemini-2.0-pro-exp-02-05:
+    label: Gemini 2.0 Pro Exp
+    description: Gemini 2.0 Pro Exp
+    release_date: "2025-02-05"
+    properties:
+      context_window: 2_097_152
+      max_token_output: 8_192
+      training_cutoff: "2024-06"
+      reasoning_model: true
+      available_for_everyone: false
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 1.25
+      output: 5
+      context_caching: 0.025
+
+  google/gemini-2.0-flash-thinking-exp-01-21:
+    label: Gemini 2.0 Flash Thinking Exp
+    description: Gemini 2.0 Flash Thinking Exp
+    release_date: "2025-01-21"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 65_536
+      training_cutoff: "2024-05"
+      reasoning_model: true
+      available_for_everyone: False
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 0.10
+      output: 0.70
+      context_caching: 0.025
+
+  google/gemini-2.0-flash-001:
+    label: Gemini 2.0 Flash (001)
+    description: Gemini 2.0 Flash, 001 model.
+    release_date: "2025-02-05"
+    properties:
+      properties:
+      context_window: 1_048_576
+      max_token_output: 8192
+      training_cutoff: "2024-08"
+    costs_per_million_token:
+      input: 0.10
+      output: 0.40
+      context_caching: 0.025
+
+  google/gemini-2.0-flash-exp:
+    label: Gemini 2.0 Flash Exp
+    description: Gemini 2.0 Flash Exp
+    release_date: "2024-12-11"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 8_192
+      training_cutoff: "2024-05"
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input_below_128k: 0.075
+      output_below_128k: 0.3
+      context_caching_below_128k: 0.01875
+      input_above_128k: 0.15
+      output_above_128k: 0.60
+      context_caching_above_128k: 0.0375
+      input: 0.075
+      output: 0.30
+      context_caching: 0.01875
+    alternative_keys:
+      - gemini-2.0-flash-exp
+
+  google/gemini-1.5-flash-002:
+    label: Gemini 1.5 Flash (002)
+    description: Gemini 1.5 Flash, 002 model.
+    release_date: "2024-09-24"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 8_192
+      training_cutoff: "2024-05"
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input_below_128k: 0.075
+      output_below_128k: 0.3
+      context_caching_below_128k: 0.01875
+      input_above_128k: 0.15
+      output_above_128k: 0.60
+      context_caching_above_128k: 0.0375
+      input: 0.075
+      output: 0.30
+      context_caching: 0.01875
+    alternative_keys:
+      - gemini-1.5-flash-002
+
+  google/gemini-1.5-flash-001:
+    label: Gemini 1.5 Flash (001)
+    description: Gemini 1.5 Flash, 001 model.
+    release_date: "2024-05-24"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 8_192
+      training_cutoff: "2023-11"
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input_below_128k: 0.075
+      output_below_128k: 0.3
+      context_caching_below_128k: 0.01875
+      input_above_128k: 0.15
+      output_above_128k: 0.60
+      context_caching_above_128k: 0.0375
+      input: 0.075
+      output: 0.30
+      context_caching: 0.01875
+
+  google/gemini-1.5-pro-002:
+    label: Gemini 1.5 Pro (002)
+    description: Gemini 1.5 Pro, 002 model.
+    release_date: "2024-09-24"
+    properties:
+      context_window: 2_097_152
+      max_token_output: 8_192
+      training_cutoff: "2024-05"
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input_below_128k: 1.25
+      output_below_128k: 5.00
+      context_caching_below_128k: 0.3125
+      input_above_128k: 2.50
+      output_above_128k: 10.00
+      context_caching_above_128k: 0.6250
+      input: 1.25
+      output: 5.00
+      context_caching: 0.3125
+    alternative_keys:
+      - gemini-1.5-pro-002
+      - gemini-1.5-pro-latest
+      - gemini-pro-1.5
+
+  google/gemini-1.5-pro-001:
+    label: Gemini 1.5 Pro (001)
+    description: Gemini 1.5 Pro, 001 model.
+    release_date: "2024-05-24"
+    properties:
+      context_window: 1_048_576
+      max_token_output: 8_192
+      training_cutoff: "2023-11"
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input_below_128k: 1.25
+      output_below_128k: 5.00
+      context_caching_below_128k: 0.3125
+      input_above_128k: 2.50
+      output_above_128k: 10.00
+      context_caching_above_128k: 0.6250
+      input: 1.25
+      output: 5.00
+      context_caching: 0.3125
+
+  google/gemini-1.0-pro-002:
+    label: Gemini 1.0 Pro 002
+    description: Gemini 1.0 Pro, 002 model.
+    release_date: "2024-02-14"
+    properties:
+      context_window: 32_760
+      max_token_output: 8_192
+      training_cutoff: "2023-02"
+    class_properties:
+      supports_images: false
+      deprecated: true
+    costs_per_million_token:
+      input: 0.50
+      output: 1.50
+    alternative_keys:
+      - gemini-pro-1.0
+      - gemini-pro
+      - gemini-1.0-pro

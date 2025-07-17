@@ -1,0 +1,168 @@
+base-config:
+  company: Cohere
+  open_source: true
+  documentation_url: https://docs.cohere.com/v2/docs/models
+  class_properties:
+    available_as_evaluator: false
+    supports_images: false
+    supports_metadata: true
+    supports_files: false
+    available_for_everyone: true
+  properties:
+    training_cutoff: null
+
+# Command Models
+command-models:
+  base-config:
+    properties:
+      context_window: 128_000
+
+  # cohere/command-light-nightly:
+  #   description: To reduce the time between major releases, we put out nightly versions of command models. For command-light, that is command-light-nightly. Be advised that command-light-nightly is the latest, most experimental, and (possibly) unstable version of its default counterpart. Nightly releases are updated regularly, without warning, and are not recommended for production use.
+  #   class_properties:
+  #   properties:
+  #     context_window: 4_000
+  cohere/command-a-03-2025:
+    label: Command A
+    description: Command A is Cohere's most efficient and performant model to date, specializing in agentic AI, multilingual, and human evaluations for real-life use cases.
+    release_date: "2025-03-13"
+    properties:
+      context_window: 256_000
+      max_token_output: 8_000
+    costs_per_million_token:
+      input: 2.50
+      output: 10.00
+
+  cohere/command-light:
+    label: Command Light
+    description: A smaller, faster version of command. Almost as capable, but a lot faster.
+    release_date: "2024-04-24"
+    properties:
+      context_window: 4_000
+      max_token_output: 4000
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 0.30
+      output: 0.60
+    alternative_keys:
+      - cohere-command-light
+
+  # cohere/command-nightly:
+  #   description: Be advised that command-nightly is the latest, most experimental, and (possibly) unstable version of its default counterpart. Nightly releases are updated regularly, without warning, and are not recommended for production use.
+
+  cohere/command:
+    label: Command
+    description: An instruction-following conversational model that performs language tasks with high quality, more reliably and with a longer context than our base generative models.
+    release_date: "2024-03-24"
+    properties:
+      context_window: 4_000
+      max_token_output: 4000
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 1.0
+      output: 2.0
+    alternative_keys:
+      - cohere-command
+      - cohere
+
+  cohere/command-r:
+    label: Command R
+    description: command-r is an alias for command-r-03-2024, so if you use command-r in the API, that’s the model you’re pointing to.
+    release_date: "2024-04-24"
+    properties:
+      context_window: 128_000
+      max_token_output: 4000
+    class_properties:
+      available_for_everyone: false
+      deprecated: true
+    costs_per_million_token:
+      input: 0.15
+      output: 0.60
+    alternative_keys:
+      - cohere-command-r
+
+  cohere/command-r-03-2024:
+    label: Command R (03/2024)
+    description: Command R is an instruction-following conversational model that performs language tasks at a higher quality, more reliably, and with a longer context than previous models. It can be used for complex workflows like code generation, retrieval augmented generation (RAG), tool use, and agents.
+    release_date: "2024-03-24"
+    properties:
+      context_window: 128_000
+      max_token_output: 4000
+    class_properties:
+      available_for_everyone: false
+      deprecated: true
+    costs_per_million_token:
+      input: 0.15
+      output: 0.60
+
+  cohere/command-r-08-2024:
+    label: Command R (08/2024)
+    description: Command R is an instruction-following conversational model that performs language tasks at a higher quality, more reliably, and with a longer context than previous models. It can be used for complex workflows like code generation, retrieval augmented generation (RAG), tool use, and agents.
+    release_date: "2024-08-30"
+    properties:
+      context_window: 128_000
+      max_token_output: 4000
+    class_properties:
+      available_for_everyone: false
+      deprecated: true
+    costs_per_million_token:
+      input: 0.15
+      output: 0.60
+
+  cohere/command-r-plus:
+    label: Command R+
+    description: command-r-plus is an alias for command-r-plus-04-2024, so if you use command-r-plus in the API, that’s the model you’re pointing to.
+    release_date: "2024-04-24"
+    properties:
+      context_window: 128_000
+      max_token_output: 4000
+    costs_per_million_token:
+      input: 2.5
+      output: 10.0
+    alternative_keys:
+      - cohere-command-r-plus
+
+  cohere/command-r-plus-04-2024:
+    label: Command R+ (04/2024)
+    description: Command R+ is an instruction-following conversational model that performs language tasks at a higher quality, more reliably, and with a longer context than previous models. It is best suited for complex RAG workflows and multi-step tool use.
+    release_date: "2024-04-24"
+    properties:
+      context_window: 128_000
+      max_token_output: 4000
+    costs_per_million_token:
+      input: 2.5
+      output: 10.0
+
+  cohere/command-r-plus-08-2024:
+    label: Command R+ (08/2024)
+    description: Command R+ is an instruction-following conversational model that performs language tasks at a higher quality, more reliably, and with a longer context than previous models. It is best suited for complex RAG workflows and multi-step tool use.
+    release_date: "2024-08-30"
+    properties:
+      context_window: 128_000
+      max_token_output: 4000
+    costs_per_million_token:
+      input: 2.5
+      output: 10.0
+
+  cohere/command-r7b-12-2024:
+    label: Command R7B
+    description: Command R7B is a small, fast update of the Command R+ model, delivered in December 2024. It excels at RAG, tool use, agents, and similar tasks requiring complex reasoning and multiple steps.
+    release_date: "2024-12-13"
+    properties:
+      context_window: 128_000
+      max_token_output: 4000
+    costs_per_million_token:
+      input: 0.0375
+      output: 0.15
+
+# Aya models
+# aya-models:
+#   cohere/c4ai-aya-expanse-8b:
+#     description: Aya Expanse is a highly performant 8B multilingual model, designed to rival monolingual performance through innovations in instruction tuning with data arbitrage, preference training, and model merging. Serves 23 languages.
+#     context_window: 8_000
+
+#   cohere/c4ai-aya-expanse-32b:
+#     description: Aya Expanse is a highly performant 32B multilingual model, designed to rival monolingual performance through innovations in instruction tuning with data arbitrage, preference training, and model merging. Serves 23 languages.
+#     context_window: 128_000

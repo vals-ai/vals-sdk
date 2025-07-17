@@ -1,0 +1,136 @@
+# Put shared information in the base model, and model specific characteristics in the model.
+
+base-config:
+  company: OpenAI
+  open_source: false
+  class_properties:
+    supports_images: false
+    available_as_evaluator: false
+    supports_metadata: true
+    supports_files: false
+    available_for_everyone: false
+
+
+
+o3-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#o3-mini
+  
+  azure/o3-mini-2025-01-31:
+    label: o3 Mini
+    description: OpenAI's most recent small reasoning model, providing high intelligence at the same cost and latency targets of o1-mini.
+    release_date: "2025-01-31"
+    properties:
+      context_window: 200_000
+      max_token_output: 100_000
+      training_cutoff: "2023-10"
+    costs_per_million_token:
+      input: 1.10
+      cached_input: 0.55
+      output: 4.40
+
+# o1 MODELS
+o1-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#o1
+
+
+  azure/o1-2024-12-17:
+    label: o1
+    description: "Points to the most recent snapshot of the o1 model: o1-2024-12-17"
+    release_date: "2024-12-17"
+    properties:
+      context_window: 200_000
+      max_token_output: 100_000
+      training_cutoff: "2023-10"
+    costs_per_million_token:
+      input: 15.00
+      cached_input: 7.50
+      output: 60.00
+    class_properties:
+      supports_images: true
+
+  azure/o1-mini-2024-09-12:
+    label: o1 Mini
+    description: Latest o1-mini model snapshot.
+    release_date: "2024-09-12"
+    properties:
+      context_window: 128_000
+      max_token_output: 65_536
+      training_cutoff: "2023-10"
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 3.00
+      cached_input: 1.50
+      output: 12.00
+    alternative_keys:
+      - gpt-o1-mini
+
+
+# GPT-4o MODELS
+
+gpt-4o-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#gpt-4o
+    properties:
+      context_window: 128_000
+      max_token_output: 16_384
+      training_cutoff: "2023-10"
+
+
+  azure/gpt-4o-2024-11-20:
+    label: GPT 4o (2024-11-20)
+    description: Latest gpt-4o snapshot from November 20th, 2024.
+    release_date: "2024-11-20"
+    class_properties:
+      supports_images: true
+      available_as_evaluator: true
+    costs_per_million_token:
+      input: 2.50
+      cached_input: 1.25
+      output: 10.00
+    alternative_keys:
+      - gpt-4o-2024-11-20
+
+
+# GPT-4o mini MODELS
+
+gpt-4o-mini-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#gpt-4o-mini
+    properties:
+      context_window: 128_000
+      max_token_output: 16_384
+      training_cutoff: "2023-10"
+
+  azure/gpt-4o-mini-2024-07-18:
+    label: GPT 4o Mini
+    description: gpt-4o-mini currently points to this version.
+    release_date: "2024-07-18"
+    class_properties:
+      supports_images: true
+      available_as_evaluator: true
+    costs_per_million_token:
+      input: 0.15
+      cached_input: 0.075
+      output: 0.60
+
+# GPT-4 MODELS
+
+gpt-4-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#gpt-4-turbo-and-gpt-4
+    properties:
+      context_window: 128_000
+      max_token_output: 4_096
+      training_cutoff: "2023-12"
+
+
+  azure/gpt-4-turbo-2024-04-09:
+    label: GPT 4 Turbo (2024-04-09)
+    description: GPT-4 Turbo with Vision model. Vision requests can now use JSON mode and function calling. gpt-4-turbo currently points to this version.
+    release_date: "2024-04-09"
+    costs_per_million_token:
+      input: 10
+      output: 30

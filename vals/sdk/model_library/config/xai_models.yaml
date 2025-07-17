@@ -1,0 +1,217 @@
+base-config:
+  company: xAI
+  documentation_url: https://docs.x.ai/docs#models
+  open_source: false
+  class_properties:
+    supports_images: false
+    available_as_evaluator: false
+    supports_metadata: true
+    supports_files: false
+    available_for_everyone: true
+  properties:
+    reasoning_model: false
+
+xai-models:
+  grok/grok-3-fast-beta:
+    label: Grok 3 Fast Beta
+    description: ""
+    release_date: "2025-04-09"
+    properties:
+      context_window: 131_072
+      max_token_output: null
+      training_cutoff: null
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 5.00
+      output: 25.00
+
+  grok/grok-3-beta:
+    label: Grok 3 Beta
+    description: ""
+    release_date: "2025-04-09"
+    properties:
+      context_window: 131_072
+      max_token_output: null
+      training_cutoff: null
+    costs_per_million_token:
+      input: 3.00
+      output: 15.00
+
+  grok/grok-4-0709:
+    label: Grok 4
+    description: "xAI's latest reasoning model with vision"
+    release_date: "2025-07-09"
+    class_properties:
+      supports_images: true
+      available_for_everyone: false
+    properties:
+      context_window: 256_000
+      max_token_output: 128_000
+      training_cutoff: null
+      reasoning_model: true
+    costs_per_million_token:
+      input: 3.00
+      cached_input: 0.75
+      input_images: 3.00
+      output: 15.00
+
+  grok/grok-3-mini-fast-beta-high-reasoning:
+    label: Grok 3 Mini Fast High Reasoning
+    description: ""
+    release_date: "2025-04-09"
+    properties:
+      context_window: 131_072
+      max_token_output: null
+      training_cutoff: null
+      reasoning_model: true
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 0.60
+      output: 4.00
+
+  grok/grok-3-mini-fast-beta-low-reasoning:
+    label: Grok 3 Mini Fast Low Reasoning
+    description: ""
+    release_date: "2025-04-09"
+    properties:
+      context_window: 131_072
+      max_token_output: null
+      training_cutoff: null
+      reasoning_model: true
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 0.60
+      output: 4.00
+
+  grok/grok-3-mini-fast-beta:
+    label: Grok 3 Mini Fast Beta Reasoning
+    description: ""
+    release_date: "2025-04-09"
+    properties:
+      context_window: 131_072
+      max_token_output: null
+      training_cutoff: null
+      reasoning_model: true
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 0.60
+      output: 4.00
+
+  grok/grok-3-mini-beta-high-reasoning:
+    label: Grok 3 Mini High Reasoning
+    description: ""
+    release_date: "2025-04-09"
+    properties:
+      context_window: 131_072
+      max_token_output: null
+      training_cutoff: null
+      reasoning_model: true
+    costs_per_million_token:
+      input: 0.30
+      output: 0.50
+
+  grok/grok-3-mini-beta-low-reasoning:
+    label: Grok 3 Mini Low Reasoning
+    description: ""
+    release_date: "2025-04-09"
+    properties:
+      context_window: 131_072
+      max_token_output: null
+      training_cutoff: null
+      reasoning_model: true
+    costs_per_million_token:
+      input: 0.30
+      output: 0.50
+
+  grok/grok-3-mini-beta:
+    label: Grok 3 Mini Reasoning
+    description: ""
+    release_date: "2025-04-09"
+    properties:
+      context_window: 131_072
+      max_token_output: null
+      training_cutoff: null
+      reasoning_model: true
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 0.30
+      output: 0.50
+
+  grok/grok-3-mini-reasoning-beta:
+    label: Grok 3 Mini Reasoning Beta
+    description: ""
+    release_date: "2025-04-09"
+    properties:
+      context_window: 131_072
+      max_token_output: null
+      training_cutoff: null
+      reasoning_model: true
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 0.00
+      output: 0.00
+
+  grok/grok-beta:
+    label: Grok Beta
+    description: ""
+    release_date: "2024-12-11"
+    properties:
+      context_window: 131_072
+      max_token_output: null
+      training_cutoff: null
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 5.00
+      output: 15.00
+
+  grok/grok-2-1212:
+    label: Grok 2
+    description: ""
+    release_date: "2024-12-11"
+    properties:
+      context_window: 131_072
+      max_token_output: null
+      training_cutoff: null
+    class_properties:
+      deprecated: true
+    costs_per_million_token:
+      input: 2.00
+      output: 10.00
+
+  grok/grok-vision-beta:
+    label: Grok Vision Beta
+    description: ""
+    release_date: "2024-12-12"
+    properties:
+      context_window: 8_192
+      max_token_output: null
+      training_cutoff: null
+    class_properties:
+      supports_images: true
+      deprecated: true
+    costs_per_million_token:
+      input: 5.00
+      input_images: 5.00
+      output: 15.00
+
+  grok/grok-2-vision-1212:
+    label: Grok 2 Vision
+    description: ""
+    release_date: "2024-12-12"
+    properties:
+      context_window: 8_192
+      max_token_output: null
+      training_cutoff: null
+    class_properties:
+      supports_images: true
+    costs_per_million_token:
+      input: 2.00
+      input_images: 2.00
+      output: 10.00

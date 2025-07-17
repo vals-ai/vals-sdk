@@ -1,0 +1,50 @@
+base-config:
+  company: Saga Legal
+  open_source: false
+  class_properties:
+    supports_images: false
+    supports_metadata: false
+    supports_files: false
+    available_for_everyone: false
+    available_as_evaluator: false
+  properties:
+    context_window: 131_072
+    max_token_output: 131_072
+    training_cutoff: null
+  costs_per_million_token:
+    input: 0.0
+    output: 0.0
+
+saga-models:
+  saga/gpt-4o:
+    label: GPT-4o
+
+  saga/gpt-4o-mini:
+    label: GPT-4o Mini
+
+  saga/o1:
+    label: O1
+
+  saga/o3-mini:
+    label: O3 Mini
+
+  saga/gpt-4.1:
+    label: GPT-4.1
+
+  saga/gpt-4.1-mini:
+    label: GPT-4.1 Mini
+
+  saga/gpt-4.1-nano:
+    label: GPT-4.1 Nano
+
+  saga/anthropic.claude-3-haiku-20240307-v1:
+    label: Claude 3 Haiku
+
+  saga/eu.anthropic.claude-3-7-sonnet-20250219-v1:
+    label: Claude 3.7 Sonnet
+
+  saga/Mistral-Large-2411:
+    label: Mistral Large 2411
+
+  saga/DeepSeek-V3:
+    label: DeepSeek V3

@@ -1,0 +1,563 @@
+# Put shared information in the base model, and model specific characteristics in the model.
+
+base-config:
+  company: OpenAI
+  open_source: false
+  class_properties:
+    supports_images: false
+    available_as_evaluator: false
+    supports_metadata: true
+    supports_files: false
+    supports_batch_requests: true
+    available_for_everyone: true
+  properties:
+    reasoning_model: false
+
+# o4 MODELS
+
+o4-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#o4
+    class_properties:
+      deprecated: true
+
+  openai/o4-mini-2025-04-16:
+    label: o4 Mini
+    description: ""
+    documentation_url: https://platform.openai.com/docs/models/o4-mini
+    release_date: "2025-04-16"
+    properties:
+      context_window: 200_000
+      max_token_output: 100_000
+      training_cutoff: "2024-05-31"
+      reasoning_model: true
+    class_properties:
+      available_for_everyone: true
+      deprecated: false
+      supports_images: true
+    costs_per_million_token:
+      input: 1.1
+      cached_input: 0.0275
+      output: 4.4
+
+# GPT 4.1 MODELS
+
+gpt-4.1-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models/gpt-4.1
+    release_date: "2025-04-14"
+    class_properties:
+      supports_images: true
+    properties:
+      context_window: 1_047_576
+      max_token_output: 32_768
+      training_cutoff: "2024-05-31"
+  
+  openai/gpt-4.1-2025-04-14:
+    label: GPT 4.1
+    description: ""
+    costs_per_million_token:
+      input: 2.00
+      cached_input: 0.50
+      output: 8.00
+
+  openai/gpt-4.1-mini-2025-04-14:
+    label: GPT 4.1 Mini
+    description: ""
+    costs_per_million_token:
+      input: 0.40
+      cached_input: 0.10
+      output: 1.60
+
+  openai/gpt-4.1-nano-2025-04-14:
+    label: GPT 4.1 Nano
+    description: ""
+    costs_per_million_token:
+      input: 0.10
+      cached_input: 0.03
+      output: 0.40
+
+# GPT-4.5 MODELS
+
+gpt-4.5-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#gpt-4-5
+    class_properties:
+      deprecated: true
+      supports_images: true
+
+  openai/gpt-4.5-preview-2025-02-27:
+    label: GPT 4.5 Preview
+    description: GPT 4.5 Preview is a research preview of GPT-4.5, OpenAI's largest and most capable GPT model yet.
+    release_date: "2025-02-27"
+    properties:
+      context_window: 128_000
+      max_token_output: 16_384
+      training_cutoff: "2023-10"
+    costs_per_million_token:
+      input: 2.50
+      cached_input: 1.25
+      output: 10.00
+
+# o3 MODELS
+
+o3-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#o3-mini
+
+  openai/o3-2025-04-16:
+    label: o3
+    description: ""
+    documentation_url: https://platform.openai.com/docs/models/o3
+    release_date: "2025-04-16"
+    properties:
+      context_window: 200_000
+      max_token_output: 100_000
+      training_cutoff: "2024-05-31"
+      reasoning_model: true
+    class_properties:
+      available_for_everyone: true
+      supports_images: true
+    costs_per_million_token:
+      input: 2
+      cached_input: 0.5
+      output: 8
+  
+  openai/o3-mini:
+    description: OpenAI's most recent small reasoning model, providing high intelligence at the same cost and latency targets of o1-mini.
+    label: o3 Mini
+    release_date: "2025-01-31"
+    properties:
+      context_window: 200_000
+      max_token_output: 100_000
+      training_cutoff: "2023-10"
+      reasoning_model: true
+    costs_per_million_token:
+      input: 1.10
+      cached_input: 0.55
+      output: 4.40
+    class_properties:
+      available_for_everyone: false
+
+  openai/o3-mini-2025-01-31:
+    label: o3 Mini
+    description: OpenAI's most recent small reasoning model, providing high intelligence at the same cost and latency targets of o1-mini.
+    release_date: "2025-01-31"
+    properties:
+      context_window: 200_000
+      max_token_output: 100_000
+      training_cutoff: "2023-10"
+      reasoning_model: true
+    costs_per_million_token:
+      input: 1.10
+      cached_input: 0.55
+      output: 4.40
+    class_properties:
+      available_for_everyone: false
+
+
+  openai/o3-pro-2025-06-10:
+    label: o3 Pro
+    description: The latest and most expensive reasoning model from OpenAI.
+    release_date: "2025-06-10"
+    properties:
+      context_window: 200_000
+      max_token_output: 100_000
+      training_cutoff: "2024-05-31"
+      reasoning_model: true
+    costs_per_million_token:
+      input: 20
+      cached_input: 10
+      output: 80
+    class_properties:
+      available_for_everyone: false
+      supports_images: true
+
+# o1 MODELS
+
+o1-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#o1
+    class_properties:
+      deprecated: true
+
+  openai/o1:
+    label: o1
+    description: "Points to the most recent snapshot of the o1 model: o1-2024-12-17"
+    release_date: "2024-12-17"
+    properties:
+      context_window: 200_000
+      max_token_output: 100_000
+      training_cutoff: "2023-10"
+      reasoning_model: true
+    costs_per_million_token:
+      input: 15.00
+      cached_input: 7.50
+      output: 60.00
+    class_properties:
+      supports_images: true
+      available_for_everyone: false
+      deprecated: false
+
+
+  openai/o1-2024-12-17:
+    label: o1
+    description: "Points to the most recent snapshot of the o1 model: o1-2024-12-17"
+    release_date: "2024-12-17"
+    properties:
+      context_window: 200_000
+      max_token_output: 100_000
+      training_cutoff: "2023-10"
+      reasoning_model: true
+    costs_per_million_token:
+      input: 15.00
+      cached_input: 7.50
+      output: 60.00
+    class_properties:
+      supports_images: true
+      available_for_everyone: false
+      deprecated: false
+
+
+  openai/o1-preview:
+    label: o1 Preview
+    description: "Points to the most recent snapshot of the o1 model: o1-preview-2024-09-12"
+    release_date: "2024-09-12"
+    properties:
+      context_window: 128_000
+      max_token_output: 32_768
+      training_cutoff: "2023-10"
+      reasoning_model: true
+    costs_per_million_token:
+      input: 15.00
+      cached_input: 7.50
+      output: 60.00
+    class_properties:
+      available_for_everyone: false
+
+  openai/o1-preview-2024-09-12:
+    label: o1 Preview
+    description: Latest o1 model snapshot.
+    release_date: "2024-09-12"
+    properties:
+      context_window: 128_000
+      max_token_output: 32_768
+      training_cutoff: "2023-10"
+      reasoning_model: true
+    costs_per_million_token:
+      input: 15.00
+      cached_input: 7.50
+      output: 60.00
+    alternative_keys:
+      - gpt-o1-preview
+    class_properties:
+      available_for_everyone: false
+
+  openai/o1-mini:
+    label: o1 Mini
+    description: "Points to the most recent o1-mini snapshot: o1-mini-2024-09-12."
+    release_date: "2024-09-12"
+    properties:
+      context_window: 128_000
+      max_token_output: 65_536
+      training_cutoff: "2023-10"
+      reasoning_model: true
+    costs_per_million_token:
+      input: 3.00
+      cached_input: 1.50
+      output: 12.00
+    class_properties:
+      available_for_everyone: true
+      deprecated: true
+
+  openai/o1-mini-2024-09-12:
+    label: o1 Mini
+    description: Latest o1-mini model snapshot.
+    release_date: "2024-09-12"
+    properties:
+      context_window: 128_000
+      max_token_output: 65_536
+      training_cutoff: "2023-10"
+      reasoning_model: true
+    costs_per_million_token:
+      input: 3.00
+      cached_input: 1.50
+      output: 12.00
+    alternative_keys:
+      - gpt-o1-mini
+    class_properties:
+      available_for_everyone: true
+      deprecated: true
+
+# GPT-4o MODELS
+
+gpt-4o-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#gpt-4o
+    properties:
+      context_window: 128_000
+      max_token_output: 16_384
+      training_cutoff: "2023-10"
+
+  openai/gpt-4o:
+    label: GPT 4o
+    description: OpenAI's high-intelligence flagship model for complex, multi-step tasks. GPT-4o is cheaper and faster than GPT-4 Turbo. Currently points to gpt-4o-2024-08-06.
+    release_date: "2024-08-06"
+    class_properties:
+      supports_images: true
+      available_as_evaluator: true
+    costs_per_million_token:
+      input: 2.50
+      cached_input: 1.25
+      output: 10.00
+    alternative_keys:
+      - gpt-4o
+
+  openai/gpt-4o-2024-11-20:
+    label: GPT 4o (2024-11-20)
+    description: Latest gpt-4o snapshot from November 20th, 2024.
+    release_date: "2024-11-20"
+    class_properties:
+      supports_images: true
+      available_as_evaluator: true
+      available_for_everyone: false
+    costs_per_million_token:
+      input: 2.50
+      cached_input: 1.25
+      output: 10.00
+    alternative_keys:
+      - gpt-4o-2024-11-20
+
+  openai/gpt-4o-2024-08-06:
+    label: GPT 4o (2024-08-06)
+    description: First snapshot that supports Structured Outputs. gpt-4o currently points to this version.
+    release_date: "2024-08-06"
+    class_properties:
+      supports_images: true
+      available_as_evaluator: true
+      available_for_everyone: false
+    costs_per_million_token:
+      input: 2.50
+      cached_input: 1.25
+      output: 10.00
+    alternative_keys:
+      - gpt-4o-2024-08-06
+
+  openai/gpt-4o-2024-05-13:
+    label: GPT 4o (2024-05-13)
+    description: Original gpt-4o snapshot from May 13, 2024.
+    release_date: "2024-05-13"
+    class_properties:
+      supports_images: false
+      available_for_everyone: false
+    costs_per_million_token:
+      input: 5.00
+      output: 15.00
+
+  # openai/chatgpt-4o-latest
+  #   description: The chatgpt-4o-latest model version continuously points to the version of GPT-4o used in ChatGPT, and is updated frequently, when there are significant changes.
+
+# GPT-4o mini MODELS
+
+gpt-4o-mini-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#gpt-4o-mini
+    properties:
+      context_window: 128_000
+      max_token_output: 16_384
+      training_cutoff: "2023-10"
+
+  openai/gpt-4o-mini:
+    label: GPT 4o Mini
+    description: OpenAI's affordable and intelligent small model for fast, lightweight tasks. GPT-4o mini is cheaper and more capable than GPT-3.5 Turbo. Currently points to gpt-4o-mini-2024-07-18.
+    release_date: "2024-07-18"
+    class_properties:
+      supports_images: true
+      available_as_evaluator: true
+    costs_per_million_token:
+      input: 0.15
+      cached_input: 0.075
+      output: 0.60
+    alternative_keys:
+      - gpt-4o-mini
+
+  openai/gpt-4o-mini-2024-07-18:
+    label: GPT 4o Mini
+    description: gpt-4o-mini currently points to this version.
+    release_date: "2024-07-18"
+    class_properties:
+      supports_images: true
+      available_as_evaluator: true
+      available_for_everyone: false
+    costs_per_million_token:
+      input: 0.15
+      cached_input: 0.075
+      output: 0.60
+
+# GPT-4 MODELS
+
+gpt-4-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#gpt-4-turbo-and-gpt-4
+    properties:
+      context_window: 128_000
+      max_token_output: 4_096
+      training_cutoff: "2023-12"
+    class_properties:
+      available_for_everyone: false
+      deprecated: true
+
+  openai/gpt-4-turbo:
+    label: GPT 4 Turbo
+    description: The latest GPT-4 Turbo model with vision capabilities. Vision requests can now use JSON mode and function calling. Currently points to gpt-4-turbo-2024-04-09.
+    release_date: "2024-04-09"
+    class_properties:
+      available_as_evaluator: true
+      available_for_everyone: false
+      deprecated: true
+    costs_per_million_token:
+      input: 10
+      output: 30
+    alternative_keys:
+      - gpt-4
+
+  openai/gpt-4-turbo-2024-04-09:
+    label: GPT 4 Turbo (2024-04-09)
+    description: GPT-4 Turbo with Vision model. Vision requests can now use JSON mode and function calling. gpt-4-turbo currently points to this version.
+    release_date: "2024-04-09"
+    costs_per_million_token:
+      input: 10
+      output: 30
+
+  openai/gpt-4-turbo-preview:
+    label: GPT 4 Turbo Preview
+    description: GPT-4 Turbo preview model. Currently points to gpt-4-0125-preview.
+    release_date: "2024-01-25"
+    costs_per_million_token:
+      input: 10
+      output: 30
+
+  openai/gpt-4-0125-preview:
+    label: GPT 4 Preview
+    description: GPT-4 Turbo preview model intended to reduce cases of "laziness" where the model doesn't complete a task.
+    release_date: "2024-01-25"
+    costs_per_million_token:
+      input: 10
+      output: 30
+
+  openai/gpt-4-1106-preview:
+    label: GPT 4 Preview (2023-11-06)
+    description: GPT-4 Turbo preview model featuring improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more. This is a preview model.
+    release_date: "2024-11-06"
+    properties:
+      training_cutoff: "2023-04"
+    costs_per_million_token:
+      input: 10
+      output: 30
+
+  openai/gpt-4:
+    label: GPT 4
+    description: Currently points to gpt-4-0613.
+    release_date: "2023-06-13"
+    properties:
+      context_window: 8_192
+      max_token_output: 8_192
+      training_cutoff: "2021-09"
+    costs_per_million_token:
+      input: 30
+      output: 60
+
+  openai/gpt-4-0613:
+    description: Snapshot of gpt-4 from June 13th 2023 with improved function calling support.
+    label: GPT 4 (2023-06-13)
+    properties:
+      context_window: 8_192
+      max_token_output: 8_192
+      training_cutoff: "2021-09"
+    costs_per_million_token:
+      input: 30
+      output: 60
+
+  openai/gpt-4-0314:
+    label: GPT 4 (2023-03-14)
+    description: Snapshot of gpt-4 from March 14th 2023. (Legacy)
+    release_date: "2023-03-14"
+    properties:
+      context_window: 8_192
+      max_token_output: 8_192
+      training_cutoff: "2021-09"
+    costs_per_million_token:
+      input: 30
+      output: 60
+
+# GPT-3.5 MODELS
+
+gpt-3.5-models:
+  base-config:
+    documentation_url: https://platform.openai.com/docs/models#gpt-3-5-turbo
+    properties:
+      context_window: 16_385
+      max_token_output: 4_096
+      training_cutoff: "2021-09"
+    class_properties:
+      available_for_everyone: false
+      deprecated: true
+
+  openai/gpt-3.5-turbo:
+    label: GPT 3.5
+    description: Currently points to gpt-3.5-turbo-0125.
+    release_date: "2023-01-25"
+    class_properties:
+      available_for_everyone: true
+    costs_per_million_token:
+      input: 0.50
+      output: 1.50
+    alternative_keys:
+      - gpt-3.5
+
+  openai/gpt-3.5-turbo-0125:
+    label: GPT 3.5 (2023-01-25)
+    description: The latest GPT-3.5 Turbo model with higher accuracy at responding in requested formats and a fix for a bug which caused a text encoding issue for non-English language function calls.
+    release_date: "2023-01-25"
+    costs_per_million_token:
+      input: 0.50
+      output: 1.50
+
+  openai/gpt-3.5-turbo-1106:
+    label: GPT 3.5 Turbo (2022-11-06)
+    description: GPT-3.5 Turbo model with improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more.
+    release_date: "2022-11-06"
+    costs_per_million_token:
+      input: 1.00
+      output: 2.00
+    
+  openai/gpt-3.5-turbo-instruct:
+    label: GPT 3.5 Turbo Instruct
+    description: Similar capabilities as GPT-3 era models. Compatible with legacy Completions endpoint and not Chat Completions.
+    release_date: "2022-11-06"
+    properties:
+      context_window: 4_096
+    costs_per_million_token:
+      input: 1.50
+      output: 2.00
+
+# Databricks Models
+databricks-models:
+  base-config:
+    company: Databricks
+
+  databricks/databricks-dbrx-instruct:
+    label: DBRX Instruct
+    description: Databricks Instruct model.
+    release_date: "2024-03-27"
+    properties:
+      context_window: 32_768
+      max_token_output: 4_096
+      training_cutoff: "2023-12"
+    class_properties:
+      available_for_everyone: false
+    costs_per_million_token:
+      input: 2.25
+      output: 6.75
+    alternative_keys:
+      - dbrx-instruct

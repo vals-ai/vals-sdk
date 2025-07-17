@@ -1,0 +1,105 @@
+base-config:
+  company: xAI
+  documentation_url: https://fireworks.ai/models
+  open_source: false
+  class_properties:
+    supports_images: false
+    available_as_evaluator: false
+    supports_metadata: true
+    supports_files: false
+    available_for_everyone: true
+  properties:
+    reasoning_model: false
+
+qwen-models:
+  base-config:
+    company: Alibaba
+    open_source: true
+
+  fireworks/qwen3-235b-a22b:
+    label: Qwen 3 (235B)
+    description: ""
+    release_date: "2025-04-28"
+    properties:
+      context_window: 128_000
+      max_token_output: 32_768
+      training_cutoff: "2024-08"
+      reasoning_model: true
+    costs_per_million_token:
+      input: 0.22
+      output: 0.88
+
+llama-4-models:
+  base-config:
+    company: Meta
+
+  fireworks/llama4-maverick-instruct-basic:
+    label: Llama 4 Maverick
+    description: Llama 4 Maverick SOTA 128-expert MoE powerhouse for multilingual image/text understanding.
+    release_date: "2025-04-05"
+    properties:
+      context_window: 1_000_000
+      max_token_output: 16_384
+      training_cutoff: "2024-08"
+    costs_per_million_token:
+      input: 0.22
+      output: 0.88
+    class_properties:
+      supports_images: true
+      deprecated: true
+
+  fireworks/llama4-scout-instruct-basic:
+    label: Llama 4 Scout
+    description: Llama 4 Scout SOTA 128-expert MoE powerhouse for multilingual image/text understanding.
+    release_date: "2025-04-05"
+    properties:
+      context_window: 10_000_000
+      max_token_output: 16_384
+      training_cutoff: "2024-08"
+    costs_per_million_token:
+      input: 0.18
+      output: 0.59
+    class_properties:
+      supports_images: true
+      deprecated: true
+
+deepseek-models:
+  base-config:
+    company: DeepSeek
+    open_source: true 
+
+
+  fireworks/deepseek-r1:
+    label: DeepSeek R1
+    description: ""
+    release_date: "2025-01-20"
+    properties:
+      context_window: 163_840
+      max_token_output: 163_840
+      training_cutoff: null
+      reasoning_model: true
+    costs_per_million_token:
+      input: 8.00
+      output: 8.00
+
+  fireworks/deepseek-v3-0324:
+    label: DeepSeek V3 (03/24/2025)
+    description: ""
+    release_date: "2025-03-24"
+    properties:
+      context_window: 131_072
+      max_token_output: 131_072
+    costs_per_million_token:
+      input: 1.20
+      output: 1.20
+
+  fireworks/deepseek-v3:
+    label: DeepSeek V3
+    description: ""
+    release_date: "2024-12-26"
+    properties:
+      context_window: 131_072
+      max_token_output: 131_072
+    costs_per_million_token:
+      input: 0.90
+      output: 0.90
