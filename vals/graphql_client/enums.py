@@ -59,14 +59,12 @@ class AppTestResultStatusChoices(str, Enum):
 class TestResultReviewStatusEnum(str, Enum):
     PENDING = "PENDING"
     COMPLETED = "COMPLETED"
-    ARCHIVED = "ARCHIVED"
 
 
 class RunReviewStatusEnum(str, Enum):
     PENDING = "PENDING"
     COMPLETED = "COMPLETED"
     ARCHIVED = "ARCHIVED"
-    CANCELLED = "CANCELLED"
 
 
 class TemplateType(str, Enum):

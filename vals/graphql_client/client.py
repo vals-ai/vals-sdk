@@ -13,6 +13,7 @@ from .delete_test_suite import DeleteTestSuite
 from .get_active_custom_operators import GetActiveCustomOperators
 from .get_default_parameters import GetDefaultParameters
 from .get_operators import GetOperators
+from .get_run_status import GetRunStatus
 from .get_single_run_review import GetSingleRunReview
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
@@ -34,7 +35,6 @@ from .pull_run import PullRun
 from .pull_test_results_with_count import PullTestResultsWithCount
 from .remove_old_tests import RemoveOldTests
 from .rerun_tests import RerunTests
-from .run_status import RunStatus
 from .single_test_result_reviews_with_count import SingleTestResultReviewsWithCount
 from .start_run import StartRun
 from .update_global_checks import UpdateGlobalChecks
@@ -48,16 +48,13 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def list_projects(
-        self,
-        offset: Union[Optional[int], UnsetType] = UNSET,
-        limit: Union[Optional[int], UnsetType] = UNSET,
-        **kwargs: Any,
+        self, offset: int, limit: int, search: str, **kwargs: Any
     ) -> ListProjects:
         query = gql(
             """
-            query listProjects($offset: Int, $limit: Int) {
+            query listProjects($offset: Int!, $limit: Int!, $search: String!) {
               projectsWithCount(
-                filterOptions: {offset: $offset, limit: $limit, archived: false}
+                filterOptions: {offset: $offset, limit: $limit, archived: false, search: $search}
               ) {
                 projects {
                   id
@@ -71,7 +68,11 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"offset": offset, "limit": limit}
+        variables: Dict[str, object] = {
+            "offset": offset,
+            "limit": limit,
+            "search": search,
+        }
         response = await self.execute(
             query=query, operation_name="listProjects", variables=variables, **kwargs
         )
@@ -253,9 +254,9 @@ class Client(AsyncBaseClient):
                 createdBy
                 createdAt
                 status
-                passRate
+                passRateHumanEval
                 flaggedRate
-                agreementRate
+                agreementRateAutoEval
                 completedTime
                 numberOfReviews
                 assignedReviewers
@@ -474,10 +475,10 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return UpdateRunStatus.model_validate(data)
 
-    async def run_status(self, run_id: str, **kwargs: Any) -> RunStatus:
+    async def get_run_status(self, run_id: str, **kwargs: Any) -> GetRunStatus:
         query = gql(
             """
-            query RunStatus($runId: String!) {
+            query GetRunStatus($runId: String!) {
               run(runId: $runId) {
                 status
               }
@@ -486,10 +487,10 @@ class Client(AsyncBaseClient):
         )
         variables: Dict[str, object] = {"runId": run_id}
         response = await self.execute(
-            query=query, operation_name="RunStatus", variables=variables, **kwargs
+            query=query, operation_name="GetRunStatus", variables=variables, **kwargs
         )
         data = self.get_data(response)
-        return RunStatus.model_validate(data)
+        return GetRunStatus.model_validate(data)
 
     async def pull_run(self, run_id: str, **kwargs: Any) -> PullRun:
         query = gql(
