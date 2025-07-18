@@ -17,6 +17,7 @@ class ExceptionHandlingWrapper(click.Group):
 
 
 @click.group()
+@click.version_option(package_name="valsai")
 def cli():
     pass
 
