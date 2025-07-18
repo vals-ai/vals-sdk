@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 from typing import Any
 
+import aiohttp
 import requests
 from pydantic import BaseModel, PrivateAttr
 from vals.graphql_client import Client
@@ -192,10 +193,10 @@ class Run(BaseModel):
         """Converts the run to a dictionary."""
         return self.model_dump(exclude_none=True, exclude_defaults=True, mode="json")
 
-    def to_json_file(self, file_path: str) -> None:
+    async def to_json_file(self, file_path: str) -> None:
         """Converts the run to a JSON file."""
         with open(file_path, "w") as f:
-            f.write(self.to_json_string())
+            f.write(await self.to_json_string())
 
     async def pull(self) -> None:
         """Update this Run instance with latest data from vals servers."""
@@ -275,26 +276,26 @@ class Run(BaseModel):
 
     async def to_csv_string(self) -> str:
         """Same as to_csv, but returns a string instead of writing to a file."""
-        response = requests.post(
-            url=f"{be_host()}/export_results_to_file/?run_id={self.id}",
-            headers={"Authorization": _get_auth_token()},
-        )
-
-        if response.status_code != 200:
-            raise ValsException("Received Error from Vals Servers: " + response.text)
-
-        return response.text
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url=f"{be_host()}/export_results_to_file/?run_id={self.id}",
+                headers={"Authorization": _get_auth_token()},
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise ValsException("Received Error from Vals Servers: " + error_text)
+                return await response.text()
 
     async def to_json_string(self) -> str:
-        response = requests.post(
-            url=f"{be_host()}/export_run_to_json/?run_id={self.id}",
-            headers={"Authorization": _get_auth_token()},
-        )
-
-        if response.status_code != 200:
-            raise ValsException("Received Error from Vals Servers: " + response.text)
-
-        return response.text
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url=f"{be_host()}/export_run_to_json/?run_id={self.id}",
+                headers={"Authorization": _get_auth_token()},
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise ValsException("Received Error from Vals Servers: " + error_text)
+                return await response.text()
 
     async def to_csv(self, file_path: str) -> None:
         """Get the CSV results of a run, as bytes."""
