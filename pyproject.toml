@@ -27,6 +27,17 @@ dependencies = [
   "inspect-ai",
   "aiohttp",
   "aiofiles",
+  "pillow",
+  "redis",
+  "typing-extensions>=4.14.0",
+  "openai==1.93.2",
+  "anthropic==0.57.1",
+  "together==1.5.21",
+  "mistralai==1.9.2",
+  "xai-sdk==1.0.0",
+  "ai21==4.0.3",
+  "boto3==1.38.27",
+  "google-genai[aiohttp]==1.26.0",
 ]
 [dependency-groups]
 dev = ["ariadne-codegen", "ruff", "basedpyright"]
@@ -51,3 +62,4 @@ exclude = ["examples", "vals/graphql_client"]
 
 [tool.basedpyright]
 exclude = ["examples", "vals/graphql_client"]
+reportExplicitAny = false
