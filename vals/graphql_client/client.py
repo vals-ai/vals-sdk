@@ -3,6 +3,8 @@
 
 from typing import Any, Dict, List, Optional, Union
 
+from .enums import RunStatus
+
 from .add_batch_tests import AddBatchTests
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType
