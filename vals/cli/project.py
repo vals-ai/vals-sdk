@@ -14,16 +14,15 @@ def project_group():
     pass
 
 
-async def list_command_async(limit: int, offset: int):
+async def list_command_async(limit: int, offset: int, search: str):
     """List all projects in the organization."""
-    projects = await Project.list_projects(limit=limit, offset=offset)
-    
+    projects = await Project.list_projects(limit=limit, offset=offset, search=search)
     headers = ["#", "Name", "ID", "Slug", "Default"]
     rows = []
     for i, project in enumerate(projects, start=offset):
         default_marker = "✓" if project.is_default else ""
         rows.append([i, project.name, project.id, project.slug, default_marker])
-    
+
     table = tabulate(rows, headers=headers, tablefmt="tsv")
     click.echo(table)
 
@@ -33,11 +32,12 @@ async def list_command_async(limit: int, offset: int):
 @click.option(
     "-o", "--offset", type=int, default=0, help="Start table at this row (0-indexed)"
 )
-def list_command(limit: int, offset: int):
+@click.option("-s", "--search", type=str, default="", help="Search query to filter projects")
+def list_command(limit: int, offset: int, search: str):
     """
     List all projects in the organization
     """
-    asyncio.run(list_command_async(limit, offset))
+    asyncio.run(list_command_async(limit, offset, search))
 
 
 project_group.add_command(list_command)

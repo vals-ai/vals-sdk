@@ -24,6 +24,7 @@ from vals.graphql_client.input_types import (
 )
 from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.run import Run
+from vals.graphql_client.enums import RunStatus
 from vals.sdk.types import (
     Check,
     File,
@@ -34,7 +35,6 @@ from vals.sdk.types import (
     OutputObject,
     QuestionAnswerPair,
     RunParameters,
-    RunStatus,
     SimpleModelFunctionType,
     Test,
     TestSuiteMetadata,
@@ -247,14 +247,14 @@ class Suite(BaseModel):
         """
         return self.model_dump(exclude_none=True, exclude_defaults=True)
 
-    def to_json_file(self, file_path: str) -> None:
+    async def to_json_file(self, file_path: str) -> None:
         """
         Converts the test suite to a JSON file.
         """
         with open(file_path, "w") as f:
-            f.write(self.to_json_string())
+            f.write(await self.to_json_string())
 
-    def to_csv_string(self) -> str:
+    async def to_csv_string(self) -> str:
         """
         Like to_csv_file, but returns the file as a string instead of writing it to a file.
         """
@@ -262,16 +262,17 @@ class Suite(BaseModel):
             raise Exception("Suite has not been created yet.")
 
         url = f"{be_host()}/export_tests_to_file/?suite_id={self.id}"
-        response = requests.post(
-            url,
-            headers={"Authorization": _get_auth_token()},
-        )
-        if response.status_code != 200:
-            raise Exception(f"Failed to export tests: {response.text}")
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url,
+                headers={"Authorization": _get_auth_token()},
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise Exception(f"Failed to export tests: {error_text}")
+                return await response.text()
 
-        return response.text
-
-    def to_json_string(self) -> str:
+    async def to_json_string(self) -> str:
         """
         Converts the test suite to a JSON string.
         """
@@ -279,22 +280,22 @@ class Suite(BaseModel):
             raise Exception("Suite has not been created yet.")
 
         url = f"{be_host()}/export_tests_to_json/?suite_id={self.id}"
-        response = requests.post(
-            url,
-            headers={"Authorization": _get_auth_token()},
-        )
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url,
+                headers={"Authorization": _get_auth_token()},
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise Exception(f"Failed to export tests: {error_text}")
+                return await response.text()
 
-        if response.status_code != 200:
-            raise Exception(f"Failed to export tests: {response.text}")
-
-        return response.text
-
-    def to_csv_file(self, file_path: str) -> None:
+    async def to_csv_file(self, file_path: str) -> None:
         """
         Converts the test suite to a CSV file.
         """
         with open(file_path, "w") as f:
-            f.write(self.to_csv_string())
+            f.write(await self.to_csv_string())
 
     async def create(
         self, force_creation: bool = False, max_upload_concurrency: int = 10
@@ -443,13 +444,13 @@ class Suite(BaseModel):
         ):
             if run_id:
                 await self._client.update_run_status(
-                    run_id=run_id, status=RunStatus.ERROR.value.upper()
+                    run_id=run_id, status=RunStatus.ERROR
                 )
             raise
         except Exception:
             if run_id:
                 await self._client.update_run_status(
-                    run_id=run_id, status=RunStatus.ERROR.value.upper()
+                    run_id=run_id, status=RunStatus.ERROR
                 )
             raise
 
@@ -507,7 +508,6 @@ class Suite(BaseModel):
         if isinstance(model, InspectWrapper):
             model_name = model.model_name
             eval_model_name = model.eval_model_name
-            inspect_wrapper = model
             custom_operators = model.get_custom_operators()
             model = model.get_custom_model()
 

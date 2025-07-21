@@ -23,6 +23,13 @@ from .enums import (
 )
 
 
+class CustomMetricFilterOptions(BaseModel):
+    archived: bool
+    limit: int
+    offset: int
+    project_id: Optional[str] = Field(alias="projectId", default=None)
+
+
 class CustomOperatorFilterOptions(BaseModel):
     archived: Optional[bool] = None
     limit: int
@@ -115,10 +122,10 @@ class TestFilterOptions(BaseModel):
 
 
 class ProjectsWithCountFilterType(BaseModel):
-    search: Optional[str] = None
-    archived: Optional[bool] = None
-    offset: Optional[int] = None
-    limit: Optional[int] = None
+    search: str
+    archived: bool
+    offset: int
+    limit: int
 
 
 class CheckInputType(BaseModel):
