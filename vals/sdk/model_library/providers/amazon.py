@@ -39,9 +39,7 @@ class AmazonModel(LLM):
                     image_bytes = base64.b64decode(image.base64)
                     yield {
                         "image": {
-                            "format": "jpeg"
-                            if image.mime in ["jpg", "jpeg"]
-                            else image.mime,
+                            "format": image.mime,
                             "source": {"bytes": image_bytes},
                         },
                     }

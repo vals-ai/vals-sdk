@@ -1,6 +1,9 @@
 import inspect
 import logging
+from collections.abc import Mapping, Sequence
 from typing import NamedTuple
+
+from pydantic.main import BaseModel
 
 
 class FileContent(NamedTuple):
@@ -35,3 +38,16 @@ def get_logger(name: str | None = None):
         handler.setFormatter(formatter)
         logger.addHandler(handler)
     return logger
+
+
+def deep_model_dump(obj: object) -> object:
+    if isinstance(obj, BaseModel):
+        return deep_model_dump(obj.model_dump())
+
+    if isinstance(obj, Mapping):
+        return {k: deep_model_dump(v) for k, v in obj.items()}
+
+    if isinstance(obj, Sequence) and not isinstance(obj, (str, bytes)):
+        return [deep_model_dump(v) for v in obj]
+
+    return obj

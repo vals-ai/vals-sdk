@@ -1,125 +1,149 @@
 from __future__ import annotations
 
+import json
 import random
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
+import redis
+from redis.client import Redis
 from typing_extensions import override
 
+from vals import sdk
 from vals.sdk.model_library.base import (
     LLM,
+    BatchResult,
     FileInput,
+    LLMBatchMixin,
     LLMConfig,
     QueryResult,
     QueryResultMetadata,
 )
 
-# class DummyAIBatchMixin(LLMBatchMixin):
-#     BATCH_EXP = 60 * 10  # 10 minutes
-#     redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
-#
-#     def __init__(self, openai: DummyAIModel):
-#         self._root: DummyAIModel = openai
-#
-#     def create_batch_query_request(
-#         self,
-#         custom_id: str,
-#         prompt: str,
-#         *,
-#         images: list[FileInput],
-#         files: list[FileInput],
-#         **kwargs: object,
-#     ) -> dict[str, Any]:
-#         return {
-#             "custom_id": custom_id,
-#             "method": "",
-#             "url": "",
-#             "body": self._root.query_body(prompt, images=images, files=files, **kwargs),
-#         }
-#
-#     async def batch_query(self, batch_name: str, requests: list[dict[str, Any]]) -> str:
-#         """Sends a batch api query and returns batch_id"""
-#         if random.random() < FAIL_RATE and "evaluator" not in self.model_name:
-#             raise Exception("Something went wrong in batch query")
-#
-#         random_id = "".join(random.choices("0123456789", k=8))
-#         batch_id = f"dumbar_batch_{random_id}"
-#         batch_obj = {
-#             "status": "in_progress",
-#             "batch_name": batch_name,
-#             "requests": requests,
-#         }
-#         redis_client.setex(f"dummy_batch:{batch_id}", BATCH_EXP, json.dumps(batch_obj))
-#         return batch_id
-#
-#     async def get_batch_status(self, batch_id: str) -> str:
-#         batch_obj = self._get_batch_obj(batch_id)
-#         if random.random() < FAIL_RATE and "evaluator" not in self.model_name:
-#             batch_obj["status"] = "failed"
-#         elif batch_obj["status"] != "cancelled":
-#             batch_obj["status"] = random.choice(["completed", "in_progress"])
-#
-#         redis_client.setex(f"dummy_batch:{batch_id}", BATCH_EXP, json.dumps(batch_obj))
-#         return batch_obj["status"]
-#
-#     @override
-#     @classmethod
-#     def is_status_completed(cls, batch_status: str) -> bool:
-#         return True
-#
-#     @override
-#     @classmethod
-#     def is_status_cancelled(cls, batch_status: str) -> bool:
-#         return batch_status == "cancelled"
-#
-#     @override
-#     @classmethod
-#     def is_status_failed(cls, batch_status: str) -> bool:
-#         return batch_status == "failed"
-#
-#     async def get_batch_results(self, batch_id: str) -> list[BatchResult]:
-#         if random.random() < FAIL_RATE and "evaluator" not in self.model_name:
-#             raise Exception("Something went wrong in parsing batch results")
-#
-#         batch_obj = self._get_batch_obj(batch_id)
-#         requests = batch_obj["requests"]
-#         batch_results = []
-#         for req in requests:
-#             if random.random() < FAIL_RATE and "evaluator" not in self.model_name:
-#                 batch_results.append(
-#                     BatchResult(
-#                         custom_id=req["custom_id"],
-#                         error_message="Dumbmar queried unsuccessfully",
-#                     )
-#                 )
-#             else:
-#                 batch_results.append(
-#                     BatchResult(
-#                         custom_id=req["custom_id"],
-#                         llm_output="Dumbmar queried successfully",
-#                         live_metadata={
-#                             "in_tokens": 0,
-#                             "out_tokens": 0,
-#                         },
-#                     )
-#                 )
-#         return batch_results
-#
-#     def get_batch_progress(self, batch_id: str) -> int:
-#         batch_obj = self._get_batch_obj(batch_id)
-#         return len(batch_obj["requests"])
-#
-#     def cancel_batch_request(self, batch_id: str):
-#         batch_obj = self._get_batch_obj(batch_id)
-#         batch_obj["status"] = "cancelled"
-#         redis_client.setex(f"dummy_batch:{batch_id}", BATCH_EXP, json.dumps(batch_obj))
-#
-#     def _get_batch_obj(self, batch_id: str):
-#         batch_obj = json.loads(redis_client.get(f"dummy_batch:{batch_id}"))  # type: ignore
-#         return batch_obj
+FAIL_RATE = 0.1
+BATCH_EXP = 60 * 10  # 10 minutes
+redis_client: Redis = redis.from_url(
+    sdk.model_library_settings.REDIS_URL, decode_responses=True
+)
+
+
+class DummyAIBatchMixin(LLMBatchMixin):
+    def __init__(self, openai: DummyAIModel):
+        self._root: DummyAIModel = openai
+
+    @override
+    def create_batch_query_request(
+        self,
+        custom_id: str,
+        prompt: str,
+        *,
+        images: list[FileInput],
+        files: list[FileInput],
+        **kwargs: object,
+    ) -> dict[str, Any]:
+        return {
+            "custom_id": custom_id,
+            "method": "",
+            "url": "",
+            "body": self._root.query_body(prompt, images=images, files=files, **kwargs),
+        }
+
+    @override
+    async def batch_query(self, batch_name: str, requests: list[dict[str, Any]]) -> str:
+        """Sends a batch api query and returns batch_id"""
+        if random.random() < FAIL_RATE and "evaluator" not in self._root.model_name:
+            raise Exception("Something went wrong in batch query")
+
+        random_id = "".join(random.choices("0123456789", k=8))
+        batch_id = f"dumbar_batch_{random_id}"
+        batch_obj = {
+            "status": "in_progress",
+            "batch_name": batch_name,
+            "requests": requests,
+        }
+        _ = redis_client.setex(
+            f"dummy_batch:{batch_id}", BATCH_EXP, json.dumps(batch_obj)
+        )
+        return batch_id
+
+    @override
+    async def get_batch_results(self, batch_id: str) -> list[BatchResult]:
+        if random.random() < FAIL_RATE and "evaluator" not in self._root.model_name:
+            raise Exception("Something went wrong in parsing batch results")
+
+        batch_obj = self._get_batch_obj(batch_id)
+        requests: list[dict[str, Any]] = batch_obj["requests"]
+        batch_results: list[BatchResult] = []
+        for req in requests:
+            custom_id = cast(str, req["custom_id"])
+            if random.random() < FAIL_RATE and "evaluator" not in self._root.model_name:
+                batch_results.append(
+                    BatchResult(
+                        custom_id=custom_id,
+                        llm_output="",
+                        error_message="Dumbmar queried unsuccessfully",
+                    )
+                )
+            else:
+                batch_results.append(
+                    BatchResult(
+                        custom_id=custom_id,
+                        llm_output="Dumbmar queried successfully",
+                    )
+                )
+        return batch_results
+
+    def _get_batch_obj(self, batch_id: str) -> dict[str, Any]:
+        batch_obj: dict[str, Any] = json.loads(
+            redis_client.get(f"dummy_batch:{batch_id}")  # type: ignore
+        )
+        return batch_obj
+
+    @override
+    async def get_batch_progress(self, batch_id: str) -> int:
+        batch_obj = self._get_batch_obj(batch_id)
+        return len(batch_obj["requests"])
+
+    @override
+    async def cancel_batch_request(self, batch_id: str):
+        batch_obj = self._get_batch_obj(batch_id)
+        batch_obj["status"] = "cancelled"
+        _ = redis_client.setex(
+            f"dummy_batch:{batch_id}", BATCH_EXP, json.dumps(batch_obj)
+        )
+
+    @override
+    async def get_batch_status(self, batch_id: str) -> str:
+        batch_obj = self._get_batch_obj(batch_id)
+        if random.random() < FAIL_RATE and "evaluator" not in self._root.model_name:
+            batch_obj["status"] = "failed"
+        elif batch_obj["status"] != "cancelled":
+            batch_obj["status"] = random.choice(["completed", "in_progress"])
+
+        _ = redis_client.setex(
+            f"dummy_batch:{batch_id}", BATCH_EXP, json.dumps(batch_obj)
+        )
+        return batch_obj["status"]
+
+    @override
+    @classmethod
+    def is_status_completed(cls, batch_status: str) -> bool:
+        return True
+
+    @override
+    @classmethod
+    def is_status_cancelled(cls, batch_status: str) -> bool:
+        return batch_status == "cancelled"
+
+    @override
+    @classmethod
+    def is_status_failed(cls, batch_status: str) -> bool:
+        return batch_status == "failed"
 
 
 class DummyAIModel(LLM):
-    FAIL_RATE = 0.1
+    @override
+    def get_client(self) -> object:
+        raise NotImplementedError("DummyAI does not support client")
 
     def __init__(
         self,
@@ -129,9 +153,9 @@ class DummyAIModel(LLM):
         config: LLMConfig | None = None,
     ):
         super().__init__(model_name, provider, config=config)
-        # self.batch: LLMBatchMixin | None = (
-        #     DummyAIBatchMixin(self) if self.supports_batch else None
-        # )
+        self.batch: LLMBatchMixin | None = (
+            DummyAIBatchMixin(self) if self.supports_batch else None
+        )
 
     def query_body(
         self,
@@ -147,9 +171,9 @@ class DummyAIModel(LLM):
             "temperature": self.temperature,
             "top_p": self.top_p,
             "seed": 0,
-            "files": len(files),
-            "images": len(images),
-            "messages": ["Dumbar dummy message"],
+            "messages": [
+                f"Dumbmar dummy message: {prompt} --- {len(images)} images, {len(files)} files"
+            ],
         }
         body.update(kwargs)
         return body
@@ -163,15 +187,12 @@ class DummyAIModel(LLM):
         files: list[FileInput],
         **kwargs: object,
     ) -> QueryResult:
-        _ = self.query_body(prompt, images=images, files=files, **kwargs)
+        body = self.query_body(prompt, images=images, files=files, **kwargs)
 
-        if (
-            random.random() < DummyAIModel.FAIL_RATE
-            and "evaluator" not in self.model_name
-        ):
+        if random.random() < FAIL_RATE and "evaluator" not in self.model_name:
             raise Exception("Dumbmar couldn't retrieve output.")
 
-        return "Dumbmar retrieved output successfully.", QueryResultMetadata(
+        return body["messages"][0], QueryResultMetadata(
             in_tokens=0,
             out_tokens=0,
         )

@@ -60,6 +60,8 @@ You can set metadata configs that are not passed into the LLMConfig class here, 
 class Properties(BaseModel):
     context_window: int | None = None
     max_token_output: int | None = None
+    temperature: float | None = None
+    top_p: float | None = None
     training_cutoff: str | None = None
     reasoning_model: bool | None = None
 

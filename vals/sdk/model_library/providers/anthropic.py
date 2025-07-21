@@ -66,6 +66,7 @@ class AnthropicModel(LLM):
         for image in images:
             match image:
                 case FileWithBase64():
+                    mime = image.mime.replace("jpg", "jpeg")
                     yield {
                         "type": "image",
                         "source": {

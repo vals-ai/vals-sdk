@@ -22,7 +22,7 @@ from vals.sdk.model_library.utils import truncate_str
 
 DEFAULT_MAX_TOKENS = 2048
 DEFAULT_TEMPERATURE = 0.7
-DEFAULT_TOP_P = 1.0
+DEFAULT_TOP_P = 0.95
 
 
 class FileBase(BaseModel):
@@ -153,6 +153,9 @@ class LLM(ABC):
         files: list[FileInput],
         **kwargs: object,
     ) -> QueryResult:
+        """
+        Time the query
+        """
         start = time.perf_counter()
         result, metadata = await self._query_impl(
             prompt, images=images, files=files, **kwargs
@@ -172,7 +175,7 @@ class LLM(ABC):
         files: list[FileInput] | None = None,
         **kwargs: object,
     ) -> QueryResult:
-        """Query the model. Log the query and add duration information"""
+        """Query the model. Log, time, and retry"""
         short_prompt = truncate_str(repr(prompt))
         short_kwargs = {k: truncate_str(repr(v)) for k, v in kwargs.items()}
 
