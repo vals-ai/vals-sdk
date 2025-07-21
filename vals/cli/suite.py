@@ -258,12 +258,6 @@ async def run_command_async(
     help="Run evaluation against golden output",
 )
 @click.option(
-    "--run-confidence-evaluation",
-    is_flag=True,
-    default=None,
-    help="Run confidence evaluation",
-)
-@click.option(
     "--heavyweight-factor",
     type=int,
     default=None,
@@ -278,7 +272,6 @@ async def run_command_async(
 @click.option("--temperature", type=float, default=None, help="Temperature parameter for model")
 @click.option("--max-output-tokens", type=int, default=None, help="Maximum tokens in model output")
 @click.option("--system-prompt", type=str, default=None, help="System prompt for model")
-@click.option("--new-line-stop-option", is_flag=True, default=None, help="Stop on new line")
 @click.option("--as-batch", is_flag=True, default=False, help="Run suite as a batch")
 def run_command(suite_id: str, model: str, run_name: str, wait_for_completion: bool, **params):
     """
