@@ -69,9 +69,7 @@ def update_command(file: TextIOWrapper, suite_id: str):
     asyncio.run(update_command_async(file, suite_id))
 
 
-async def list_command_async(
-    limit: int, offset: int, search: str, project_id: str | None
-):
+async def list_command_async(limit: int, offset: int, search: str, project_id: str | None):
     if project_id:
         click.echo(f"Listing suites for project: {project_id}")
     else:
@@ -156,14 +154,10 @@ async def pull_command_async(
 
 @click.command(name="pull")
 @click.option("-s", "--suite-id", type=str, required=True)
-@click.option(
-    "--file", type=str, required=True, help="Name of the file to save the suite to"
-)
+@click.option("--file", type=str, required=True, help="Name of the file to save the suite to")
 @click.option("--csv", is_flag=True, help="Output in CSV format")
 @click.option("--json", is_flag=True, help="Output in JSON format")
-@click.option(
-    "--no-download-files", is_flag=True, help="Do not download files from the suite"
-)
+@click.option("--no-download-files", is_flag=True, help="Do not download files from the suite")
 @click.option(
     "--download-path",
     type=str,
