@@ -15,9 +15,9 @@ class MarkQuestionAnswerSetAsComplete(BaseModel):
 
 
 class MarkQuestionAnswerSetAsCompleteMarkQuestionAnswerSetAsComplete(BaseModel):
-    question_answer_set: (
-        "MarkQuestionAnswerSetAsCompleteMarkQuestionAnswerSetAsCompleteQuestionAnswerSet"
-    ) = Field(alias="questionAnswerSet")
+    question_answer_set: "MarkQuestionAnswerSetAsCompleteMarkQuestionAnswerSetAsCompleteQuestionAnswerSet" = Field(
+        alias="questionAnswerSet"
+    )
 
 
 class MarkQuestionAnswerSetAsCompleteMarkQuestionAnswerSetAsCompleteQuestionAnswerSet(

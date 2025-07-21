@@ -1,10 +1,21 @@
 import asyncio
-import time
+import os
 from io import BytesIO
 from typing import Any
 
-from vals import Check, QuestionAnswerPair, Run, RunParameters, Suite, Test
+from vals import (
+    Check,
+    QuestionAnswerPair,
+    Run,
+    RunParameters,
+    Suite,
+    Test,
+    configure_credentials,
+)
 from vals.sdk.types import OperatorInput, OperatorOutput
+
+
+configure_credentials(api_key=os.getenv("VALS_API_KEY"))
 
 
 async def run_with_model_under_test():
