@@ -7,6 +7,7 @@ These are meant to be user-facing.
 
 import datetime
 import json
+from collections.abc import Awaitable
 from enum import Enum
 from io import BytesIO
 from typing import Any, Callable, Literal, Optional
@@ -600,7 +601,10 @@ class OperatorOutput(BaseModel):
     explanation: str
 
 
-ModelCustomOperatorFunctionType = Callable[[OperatorInput], OperatorOutput]
+ModelCustomOperatorFunctionType = (
+    Callable[[OperatorInput], OperatorOutput]  # sync
+    | Callable[[OperatorInput], Awaitable[OperatorOutput]]  # async
+)
 
 
 class CustomModelInput(BaseModel):
@@ -620,11 +624,21 @@ class CustomModelOutput(BaseModel):
     }
 
 
-SimpleModelFunctionType = Callable[[str], str | OutputObject]
+SimpleModelFunctionType = (
+    Callable[[str], str | OutputObject]  # sync
+    | Callable[[str], Awaitable[str | OutputObject]]  # async
+)
 
-ModelFunctionWithFilesAndContextType = Callable[
-    [str, dict[str, BytesIO], dict[str, Any]], str | dict[str, Any] | OutputObject
-]
+
+ModelFunctionWithFilesAndContextType = (
+    Callable[
+        [str, dict[str, BytesIO], dict[str, Any]], str | dict[str, Any] | OutputObject
+    ]  # sync
+    | Callable[
+        [str, dict[str, BytesIO], dict[str, Any]],
+        Awaitable[str | dict[str, Any] | OutputObject],
+    ]  # async
+)
 
 ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType
 
