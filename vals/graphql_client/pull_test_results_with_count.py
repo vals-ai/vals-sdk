@@ -23,7 +23,7 @@ class PullTestResultsWithCountTestResultsWithCount(BaseModel):
 
 
 class PullTestResultsWithCountTestResultsWithCountTestResults(BaseModel):
-    id: str
+    id: Any
     llm_output: str = Field(alias="llmOutput")
     pass_percentage: float = Field(alias="passPercentage")
     pass_percentage_with_weight: float = Field(alias="passPercentageWithWeight")
