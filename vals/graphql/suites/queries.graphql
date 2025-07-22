@@ -30,7 +30,7 @@ query getTestSuitesWithCount(
   $offset: Int
   $limit: Int
   $search: String
-  $projectId: String
+  $projectId: String!
 ) {
   testSuitesWithCount(
     filterOptions: {

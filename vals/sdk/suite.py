@@ -315,7 +315,7 @@ class Suite(BaseModel):
 
         # Create suite object on the server
         suite = await self._client.create_or_update_test_suite(
-            "0", self.title, self.description, project_id=self.project_id
+            "0", self.title, self.description, self.project_id or ""
         )
         if suite.update_test_suite is None:
             raise Exception("Unable to update the test suite.")
@@ -353,7 +353,7 @@ class Suite(BaseModel):
             )
 
         suite = await self._client.create_or_update_test_suite(
-            self.id, self.title, self.description
+            self.id, self.title, self.description, self.project_id or ""
         )
         self.project_id = suite.update_test_suite.test_suite.project.slug
 
@@ -832,7 +832,7 @@ class Suite(BaseModel):
             for i in range(0, len(test_mutations), 25):
                 batch = test_mutations[i : i + 25]
                 batch_result = await self._client.add_batch_tests(
-                    tests=batch,
+                    test_info=batch,
                     create_only=create_only,
                 )
                 if batch_result.batch_update_test is None:
