@@ -65,7 +65,9 @@ async def list_async(
     rows = []
     for i, run in enumerate(run_results, start=offset):
         date_str = run.timestamp.strftime("%Y/%m/%d %H:%M")
-        pass_percentage_str = f"{run.pass_rate:.2f}%" if run.pass_rate is not None else "N/A"
+        pass_percentage_str = (
+            f"{run.pass_rate:.2f}%" if run.pass_rate is not None else "N/A"
+        )
         rows.append(
             [
                 i,

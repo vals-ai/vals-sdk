@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import Any
 
 import aiohttp
-import requests
 from pydantic import BaseModel, PrivateAttr
 from vals.graphql_client import Client
 from vals.sdk.exceptions import ValsException
@@ -217,7 +216,9 @@ class Run(BaseModel):
 
         while remaining_limit != 0:
             # Calculate the current batch size
-            current_batch_size = min(batch_size, remaining_limit) if remaining_limit > 0 else batch_size
+            current_batch_size = (
+                min(batch_size, remaining_limit) if remaining_limit > 0 else batch_size
+            )
 
             result = await self._client.list_question_answer_pairs(
                 qa_set_id=self.qa_set_id,
@@ -283,7 +284,9 @@ class Run(BaseModel):
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
-                    raise ValsException("Received Error from Vals Servers: " + error_text)
+                    raise ValsException(
+                        "Received Error from Vals Servers: " + error_text
+                    )
                 return await response.text()
 
     async def to_json_string(self) -> str:
@@ -294,7 +297,9 @@ class Run(BaseModel):
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
-                    raise ValsException("Received Error from Vals Servers: " + error_text)
+                    raise ValsException(
+                        "Received Error from Vals Servers: " + error_text
+                    )
                 return await response.text()
 
     async def to_csv(self, file_path: str) -> None:
@@ -395,7 +400,6 @@ class Run(BaseModel):
         qa_pairs = await self.get_qa_pairs(offset=0, remaining_limit=-1)
         suite = await Suite.from_id(self.test_suite_id)
         return await suite.run(qa_pairs)
-
 
     @staticmethod
     async def get_status_from_id(run_id: str) -> RunStatus:
