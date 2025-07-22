@@ -15,9 +15,9 @@ class CreateQuestionAnswerSet(BaseModel):
 
 
 class CreateQuestionAnswerSetCreateQuestionAnswerSet(BaseModel):
-    question_answer_set: "CreateQuestionAnswerSetCreateQuestionAnswerSetQuestionAnswerSet" = Field(
-        alias="questionAnswerSet"
-    )
+    question_answer_set: (
+        "CreateQuestionAnswerSetCreateQuestionAnswerSetQuestionAnswerSet"
+    ) = Field(alias="questionAnswerSet")
     run_id: Optional[str] = Field(alias="runId")
 
 

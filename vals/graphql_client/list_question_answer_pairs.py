@@ -2,7 +2,7 @@
 # Source: vals/graphql/
 
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List
 
 from pydantic import Field
 
@@ -10,9 +10,9 @@ from .base_model import BaseModel
 
 
 class ListQuestionAnswerPairs(BaseModel):
-    question_answer_pairs_with_count: "ListQuestionAnswerPairsQuestionAnswerPairsWithCount" = Field(
-        alias="questionAnswerPairsWithCount"
-    )
+    question_answer_pairs_with_count: (
+        "ListQuestionAnswerPairsQuestionAnswerPairsWithCount"
+    ) = Field(alias="questionAnswerPairsWithCount")
 
 
 class ListQuestionAnswerPairsQuestionAnswerPairsWithCount(BaseModel):
@@ -28,16 +28,14 @@ class ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs(Bas
     llm_output: str = Field(alias="llmOutput")
     context: Any
     output_context: Any = Field(alias="outputContext")
-    typed_metadata: "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTypedMetadata" = Field(
-        alias="typedMetadata"
-    )
+    typed_metadata: (
+        "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTypedMetadata"
+    ) = Field(alias="typedMetadata")
     typed_file_ids: List[str] = Field(alias="typedFileIds")
     local_evals: List[
         "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsLocalEvals"
     ] = Field(alias="localEvals")
-    test: Optional[
-        "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTest"
-    ]
+    test: "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTest"
 
 
 class ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTypedMetadata(

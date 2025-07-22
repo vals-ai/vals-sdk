@@ -11,9 +11,9 @@ from .enums import TemplateType, TestResultReviewStatusEnum
 
 
 class SingleTestResultReviewsWithCount(BaseModel):
-    test_result_reviews_with_count: "SingleTestResultReviewsWithCountTestResultReviewsWithCount" = Field(
-        alias="testResultReviewsWithCount"
-    )
+    test_result_reviews_with_count: (
+        "SingleTestResultReviewsWithCountTestResultReviewsWithCount"
+    ) = Field(alias="testResultReviewsWithCount")
 
 
 class SingleTestResultReviewsWithCountTestResultReviewsWithCount(BaseModel):
@@ -26,7 +26,7 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCount(BaseModel):
 class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResults(
     BaseModel
 ):
-    id: str
+    id: Any
     reviewed_by: Optional[List[str]] = Field(alias="reviewedBy")
     has_feedback: Optional[bool] = Field(alias="hasFeedback")
     agreement_rate_auto_eval: Optional[float] = Field(alias="agreementRateAutoEval")
@@ -43,9 +43,9 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
         "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsQaPair"
     ] = Field(alias="qaPair")
     test: "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTest"
-    typed_metadata: "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedMetadata" = Field(
-        alias="typedMetadata"
-    )
+    typed_metadata: (
+        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedMetadata"
+    ) = Field(alias="typedMetadata")
     aggregated_custom_metrics: Optional[
         List[
             "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsAggregatedCustomMetrics"
@@ -141,9 +141,9 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
     per_check_test_review_typed: List[
         "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsPerCheckTestReviewTyped"
     ] = Field(alias="perCheckTestReviewTyped")
-    test_result: "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResult" = Field(
-        alias="testResult"
-    )
+    test_result: (
+        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResult"
+    ) = Field(alias="testResult")
     custom_review_values: List[
         "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsCustomReviewValues"
     ] = Field(alias="customReviewValues")
@@ -159,7 +159,7 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
 class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResult(
     BaseModel
 ):
-    id: str
+    id: Any
     typed_result_json: List[
         "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultTypedResultJson"
     ] = Field(alias="typedResultJson")

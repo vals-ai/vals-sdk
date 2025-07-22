@@ -29,9 +29,9 @@ class BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairs(
     file_ids: Any = Field(alias="fileIds")
     context: Any
     output_context: Any = Field(alias="outputContext")
-    test: Optional[
+    test: (
         "BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairsTest"
-    ]
+    )
 
 
 class BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairsTest(
