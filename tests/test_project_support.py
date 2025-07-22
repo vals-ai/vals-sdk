@@ -18,8 +18,12 @@ class TestProjectClass:
         mock_client = AsyncMock()
         mock_response = MagicMock()
         mock_response.projects_with_count.projects = [
-            SimpleNamespace(id="proj1", name="Project 1", slug="project-1", is_default=False),
-            SimpleNamespace(id="proj2", name="Default", slug="default", is_default=True),
+            SimpleNamespace(
+                id="proj1", name="Project 1", slug="project-1", is_default=False
+            ),
+            SimpleNamespace(
+                id="proj2", name="Default", slug="default", is_default=True
+            ),
         ]
         mock_client.list_projects.return_value = mock_response
 
@@ -59,7 +63,7 @@ class TestSuiteProjectSupport:
         """Test creating a Suite instance without project_id."""
         suite = Suite(title="Test Suite", description="A test suite")
 
-        assert suite.project_id == 'default-project'
+        assert suite.project_id == "default-project"
         assert suite.title == "Test Suite"
 
     @pytest.mark.asyncio

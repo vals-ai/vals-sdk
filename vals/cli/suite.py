@@ -69,9 +69,7 @@ def update_command(file: TextIOWrapper, suite_id: str):
     asyncio.run(update_command_async(file, suite_id))
 
 
-async def list_command_async(
-    limit: int, offset: int, search: str, project_id: str
-):
+async def list_command_async(limit: int, offset: int, search: str, project_id: str):
     if project_id:
         click.echo(f"Listing suites for project: {project_id}")
     else:
