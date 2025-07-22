@@ -29,7 +29,7 @@ dependencies = [
   "aiofiles",
 ]
 [dependency-groups]
-dev = ["ariadne-codegen", "ruff", "basedpyright"]
+dev = ["pytest", "ariadne-codegen", "ruff", "basedpyright"]
 parsing = ["pypdf", "pypandoc-binary"]
 
 [project.scripts]
@@ -50,4 +50,4 @@ local_scheme = "node-and-date"
 exclude = ["examples", "vals/graphql_client"]
 
 [tool.basedpyright]
-exclude = ["examples", "vals/graphql_client"]
+exclude = ["examples", "vals/graphql_client", ".*"]

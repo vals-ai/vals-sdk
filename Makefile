@@ -1,6 +1,6 @@
 .PHONY: help install test style typecheck
 
-ACTIVATE := source .venv/bin/activate
+ACTIVATE := @. .venv/bin/activate
 
 help:
 	@echo "Makefile for vals-sdk"
@@ -25,6 +25,7 @@ venv_check:
 		echo "❌ Virtualenv not found! Run \`make install\` first."; \
 		exit 1; \
 	fi
+
 test: venv_check
 	$(ACTIVATE) && pytest
 
