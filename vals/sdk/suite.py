@@ -66,7 +66,7 @@ class Suite(BaseModel):
 
     @classmethod
     async def list_suites(
-        cls, limit=50, offset=0, search="", project_id=None
+        cls, limit=50, offset=0, search="", project_id="default-project"
     ) -> list[TestSuiteMetadata]:
         """
         Generate a list of all the test suites on the server.
