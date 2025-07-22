@@ -1,6 +1,6 @@
 """
 Tests for rerun_checks functionality in SDK and CLI.
-requires VALS_ENV = 'DEV' w VALS_API_KEY configured.
+Requires VALS_ENV, VALS_API_KEY, and RUN_ID configured as GitHub secrets.
 """
 
 import os
@@ -16,16 +16,15 @@ class TestRerunChecks:
     @pytest.mark.skip(reason="This test is temporarily disabled")
     async def test_rerun_all_checks_integration(self):
         """Integration test for rerun_all_checks with specific run ID."""
-        # Assert VALS_ENV is set to DEV
+        # Read from GitHub secrets via environment variables
         vals_env = os.getenv("VALS_ENV")
-        assert vals_env == "DEV", f"VALS_ENV must be set to 'DEV', got: {vals_env}"
-
-        # Assert VALS_API_KEY is set
+        assert vals_env is not None, "VALS_ENV must be set as a GitHub secret"
+        
         vals_api_key = os.getenv("VALS_API_KEY")
-        assert vals_api_key is not None, "VALS_API_KEY environment variable must be set"
-
-        # Use the specific run ID provided
-        run_id = "57d78d38-a19c-4f52-95f2-2eb4b4615b76"
+        assert vals_api_key is not None, "VALS_API_KEY must be set as a GitHub secret"
+        
+        run_id = os.getenv("RUN_ID")
+        assert run_id is not None, "RUN_ID must be set as a GitHub secret"
 
         try:
             # Get the original run
@@ -66,9 +65,9 @@ class TestRerunChecksEdgeCases:
     @pytest.mark.skip(reason="This test is temporarily disabled")
     async def test_rerun_all_checks_with_invalid_run_id(self):
         """Test rerun_all_checks with invalid run ID."""
-        # Assert environment variables are set
-        assert os.getenv("VALS_ENV") == "DEV", "VALS_ENV must be set to 'DEV'"
-        assert os.getenv("VALS_API_KEY") is not None, "VALS_API_KEY must be set"
+        # Assert GitHub secrets are set
+        assert os.getenv("VALS_ENV") is not None, "VALS_ENV must be set as a GitHub secret"
+        assert os.getenv("VALS_API_KEY") is not None, "VALS_API_KEY must be set as a GitHub secret"
 
         with pytest.raises(Exception):  # Should raise some form of error
             invalid_run = await Run.from_id("invalid-run-id-12345")
@@ -78,12 +77,14 @@ class TestRerunChecksEdgeCases:
     @pytest.mark.skip(reason="This test is temporarily disabled")
     async def test_rerun_all_checks_preserves_original_run(self):
         """Test that rerun_all_checks doesn't modify the original run."""
-        # Assert environment variables are set
-        assert os.getenv("VALS_ENV") == "BENCH", "VALS_ENV must be set to 'BENCH'"
-        assert os.getenv("VALS_API_KEY") is not None, "VALS_API_KEY must be set"
+        # Assert GitHub secrets are set
+        vals_env = os.getenv("VALS_ENV")
+        assert vals_env is not None, "VALS_ENV must be set as a GitHub secret"
+        assert os.getenv("VALS_API_KEY") is not None, "VALS_API_KEY must be set as a GitHub secret"
 
-        # run_id = "b5016745-3911-4ab1-b708-cd38ddbd5304" # small, DEV
-        run_id = "e80d9cb2-d5de-4901-9c7c-4a0914e54149"  # large, BENCH
+        # Read run ID from GitHub secret
+        run_id = os.getenv("RUN_ID")
+        assert run_id is not None, "RUN_ID must be set as a GitHub secret"
 
         try:
             original_run = await Run.from_id(run_id)
