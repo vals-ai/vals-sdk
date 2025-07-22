@@ -51,7 +51,7 @@ from vals.sdk.util import (
 
 class Suite(BaseModel):
     id: str | None = None
-    project_id: str | None = None
+    project_id: str = "default-project"
 
     title: str
     description: str = ""
