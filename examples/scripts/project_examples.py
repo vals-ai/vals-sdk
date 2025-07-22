@@ -1,7 +1,7 @@
 import asyncio
 
-from vals.sdk import Project, Run, Suite
-from vals.sdk.types import Check
+from vals import Project, Run, Suite
+from vals.sdk.types import Check, Test
 
 
 async def list_all_projects():
@@ -25,10 +25,10 @@ async def create_suite_in_project(project_id: str):
         description="A suite created to demonstrate project support",
         project_id=project_id,
         tests=[
-            {
-                "input_under_test": "What is 2+2?",
-                "checks": [Check(operator="includes", criteria="4")],
-            }
+            Test(
+                input_under_test="What is 2+2?",
+                checks=[Check(operator="includes", criteria="4")],
+            )
         ],
     )
 

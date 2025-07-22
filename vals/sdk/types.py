@@ -213,6 +213,8 @@ class File(BaseModel):
 
 
 class Test(BaseModel):
+    __test__ = False
+
     id: str | None = None
     """Displayed id for the test. DO NOT REPLACE _id with this since it will break creation of tests. This will be refactored in the future."""
 

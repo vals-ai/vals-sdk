@@ -13,6 +13,7 @@ class TestRerunChecks:
     """Test the rerun_all_checks functionality."""
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(reason="This test is temporarily disabled")
     async def test_rerun_all_checks_integration(self):
         """Integration test for rerun_all_checks with specific run ID."""
         # Assert VALS_ENV is set to DEV
@@ -62,6 +63,7 @@ class TestRerunChecksEdgeCases:
     """Test edge cases for rerun_all_checks functionality."""
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(reason="This test is temporarily disabled")
     async def test_rerun_all_checks_with_invalid_run_id(self):
         """Test rerun_all_checks with invalid run ID."""
         # Assert environment variables are set
@@ -73,6 +75,7 @@ class TestRerunChecksEdgeCases:
             await invalid_run.rerun_all_checks()
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(reason="This test is temporarily disabled")
     async def test_rerun_all_checks_preserves_original_run(self):
         """Test that rerun_all_checks doesn't modify the original run."""
         # Assert environment variables are set

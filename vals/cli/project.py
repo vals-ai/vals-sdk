@@ -14,7 +14,7 @@ def project_group():
     pass
 
 
-async def list_command_async(limit: int, offset: int, search: str):
+async def list_command_async(limit: int, offset: int, search: str = ""):
     """List all projects in the organization."""
     projects = await Project.list_projects(limit=limit, offset=offset, search=search)
     headers = ["#", "Name", "ID", "Slug", "Default"]
