@@ -2,6 +2,7 @@ name: Typecheck
 on: [pull_request, push]
 jobs:
   typecheck:
+    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

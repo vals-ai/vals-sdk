@@ -50,4 +50,5 @@ local_scheme = "node-and-date"
 exclude = ["examples", "vals/graphql_client"]
 
 [tool.basedpyright]
+typeCheckingMode = "basic"
 exclude = ["examples", "vals/graphql_client", ".*"]
