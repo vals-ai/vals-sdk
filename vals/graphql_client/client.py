@@ -703,12 +703,12 @@ class Client(AsyncBaseClient):
         test_suite_id: str,
         title: str,
         description: str,
-        project_id: Union[Optional[str], UnsetType] = UNSET,
+        project_id: str,
         **kwargs: Any
     ) -> CreateOrUpdateTestSuite:
         query = gql(
             """
-            mutation createOrUpdateTestSuite($testSuiteId: String!, $title: String!, $description: String!, $projectId: String) {
+            mutation createOrUpdateTestSuite($testSuiteId: String!, $title: String!, $description: String!, $projectId: String!) {
               updateTestSuite(
                 testSuiteId: $testSuiteId
                 title: $title
@@ -744,12 +744,12 @@ class Client(AsyncBaseClient):
         return CreateOrUpdateTestSuite.model_validate(data)
 
     async def add_batch_tests(
-        self, tests: List[TestMutationInfo], create_only: bool, **kwargs: Any
+        self, test_info: List[TestMutationInfo], create_only: bool, **kwargs: Any
     ) -> AddBatchTests:
         query = gql(
             """
-            mutation addBatchTests($tests: [TestMutationInfo!]!, $createOnly: Boolean!) {
-              batchUpdateTest(tests: $tests, createOnly: $createOnly) {
+            mutation addBatchTests($test_info: [TestMutationInfo!]!, $createOnly: Boolean!) {
+              batchUpdateTest(tests: $test_info, createOnly: $createOnly) {
                 tests {
                   ...TestFragment
                 }
@@ -789,7 +789,10 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"tests": tests, "createOnly": create_only}
+        variables: Dict[str, object] = {
+            "test_info": test_info,
+            "createOnly": create_only,
+        }
         response = await self.execute(
             query=query, operation_name="addBatchTests", variables=variables, **kwargs
         )
@@ -1009,15 +1012,15 @@ class Client(AsyncBaseClient):
 
     async def get_test_suites_with_count(
         self,
+        project_id: str,
         offset: Union[Optional[int], UnsetType] = UNSET,
         limit: Union[Optional[int], UnsetType] = UNSET,
         search: Union[Optional[str], UnsetType] = UNSET,
-        project_id: Union[Optional[str], UnsetType] = UNSET,
         **kwargs: Any
     ) -> GetTestSuitesWithCount:
         query = gql(
             """
-            query getTestSuitesWithCount($offset: Int, $limit: Int, $search: String, $projectId: String) {
+            query getTestSuitesWithCount($offset: Int, $limit: Int, $search: String, $projectId: String!) {
               testSuitesWithCount(
                 filterOptions: {offset: $offset, limit: $limit, search: $search, projectId: $projectId}
               ) {
