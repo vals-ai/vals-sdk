@@ -153,7 +153,7 @@ class Run(BaseModel):
         suite_id: str | None = None,
         show_archived: bool = False,
         search: str = "",
-        project_id: str | None = None,
+        project_id: str = "default-project",
     ) -> list["RunMetadata"]:
         """List runs associated with this organization
 
