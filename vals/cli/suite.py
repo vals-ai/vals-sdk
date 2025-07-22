@@ -70,7 +70,7 @@ def update_command(file: TextIOWrapper, suite_id: str):
 
 
 async def list_command_async(
-    limit: int, offset: int, search: str, project_id: str | None
+    limit: int, offset: int, search: str, project_id: str
 ):
     if project_id:
         click.echo(f"Listing suites for project: {project_id}")
@@ -100,13 +100,15 @@ async def list_command_async(
 @click.option(
     "--project-id",
     type=str,
+    default="default-project",
+    show_default=True,
     help="Project ID to filter suites by. If unset, uses the default project.",
 )
 def list_command(
     limit: int,
     offset: int,
     search: str,
-    project_id: str | None,
+    project_id: str,
 ):
     """
     List test suites associated with this organization
