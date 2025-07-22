@@ -8,7 +8,6 @@ from typing import Any, Callable, cast, overload
 
 import aiofiles
 import aiohttp
-import requests
 from pydantic import BaseModel, PrivateAttr
 from tqdm import tqdm
 from tqdm.asyncio import tqdm as asyncio_tqdm
