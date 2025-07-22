@@ -202,7 +202,7 @@ class Run(BaseModel):
 
         updated = await self._create_from_pull_result(self.id, self._client)
         # TODO: There's probably a better way to update the object.
-        for field in updated.__fields__:
+        for field in Run.model_fields:
             setattr(self, field, getattr(updated, field))
 
     async def get_qa_pairs(
