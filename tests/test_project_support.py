@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from vals.sdk.project import Project
 from vals.sdk.suite import Suite
 from vals.sdk.run import Run
-from vals.sdk.util import get_effective_project_id
 
 
 class TestProjectClass:
