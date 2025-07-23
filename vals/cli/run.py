@@ -141,7 +141,7 @@ async def rerun_checks_async(run_id: str):
 
 
 @click.command()
-@click.argument("run-id", type=str, required=True)
+@click.option("-r", "--run-id", type=click.STRING, required=True)
 def rerun_checks(run_id: str):
     """
     Rerun all checks for a run, using existing QA pairs.
