@@ -68,6 +68,8 @@ class ResultJsonElementTypeFieldsModifiers(CheckModifierOutputTypeFields):
 
 
 class TestFragment(BaseModel):
+    __test__ = False
+
     id: str
     input_under_test: str = Field(alias="inputUnderTest")
     context: Any
@@ -80,12 +82,16 @@ class TestFragment(BaseModel):
 
 
 class TestFragmentChecks(BaseModel):
+    __test__ = False
+
     operator: str
     criteria: str
     modifiers: "TestFragmentChecksModifiers"
 
 
 class TestFragmentChecksModifiers(BaseModel):
+    __test__ = False
+
     optional: bool
     severity: Optional[float]
     examples: List["TestFragmentChecksModifiersExamples"]
@@ -106,6 +112,8 @@ class TestFragmentChecksModifiersConditional(BaseModel):
 
 
 class TestFragmentTestSuite(BaseModel):
+    __test__ = False
+
     id: str
 
 
