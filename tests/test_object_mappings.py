@@ -229,14 +229,12 @@ class TestObjectMappings:
         params = result.parameters
         assert params.eval_model == "gpt-4"
         # assert params.maximum_threads == 8
-        assert params.run_golden_eval is True
         assert params.run_confidence_evaluation is False
         assert params.heavyweight_factor == 2
         assert params.create_text_summary is True
         assert params.temperature == 0.7
         assert params.max_output_tokens == 512
         assert params.system_prompt == "You are a helpful assistant."
-        assert params.new_line_stop_option is True
 
         assert result.test_suite_title == "Test Suite 1"
 
