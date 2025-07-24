@@ -27,7 +27,7 @@ class DropdownSectionEnum(str, Enum):
     OTHER = "OTHER"
 
 
-class AppQuestionAnswerPairStatusChoices(str, Enum):
+class EvaluationStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"
     ERROR = "ERROR"
     SUCCESS = "SUCCESS"
@@ -50,23 +50,15 @@ class RunStatus(str, Enum):
     PAUSING = "PAUSING"
 
 
-class AppTestResultStatusChoices(str, Enum):
-    IN_PROGRESS = "IN_PROGRESS"
-    ERROR = "ERROR"
-    SUCCESS = "SUCCESS"
-
-
 class TestResultReviewStatusEnum(str, Enum):
     PENDING = "PENDING"
     COMPLETED = "COMPLETED"
-    ARCHIVED = "ARCHIVED"
 
 
 class RunReviewStatusEnum(str, Enum):
     PENDING = "PENDING"
     COMPLETED = "COMPLETED"
     ARCHIVED = "ARCHIVED"
-    CANCELLED = "CANCELLED"
 
 
 class TemplateType(str, Enum):
@@ -91,6 +83,13 @@ class TierEnum(str, Enum):
     FREE = "FREE"
     STARTUP = "STARTUP"
     ENTERPRISE = "ENTERPRISE"
+
+
+class DateFilterEnum(str, Enum):
+    NONE = "NONE"
+    OLDER_THAN_1_MONTH = "OLDER_THAN_1_MONTH"
+    OLDER_THAN_6_MONTHS = "OLDER_THAN_6_MONTHS"
+    OLDER_THAN_1_YEAR = "OLDER_THAN_1_YEAR"
 
 
 class RunReviewTableSortField(str, Enum):

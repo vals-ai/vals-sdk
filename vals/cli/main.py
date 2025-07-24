@@ -1,5 +1,3 @@
-import sys
-
 import click
 
 from .project import project_group
@@ -19,6 +17,7 @@ class ExceptionHandlingWrapper(click.Group):
 
 
 @click.group()
+@click.version_option(package_name="valsai")
 def cli():
     pass
 

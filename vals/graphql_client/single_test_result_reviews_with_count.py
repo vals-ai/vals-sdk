@@ -26,7 +26,7 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCount(BaseModel):
 class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResults(
     BaseModel
 ):
-    id: str
+    id: Any
     reviewed_by: Optional[List[str]] = Field(alias="reviewedBy")
     has_feedback: Optional[bool] = Field(alias="hasFeedback")
     agreement_rate_auto_eval: Optional[float] = Field(alias="agreementRateAutoEval")
@@ -159,7 +159,7 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
 class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResult(
     BaseModel
 ):
-    id: str
+    id: Any
     typed_result_json: List[
         "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultTypedResultJson"
     ] = Field(alias="typedResultJson")

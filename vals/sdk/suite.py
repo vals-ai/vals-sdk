@@ -8,7 +8,6 @@ from typing import Any, Callable, cast, overload
 
 import aiofiles
 import aiohttp
-import requests
 from pydantic import BaseModel, PrivateAttr
 from tqdm import tqdm
 from tqdm.asyncio import tqdm as asyncio_tqdm
@@ -24,6 +23,7 @@ from vals.graphql_client.input_types import (
 )
 from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.run import Run
+from vals.graphql_client.enums import RunStatus
 from vals.sdk.types import (
     Check,
     File,
@@ -34,7 +34,6 @@ from vals.sdk.types import (
     OutputObject,
     QuestionAnswerPair,
     RunParameters,
-    RunStatus,
     SimpleModelFunctionType,
     Test,
     TestSuiteMetadata,
@@ -52,7 +51,7 @@ from vals.sdk.util import (
 
 class Suite(BaseModel):
     id: str | None = None
-    project_id: str | None = None
+    project_id: str = "default-project"
 
     title: str
     description: str = ""
@@ -67,7 +66,7 @@ class Suite(BaseModel):
 
     @classmethod
     async def list_suites(
-        cls, limit=50, offset=0, search="", project_id=None
+        cls, limit=50, offset=0, search="", project_id="default-project"
     ) -> list[TestSuiteMetadata]:
         """
         Generate a list of all the test suites on the server.
@@ -247,14 +246,14 @@ class Suite(BaseModel):
         """
         return self.model_dump(exclude_none=True, exclude_defaults=True)
 
-    def to_json_file(self, file_path: str) -> None:
+    async def to_json_file(self, file_path: str) -> None:
         """
         Converts the test suite to a JSON file.
         """
         with open(file_path, "w") as f:
-            f.write(self.to_json_string())
+            f.write(await self.to_json_string())
 
-    def to_csv_string(self) -> str:
+    async def to_csv_string(self) -> str:
         """
         Like to_csv_file, but returns the file as a string instead of writing it to a file.
         """
@@ -262,16 +261,17 @@ class Suite(BaseModel):
             raise Exception("Suite has not been created yet.")
 
         url = f"{be_host()}/export_tests_to_file/?suite_id={self.id}"
-        response = requests.post(
-            url,
-            headers={"Authorization": _get_auth_token()},
-        )
-        if response.status_code != 200:
-            raise Exception(f"Failed to export tests: {response.text}")
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url,
+                headers={"Authorization": _get_auth_token()},
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise Exception(f"Failed to export tests: {error_text}")
+                return await response.text()
 
-        return response.text
-
-    def to_json_string(self) -> str:
+    async def to_json_string(self) -> str:
         """
         Converts the test suite to a JSON string.
         """
@@ -279,22 +279,22 @@ class Suite(BaseModel):
             raise Exception("Suite has not been created yet.")
 
         url = f"{be_host()}/export_tests_to_json/?suite_id={self.id}"
-        response = requests.post(
-            url,
-            headers={"Authorization": _get_auth_token()},
-        )
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url,
+                headers={"Authorization": _get_auth_token()},
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise Exception(f"Failed to export tests: {error_text}")
+                return await response.text()
 
-        if response.status_code != 200:
-            raise Exception(f"Failed to export tests: {response.text}")
-
-        return response.text
-
-    def to_csv_file(self, file_path: str) -> None:
+    async def to_csv_file(self, file_path: str) -> None:
         """
         Converts the test suite to a CSV file.
         """
         with open(file_path, "w") as f:
-            f.write(self.to_csv_string())
+            f.write(await self.to_csv_string())
 
     async def create(
         self, force_creation: bool = False, max_upload_concurrency: int = 10
@@ -315,7 +315,7 @@ class Suite(BaseModel):
 
         # Create suite object on the server
         suite = await self._client.create_or_update_test_suite(
-            "0", self.title, self.description, project_id=self.project_id
+            "0", self.title, self.description, self.project_id or ""
         )
         if suite.update_test_suite is None:
             raise Exception("Unable to update the test suite.")
@@ -353,7 +353,7 @@ class Suite(BaseModel):
             )
 
         suite = await self._client.create_or_update_test_suite(
-            self.id, self.title, self.description
+            self.id, self.title, self.description, self.project_id or ""
         )
         self.project_id = suite.update_test_suite.test_suite.project.slug
 
@@ -443,13 +443,13 @@ class Suite(BaseModel):
         ):
             if run_id:
                 await self._client.update_run_status(
-                    run_id=run_id, status=RunStatus.ERROR.value.upper()
+                    run_id=run_id, status=RunStatus.ERROR
                 )
             raise
         except Exception:
             if run_id:
                 await self._client.update_run_status(
-                    run_id=run_id, status=RunStatus.ERROR.value.upper()
+                    run_id=run_id, status=RunStatus.ERROR
                 )
             raise
 
@@ -507,7 +507,6 @@ class Suite(BaseModel):
         if isinstance(model, InspectWrapper):
             model_name = model.model_name
             eval_model_name = model.eval_model_name
-            inspect_wrapper = model
             custom_operators = model.get_custom_operators()
             model = model.get_custom_model()
 
@@ -833,7 +832,7 @@ class Suite(BaseModel):
             for i in range(0, len(test_mutations), 25):
                 batch = test_mutations[i : i + 25]
                 batch_result = await self._client.add_batch_tests(
-                    tests=batch,
+                    test_info=batch,
                     create_only=create_only,
                 )
                 if batch_result.batch_update_test is None:

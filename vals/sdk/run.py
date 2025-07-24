@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 from typing import Any
 
-import requests
+import aiohttp
 from pydantic import BaseModel, PrivateAttr
 from vals.graphql_client import Client
 from vals.sdk.exceptions import ValsException
@@ -14,9 +14,9 @@ from vals.sdk.types import (
     QuestionAnswerPair,
     RunMetadata,
     RunParameters,
-    RunStatus,
     TestResult,
 )
+from vals.graphql_client.enums import RunStatus
 from vals.sdk.util import _get_auth_token, be_host, fe_host, get_ariadne_client
 
 
@@ -134,7 +134,7 @@ class Run(BaseModel):
             success_rate_error=(
                 result.run.success_rate.error if result.run.success_rate else None
             ),
-            status=RunStatus(result.run.status),
+            status=result.run.status,
             archived=result.run.archived,
             text_summary=result.run.text_summary,
             timestamp=result.run.timestamp,
@@ -153,7 +153,7 @@ class Run(BaseModel):
         suite_id: str | None = None,
         show_archived: bool = False,
         search: str = "",
-        project_id: str | None = None,
+        project_id: str = "default-project",
     ) -> list["RunMetadata"]:
         """List runs associated with this organization
 
@@ -192,30 +192,33 @@ class Run(BaseModel):
         """Converts the run to a dictionary."""
         return self.model_dump(exclude_none=True, exclude_defaults=True, mode="json")
 
-    def to_json_file(self, file_path: str) -> None:
+    async def to_json_file(self, file_path: str) -> None:
         """Converts the run to a JSON file."""
         with open(file_path, "w") as f:
-            f.write(self.to_json_string())
+            f.write(await self.to_json_string())
 
     async def pull(self) -> None:
         """Update this Run instance with latest data from vals servers."""
 
         updated = await self._create_from_pull_result(self.id, self._client)
         # TODO: There's probably a better way to update the object.
-        for field in updated.__fields__:
+        for field in Run.model_fields:
             setattr(self, field, getattr(updated, field))
 
     async def get_qa_pairs(
         self, offset: int = 0, remaining_limit: int = 200
     ) -> list[QuestionAnswerPair]:
-        """Get all QA pairs for a run."""
+        """Get up to `remaining_limit` QA pairs for a run.
+        set `remaining_limit = -1` to get all QA pairs."""
         qa_pairs = []
         current_offset = offset
         batch_size = 200
 
-        while remaining_limit > 0:
+        while remaining_limit != 0:
             # Calculate the current batch size
-            current_batch_size = min(batch_size, remaining_limit)
+            current_batch_size = (
+                min(batch_size, remaining_limit) if remaining_limit > 0 else batch_size
+            )
 
             result = await self._client.list_question_answer_pairs(
                 qa_set_id=self.qa_set_id,
@@ -242,9 +245,8 @@ class Run(BaseModel):
 
     async def run_status(self) -> RunStatus:
         """Get the status of a run"""
-        result = await self._client.run_status(run_id=self.id)
-        status = result.run.status
-        self.status = RunStatus(status.lower())
+        result = await self._client.get_run_status(run_id=self.id)
+        self.status = result.run.status
         return self.status
 
     async def wait_for_run_completion(
@@ -275,27 +277,30 @@ class Run(BaseModel):
 
     async def to_csv_string(self) -> str:
         """Same as to_csv, but returns a string instead of writing to a file."""
-        response = requests.post(
-            url=f"{be_host()}/export_results_to_file/?run_id={self.id}",
-            headers={"Authorization": _get_auth_token()},
-        )
-
-        if response.status_code != 200:
-            raise ValsException("Received Error from Vals Servers: " + response.text)
-
-        return response.text
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url=f"{be_host()}/export_results_to_file/?run_id={self.id}",
+                headers={"Authorization": _get_auth_token()},
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise ValsException(
+                        "Received Error from Vals Servers: " + error_text
+                    )
+                return await response.text()
 
     async def to_json_string(self) -> str:
-
-        response = requests.post(
-            url=f"{be_host()}/export_run_to_json/?run_id={self.id}",
-            headers={"Authorization": _get_auth_token()},
-        )
-
-        if response.status_code != 200:
-            raise ValsException("Received Error from Vals Servers: " + response.text)
-
-        return response.text
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url=f"{be_host()}/export_run_to_json/?run_id={self.id}",
+                headers={"Authorization": _get_auth_token()},
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise ValsException(
+                        "Received Error from Vals Servers: " + error_text
+                    )
+                return await response.text()
 
     async def to_csv(self, file_path: str) -> None:
         """Get the CSV results of a run, as bytes."""
@@ -311,7 +316,7 @@ class Run(BaseModel):
         self,
         model: str | ModelFunctionType | list[QuestionAnswerPair] | InspectWrapper,
         wait_for_completion: bool = False,
-        upload_concurrency: int | None = None,
+        upload_concurrency: int = 3,
         custom_operators: list[ModelCustomOperatorFunctionType] | None = None,
         parallelism: int | None = None,
     ) -> None:
@@ -383,9 +388,22 @@ class Run(BaseModel):
             uploaded_qa_pairs=uploaded_qa_pairs,
         )
 
+    async def rerun_all_checks(self) -> "Run":
+        """
+        Rerun all checks for a run, using existing QA pairs.
+        returns a new Run object, rather than modifying the existing one.
+        """
+
+        # Import Suite here to avoid circular import
+        from vals.sdk.suite import Suite
+
+        qa_pairs = await self.get_qa_pairs(offset=0, remaining_limit=-1)
+        suite = await Suite.from_id(self.test_suite_id)
+        return await suite.run(qa_pairs)
+
     @staticmethod
     async def get_status_from_id(run_id: str) -> RunStatus:
         """Get the status of a run directly from its ID without instantiating a Run object."""
         client = get_ariadne_client()
-        result = await client.run_status(run_id=run_id)
-        return RunStatus(result.run.status.lower())
+        result = await client.get_run_status(run_id=run_id)
+        return result.run.status

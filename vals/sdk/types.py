@@ -13,6 +13,7 @@ from typing import Any, Callable, Literal, Optional
 
 from pydantic import BaseModel
 
+from vals.graphql_client.enums import RunStatus
 from vals.graphql_client.get_test_suites_with_count import (
     GetTestSuitesWithCountTestSuitesWithCountTestSuites,
 )
@@ -208,6 +209,8 @@ class File(BaseModel):
 
 
 class Test(BaseModel):
+    __test__ = False
+
     id: str | None = None
     """Displayed id for the test. DO NOT REPLACE _id with this since it will break creation of tests. This will be refactored in the future."""
 
@@ -278,6 +281,7 @@ class Test(BaseModel):
         test = Test(**data)
 
         test._id = data["_id"]
+        test._file_ids = files
 
         return test
 
@@ -339,19 +343,6 @@ class RunParameters(BaseModel):
     """ If true, suite will run the QA stage using the Batch API if it's available for the current model."""
 
 
-class RunStatus(str, Enum):
-    """Status of a run."""
-
-    IN_PROGRESS = "in_progress"
-    ERROR = "error"
-    SUCCESS = "success"
-    PAUSE = "pause"
-    PENDING = "pending"
-    AWAITING_BATCH = "awaiting_batch"
-    CANCELLED = "cancelled"
-    PAUSING = "pausing"
-
-
 class RunMetadata(BaseModel):
     id: str
     name: str
@@ -381,7 +372,7 @@ class RunMetadata(BaseModel):
             success_rate_error=(
                 graphql_run.success_rate.error if graphql_run.success_rate else None
             ),
-            status=RunStatus(graphql_run.status),
+            status=graphql_run.status,
             text_summary=graphql_run.text_summary,
             timestamp=graphql_run.timestamp,
             completed_at=graphql_run.completed_at,

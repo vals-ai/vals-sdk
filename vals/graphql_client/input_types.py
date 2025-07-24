@@ -10,6 +10,7 @@ from .enums import (
     ChartMetric,
     ChartType,
     CustomMetricReviewType,
+    DateFilterEnum,
     RunResultSortField,
     RunReviewStatusEnum,
     RunReviewTableSortField,
@@ -23,6 +24,13 @@ from .enums import (
 )
 
 
+class CustomMetricFilterOptions(BaseModel):
+    archived: bool
+    limit: int
+    offset: int
+    project_id: Optional[str] = Field(alias="projectId", default=None)
+
+
 class CustomOperatorFilterOptions(BaseModel):
     archived: Optional[bool] = None
     limit: int
@@ -33,6 +41,8 @@ class CustomOperatorFilterOptions(BaseModel):
 class ResolveApiKeysFilterOptions(BaseModel):
     limit: int
     offset: int
+    associated_users: Optional[List[str]] = Field(alias="associatedUsers", default=None)
+    older_than: DateFilterEnum = Field(alias="olderThan")
 
 
 class HumanReviewTemplateFilterOptionsInput(BaseModel):
@@ -63,7 +73,7 @@ class TestReviewFilterOptionsInput(BaseModel):
 
 
 class RunResultFilterOptionsInput(BaseModel):
-    project_id: Optional[str] = Field(alias="projectId", default=None)
+    project_id: str = Field(alias="projectId")
     limit: Optional[int] = None
     offset: Optional[int] = None
     search: Optional[str] = None
@@ -77,6 +87,10 @@ class RunResultFilterOptionsInput(BaseModel):
     suite_ids: Optional[List[str]] = Field(alias="suiteIds", default=None)
     sort_by: Optional[RunResultSortField] = Field(alias="sortBy", default=None)
     sort_order: Optional[SortOrder] = Field(alias="sortOrder", default=None)
+    tags: Optional[List[Optional[str]]] = None
+    check_error: Optional[TestResultCheckErrorEnum] = Field(
+        alias="checkError", default=None
+    )
 
 
 class TestResultFilterOptions(BaseModel):

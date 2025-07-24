@@ -66,16 +66,48 @@ See usage documentation in our docs: [docs.vals.ai/cli_sdk/sdk](https://docs.val
 
 ## Local installation
 
+The sdk uses [uv](https://docs.astral.sh/uv/getting-started/installation/) for dependency management.
+A Makefile is provided to help with development.
+
+To install dependencies, run:
+
+```bash
+make install
+```
 Run the following command to install it locally. The -e flag is optional, but recommended, as it allows you to make changes to the code without reinstalling. The dev flag is required for dev-only depedencies.
 
 ```bash
 pip install -e ".[dev]"
 ```
 
+If using the sdk in a project, to install the sdk in editable mode (apply local sdk changes without reinstalling), in your project directory run:
+
+```bash
+uv pip install -e /path/to/vals-sdk
+```
+or
+
+```bash
+pip install -e /path/to/vals-sdk
+```
+
+## Additional Makefile commmands
+```
+make install        Install dependencies for development
+make test           Run tests
+make style          Lint & Format
+make typecheck      Typecheck
+make codegen        Generate GraphQL client
+```
+
 ## Running Codegen
 
 Add additional .graphql files to `vals/graphql`, then run the following command:
 
+```
+make codegen
+```
+or
 ```
 ariadne-codegen --config codegen-config.toml
 ```

@@ -14,6 +14,7 @@ from .enums import RunStatus
 from .get_active_custom_operators import GetActiveCustomOperators
 from .get_default_parameters import GetDefaultParameters
 from .get_operators import GetOperators
+from .get_run_status import GetRunStatus
 from .get_single_run_review import GetSingleRunReview
 from .get_test_data import GetTestData
 from .get_test_suite_data import GetTestSuiteData
@@ -35,7 +36,6 @@ from .pull_run import PullRun
 from .pull_test_results_with_count import PullTestResultsWithCount
 from .remove_old_tests import RemoveOldTests
 from .rerun_tests import RerunTests
-from .run_status import RunStatus
 from .single_test_result_reviews_with_count import SingleTestResultReviewsWithCount
 from .start_run import StartRun
 from .update_global_checks import UpdateGlobalChecks
@@ -49,6 +49,7 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def list_projects(
+<<<<<<< HEAD
         self, offset: int, limit: int, **kwargs: Any
     ) -> ListProjects:
         query = gql(
@@ -56,6 +57,15 @@ class Client(AsyncBaseClient):
             query listProjects($offset: Int!, $limit: Int!) {
               projectsWithCount(
                 filterOptions: {offset: $offset, limit: $limit, archived: false, search: ""}
+=======
+        self, offset: int, limit: int, search: str, **kwargs: Any
+    ) -> ListProjects:
+        query = gql(
+            """
+            query listProjects($offset: Int!, $limit: Int!, $search: String!) {
+              projectsWithCount(
+                filterOptions: {offset: $offset, limit: $limit, archived: false, search: $search}
+>>>>>>> main
               ) {
                 projects {
                   id
@@ -69,7 +79,11 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"offset": offset, "limit": limit}
+        variables: Dict[str, object] = {
+            "offset": offset,
+            "limit": limit,
+            "search": search,
+        }
         response = await self.execute(
             query=query, operation_name="listProjects", variables=variables, **kwargs
         )
@@ -472,10 +486,10 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return UpdateRunStatus.model_validate(data)
 
-    async def run_status(self, run_id: str, **kwargs: Any) -> RunStatus:
+    async def get_run_status(self, run_id: str, **kwargs: Any) -> GetRunStatus:
         query = gql(
             """
-            query RunStatus($runId: String!) {
+            query GetRunStatus($runId: String!) {
               run(runId: $runId) {
                 status
               }
@@ -484,10 +498,10 @@ class Client(AsyncBaseClient):
         )
         variables: Dict[str, object] = {"runId": run_id}
         response = await self.execute(
-            query=query, operation_name="RunStatus", variables=variables, **kwargs
+            query=query, operation_name="GetRunStatus", variables=variables, **kwargs
         )
         data = self.get_data(response)
-        return RunStatus.model_validate(data)
+        return GetRunStatus.model_validate(data)
 
     async def pull_run(self, run_id: str, **kwargs: Any) -> PullRun:
         query = gql(
@@ -626,9 +640,9 @@ class Client(AsyncBaseClient):
 
     async def list_runs(
         self,
+        project_id: str,
         archived: Union[Optional[bool], UnsetType] = UNSET,
         suite_id: Union[Optional[str], UnsetType] = UNSET,
-        project_id: Union[Optional[str], UnsetType] = UNSET,
         limit: Union[Optional[int], UnsetType] = UNSET,
         offset: Union[Optional[int], UnsetType] = UNSET,
         search: Union[Optional[str], UnsetType] = UNSET,
@@ -636,7 +650,7 @@ class Client(AsyncBaseClient):
     ) -> ListRuns:
         query = gql(
             """
-            query ListRuns($archived: Boolean, $suiteId: String, $projectId: String, $limit: Int, $offset: Int, $search: String) {
+            query ListRuns($archived: Boolean, $suiteId: String, $projectId: String!, $limit: Int, $offset: Int, $search: String) {
               runsWithCount(
                 filterOptions: {archived: $archived, suiteId: $suiteId, projectId: $projectId, limit: $limit, offset: $offset, sortBy: STARTED_AT, search: $search}
               ) {
@@ -695,12 +709,12 @@ class Client(AsyncBaseClient):
         test_suite_id: str,
         title: str,
         description: str,
-        project_id: Union[Optional[str], UnsetType] = UNSET,
+        project_id: str,
         **kwargs: Any
     ) -> CreateOrUpdateTestSuite:
         query = gql(
             """
-            mutation createOrUpdateTestSuite($testSuiteId: String!, $title: String!, $description: String!, $projectId: String) {
+            mutation createOrUpdateTestSuite($testSuiteId: String!, $title: String!, $description: String!, $projectId: String!) {
               updateTestSuite(
                 testSuiteId: $testSuiteId
                 title: $title
@@ -736,12 +750,12 @@ class Client(AsyncBaseClient):
         return CreateOrUpdateTestSuite.model_validate(data)
 
     async def add_batch_tests(
-        self, tests: List[TestMutationInfo], create_only: bool, **kwargs: Any
+        self, test_info: List[TestMutationInfo], create_only: bool, **kwargs: Any
     ) -> AddBatchTests:
         query = gql(
             """
-            mutation addBatchTests($tests: [TestMutationInfo!]!, $createOnly: Boolean!) {
-              batchUpdateTest(tests: $tests, createOnly: $createOnly) {
+            mutation addBatchTests($test_info: [TestMutationInfo!]!, $createOnly: Boolean!) {
+              batchUpdateTest(tests: $test_info, createOnly: $createOnly) {
                 tests {
                   ...TestFragment
                 }
@@ -781,7 +795,10 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"tests": tests, "createOnly": create_only}
+        variables: Dict[str, object] = {
+            "test_info": test_info,
+            "createOnly": create_only,
+        }
         response = await self.execute(
             query=query, operation_name="addBatchTests", variables=variables, **kwargs
         )
@@ -1001,15 +1018,15 @@ class Client(AsyncBaseClient):
 
     async def get_test_suites_with_count(
         self,
+        project_id: str,
         offset: Union[Optional[int], UnsetType] = UNSET,
         limit: Union[Optional[int], UnsetType] = UNSET,
         search: Union[Optional[str], UnsetType] = UNSET,
-        project_id: Union[Optional[str], UnsetType] = UNSET,
         **kwargs: Any
     ) -> GetTestSuitesWithCount:
         query = gql(
             """
-            query getTestSuitesWithCount($offset: Int, $limit: Int, $search: String, $projectId: String) {
+            query getTestSuitesWithCount($offset: Int, $limit: Int, $search: String, $projectId: String!) {
               testSuitesWithCount(
                 filterOptions: {offset: $offset, limit: $limit, search: $search, projectId: $projectId}
               ) {

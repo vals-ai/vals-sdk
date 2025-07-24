@@ -1,0 +1,30 @@
+Run Id,Test Suite Id,Test Suite Title,Run Status,Run Error Analysis,Completed At,Run Parameters,Percent Of Checks Passed,Amount Of Checks Passed,Standard Deviation For Checks Passed,Percent Of Tests Passed,Amount Of Tests Passed,Standard Deviation For Tests Passed,Needs Review Percentage
+d70d93b8-d47c-4b62-b43d-3cb9f5ce752a,cd341a65-64f6-4211-aeb3-98191d5b1dc6,Test Suite,Success,"The feedback highlights a trend of insufficient detail and context in the second text compared to the first, leading to a lack of semantic equivalence.
+",2025-07-15 19:02:02.658663+00:00,"{'as_batch': False, 'eval_model': 'openai/gpt-4o', 'max_tokens': 512, 'temperature': 0.0, 'detect_refusals': False, 'maximum_threads': 10, 'run_golden_eval': False, 'model_under_test': 'gpt-4o-mini', 'max_output_tokens': 512, 'heavyweight_factor': 1, 'create_text_summary': True, 'new_line_stop_option': False, 'run_confidence_evaluation': True, 'retry_failed_calls_indefinitely': False}",0.5,2,35.36,0.0,1,0.0,0.0
+
+Test Result Id,Test Id,Test Status,Test Input,LLM Output,In Tokens,Out Tokens,Duration,Operator,Criteria,Auto Eval,Confidence Level,Feedback
+15314797-5b5b-4a10-a6cc-686c06c3712e,439c0f2a-1176-4fc1-b21b-b2d071f08dd7,Success,What is QSBS?,"QSBS stands for Qualified Small Business Stock. It refers to shares in a qualified small business that meet specific criteria set by the Internal Revenue Code (IRC) in the United States. The primary benefits of QSBS include potential tax advantages for investors, particularly regarding capital gains.
+
+### Key Features of QSBS:
+
+1. **Eligibility**: To qualify as QSBS, the stock must be issued by a domestic C corporation with gross assets not exceeding $50 million at the time of issuance and immediately after.
+
+2. **Holding Period**: Investors must hold the stock for at least five years to benefit from the tax advantages.
+
+3. **Tax Exemption**: If the stock qualifies, investors may be able to exclude up to 100% of the capital gains from the sale of the stock, subject to certain limits.
+
+4. **Active Business Requirement**: The corporation must be engaged in an active trade or business, and certain types of businesses (like those in finance, hospitality, or professional services) may not qualify.
+
+5. **Limitations**: There are limits on the amount of gain that can be excluded, and the exclusion is capped at the greater of $10 million or 10 times the investor's basis in the stock.
+
+### Benefits:
+
+- **Tax Savings**: The primary benefit is the potential for significant tax savings on capital gains.
+- **Encouragement of Investment**: QSBS provisions are designed to encourage investment in small businesses, fostering innovation and economic growth.
+
+### Considerations:
+
+- Investors should consult with tax professionals to ensure compliance with the requirements and to understand the implications of investing in QSBS.
+
+Overall, QSBS can be a valuable tool for investors looking to support small businesses while also benefiting from favorable tax treatment.",12.0,352.0,8.34,equals,QSBS,Fail,High,"The first text provides a detailed explanation of QSBS, including its benefits, eligibility criteria, and tax implications, while the second text only mentions 'QSBS' without any context or details. Therefore, the texts are not semantically equivalent."
+,,,,,,,,grammar,,Pass,High,The text is grammatically correct and all words are spelled correctly. It provides a clear explanation of QSBS with no errors in grammar or spelling.

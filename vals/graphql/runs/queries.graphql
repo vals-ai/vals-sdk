@@ -1,6 +1,6 @@
 #import TestFragment from "../fragments/test.graphql"
 
-query RunStatus($runId: String!) {
+query GetRunStatus($runId: String!) {
   run(runId: $runId) {
     status
   }
@@ -77,7 +77,7 @@ query PullTestResultsWithCount($runId: String!, $offset: Int, $limit: Int) {
 query ListRuns(
   $archived: Boolean
   $suiteId: String
-  $projectId: String
+  $projectId: String!
   $limit: Int
   $offset: Int
   $search: String

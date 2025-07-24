@@ -3,6 +3,7 @@ from vals.sdk.operator_type import OperatorType
 from vals.sdk.patch import patch
 from vals.sdk.run import Run
 from vals.sdk.suite import Suite
+from vals.sdk.project import Project
 from vals.sdk.types import (
     Check,
     CheckModifiers,
@@ -28,6 +29,7 @@ __all__ = [
     "patch",
     "Run",
     "Suite",
+    "Project",
     "Check",
     "CheckModifiers",
     "CheckResult",

@@ -2,7 +2,7 @@
 # Source: vals/graphql/
 
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List
 
 from pydantic import Field
 
@@ -35,9 +35,7 @@ class ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs(Bas
     local_evals: List[
         "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsLocalEvals"
     ] = Field(alias="localEvals")
-    test: Optional[
-        "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTest"
-    ]
+    test: "ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTest"
 
 
 class ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairsTypedMetadata(
