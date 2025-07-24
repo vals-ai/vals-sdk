@@ -49,15 +49,6 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def list_projects(
-<<<<<<< HEAD
-        self, offset: int, limit: int, **kwargs: Any
-    ) -> ListProjects:
-        query = gql(
-            """
-            query listProjects($offset: Int!, $limit: Int!) {
-              projectsWithCount(
-                filterOptions: {offset: $offset, limit: $limit, archived: false, search: ""}
-=======
         self, offset: int, limit: int, search: str, **kwargs: Any
     ) -> ListProjects:
         query = gql(
@@ -65,7 +56,6 @@ class Client(AsyncBaseClient):
             query listProjects($offset: Int!, $limit: Int!, $search: String!) {
               projectsWithCount(
                 filterOptions: {offset: $offset, limit: $limit, archived: false, search: $search}
->>>>>>> main
               ) {
                 projects {
                   id

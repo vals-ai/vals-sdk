@@ -8,14 +8,14 @@ from pydantic import Field
 from .base_model import BaseModel
 
 
-class ExampleOutputTypeFields(BaseModel):
-    type: str
-    text: str
-
-
 class ConditionalCheckOutputTypeFields(BaseModel):
     operator: str
     criteria: str
+
+
+class ExampleOutputTypeFields(BaseModel):
+    type: str
+    text: str
 
 
 class CheckModifierOutputTypeFields(BaseModel):
@@ -68,8 +68,6 @@ class ResultJsonElementTypeFieldsModifiers(CheckModifierOutputTypeFields):
 
 
 class TestFragment(BaseModel):
-    __test__ = False
-
     id: str
     input_under_test: str = Field(alias="inputUnderTest")
     context: Any
@@ -82,16 +80,12 @@ class TestFragment(BaseModel):
 
 
 class TestFragmentChecks(BaseModel):
-    __test__ = False
-
     operator: str
     criteria: str
     modifiers: "TestFragmentChecksModifiers"
 
 
 class TestFragmentChecksModifiers(BaseModel):
-    __test__ = False
-
     optional: bool
     severity: Optional[float]
     examples: List["TestFragmentChecksModifiersExamples"]
@@ -112,13 +106,11 @@ class TestFragmentChecksModifiersConditional(BaseModel):
 
 
 class TestFragmentTestSuite(BaseModel):
-    __test__ = False
-
     id: str
 
 
-ExampleOutputTypeFields.model_rebuild()
 ConditionalCheckOutputTypeFields.model_rebuild()
+ExampleOutputTypeFields.model_rebuild()
 CheckModifierOutputTypeFields.model_rebuild()
 CheckOutputTypeFields.model_rebuild()
 MetadataOutputTypeFields.model_rebuild()
