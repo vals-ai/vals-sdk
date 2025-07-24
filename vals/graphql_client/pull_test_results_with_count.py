@@ -6,7 +6,11 @@ from typing import Any, List, Optional
 from pydantic import Field
 
 from .base_model import BaseModel
-from .fragments import TestFragment
+from .fragments import (
+    MetadataOutputTypeFields,
+    ResultJsonElementTypeFields,
+    TestFragment,
+)
 
 
 class PullTestResultsWithCount(BaseModel):
@@ -27,12 +31,20 @@ class PullTestResultsWithCountTestResultsWithCountTestResults(BaseModel):
     llm_output: str = Field(alias="llmOutput")
     pass_percentage: float = Field(alias="passPercentage")
     pass_percentage_with_weight: float = Field(alias="passPercentageWithWeight")
-    result_json: Any = Field(alias="resultJson")
+    result_json: List[
+        "PullTestResultsWithCountTestResultsWithCountTestResultsResultJson"
+    ] = Field(alias="resultJson")
     qa_pair: Optional[
         "PullTestResultsWithCountTestResultsWithCountTestResultsQaPair"
     ] = Field(alias="qaPair")
     test: "PullTestResultsWithCountTestResultsWithCountTestResultsTest"
-    metadata: Optional[Any]
+    metadata: "PullTestResultsWithCountTestResultsWithCountTestResultsMetadata"
+
+
+class PullTestResultsWithCountTestResultsWithCountTestResultsResultJson(
+    ResultJsonElementTypeFields
+):
+    pass
 
 
 class PullTestResultsWithCountTestResultsWithCountTestResultsQaPair(BaseModel):
@@ -42,6 +54,12 @@ class PullTestResultsWithCountTestResultsWithCountTestResultsQaPair(BaseModel):
 
 
 class PullTestResultsWithCountTestResultsWithCountTestResultsTest(TestFragment):
+    pass
+
+
+class PullTestResultsWithCountTestResultsWithCountTestResultsMetadata(
+    MetadataOutputTypeFields
+):
     pass
 
 

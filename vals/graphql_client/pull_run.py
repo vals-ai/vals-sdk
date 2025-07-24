@@ -24,7 +24,7 @@ class PullRunRun(BaseModel):
     completed_at: Optional[datetime] = Field(alias="completedAt")
     archived: bool
     name: str
-    typed_parameters: "PullRunRunTypedParameters" = Field(alias="typedParameters")
+    parameters: "PullRunRunParameters"
     pass_rate: Optional["PullRunRunPassRate"] = Field(alias="passRate")
     success_rate: Optional["PullRunRunSuccessRate"] = Field(alias="successRate")
     test_suite: "PullRunRunTestSuite" = Field(alias="testSuite")
@@ -35,7 +35,7 @@ class PullRunRunQaSet(BaseModel):
     id: Any
 
 
-class PullRunRunTypedParameters(BaseModel):
+class PullRunRunParameters(BaseModel):
     eval_model: str = Field(alias="evalModel")
     maximum_threads: int = Field(alias="maximumThreads")
     run_confidence_evaluation: bool = Field(alias="runConfidenceEvaluation")

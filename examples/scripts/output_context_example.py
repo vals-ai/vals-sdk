@@ -6,6 +6,7 @@ structured output with metadata from model functions.
 """
 
 import asyncio
+import os
 from vals import Suite, Test, Check, configure_credentials, OutputObject
 
 
@@ -98,8 +99,8 @@ def legacy_model_with_string(input_text: str) -> str:
 
 async def main():
     # Configure credentials (assumes VALS_API_KEY is set)
-    configure_credentials()
-
+    configure_credentials(api_key=os.getenv("VALS_API_KEY"))
+    
     # Create test suite
     suite = Suite(
         title="OutputObject Feature Demo",

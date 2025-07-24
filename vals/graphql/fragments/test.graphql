@@ -1,12 +1,12 @@
 fragment TestFragment on TestType {
   id
   inputUnderTest
-  typedContext
-  typedTags
+  context
+  tags
   crossVersionId
   goldenOutput
-  typedFileIds
-  typedChecks {
+  fileIds
+  checks {
     operator
     criteria
     modifiers {

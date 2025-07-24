@@ -53,3 +53,5 @@ exclude = ["examples", "vals/graphql_client"]
 [tool.basedpyright]
 typeCheckingMode = "basic"
 exclude = ["examples", "vals/graphql_client", ".*"]
+include = ["vals"]
+reportAny = false
