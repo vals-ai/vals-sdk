@@ -209,12 +209,12 @@ class Client(AsyncBaseClient):
                   llmOutput
                   context
                   outputContext
-                  typedMetadata {
+                  metadata {
                     inTokens
                     outTokens
                     durationSeconds
                   }
-                  typedFileIds
+                  fileIds
                   localEvals {
                     id
                     score
@@ -313,7 +313,7 @@ class Client(AsyncBaseClient):
                   amountReviewed
                   latestCompletedReview
                   llmOutput
-                  typedResultJson {
+                  resultJson {
                     autoEval
                     criteria
                     operator
@@ -326,9 +326,9 @@ class Client(AsyncBaseClient):
                   test {
                     id
                     inputUnderTest
-                    typedContext
+                    context
                   }
-                  typedMetadata {
+                  metadata {
                     inTokens
                     outTokens
                     durationSeconds
@@ -358,13 +358,13 @@ class Client(AsyncBaseClient):
                     startedAt
                     createdBy
                     status
-                    perCheckTestReviewTyped {
+                    perCheckTestReview {
                       binaryHumanEval
                       isFlagged
                     }
                     testResult {
                       id
-                      typedResultJson {
+                      resultJson {
                         autoEval
                         criteria
                         operator
@@ -509,7 +509,7 @@ class Client(AsyncBaseClient):
                 completedAt
                 archived
                 name
-                typedParameters {
+                parameters {
                   evalModel
                   maximumThreads
                   runGoldenEval
@@ -568,7 +568,9 @@ class Client(AsyncBaseClient):
                   llmOutput
                   passPercentage
                   passPercentageWithWeight
-                  resultJson
+                  resultJson {
+                    ...ResultJsonElementTypeFields
+                  }
                   qaPair {
                     context
                     outputContext
@@ -577,21 +579,66 @@ class Client(AsyncBaseClient):
                   test {
                     ...TestFragment
                   }
-                  metadata
+                  metadata {
+                    ...MetadataOutputTypeFields
+                  }
                 }
                 count
               }
             }
 
+            fragment CheckModifierOutputTypeFields on CheckModifierOutputType {
+              optional
+              severity
+              displayMetrics
+              examples {
+                ...ExampleOutputTypeFields
+              }
+              extractor
+              conditional {
+                ...ConditionalCheckOutputTypeFields
+              }
+              category
+            }
+
+            fragment ConditionalCheckOutputTypeFields on ConditionalCheckOutputType {
+              operator
+              criteria
+            }
+
+            fragment ExampleOutputTypeFields on ExampleOutputType {
+              type
+              text
+            }
+
+            fragment MetadataOutputTypeFields on MetadataOutputType {
+              inTokens
+              outTokens
+              durationSeconds
+            }
+
+            fragment ResultJsonElementTypeFields on ResultJsonElementType {
+              operator
+              criteria
+              modifiers {
+                ...CheckModifierOutputTypeFields
+              }
+              autoEval
+              feedback
+              evalCont
+              isGlobal
+              severity
+            }
+
             fragment TestFragment on TestType {
               id
               inputUnderTest
-              typedContext
-              typedTags
+              context
+              tags
               crossVersionId
               goldenOutput
-              typedFileIds
-              typedChecks {
+              fileIds
+              checks {
                 operator
                 criteria
                 modifiers {
@@ -663,7 +710,7 @@ class Client(AsyncBaseClient):
                   timestamp
                   completedAt
                   archived
-                  typedParameters {
+                  parameters {
                     evalModel
                     maximumThreads
                     runGoldenEval
@@ -759,12 +806,12 @@ class Client(AsyncBaseClient):
             fragment TestFragment on TestType {
               id
               inputUnderTest
-              typedContext
-              typedTags
+              context
+              tags
               crossVersionId
               goldenOutput
-              typedFileIds
-              typedChecks {
+              fileIds
+              checks {
                 operator
                 criteria
                 modifiers {
@@ -930,8 +977,42 @@ class Client(AsyncBaseClient):
                 org
                 title
                 created
-                globalChecks
+                globalChecks {
+                  ...CheckOutputTypeFields
+                }
               }
+            }
+
+            fragment CheckModifierOutputTypeFields on CheckModifierOutputType {
+              optional
+              severity
+              displayMetrics
+              examples {
+                ...ExampleOutputTypeFields
+              }
+              extractor
+              conditional {
+                ...ConditionalCheckOutputTypeFields
+              }
+              category
+            }
+
+            fragment CheckOutputTypeFields on CheckOutputType {
+              operator
+              criteria
+              modifiers {
+                ...CheckModifierOutputTypeFields
+              }
+            }
+
+            fragment ConditionalCheckOutputTypeFields on ConditionalCheckOutputType {
+              operator
+              criteria
+            }
+
+            fragment ExampleOutputTypeFields on ExampleOutputType {
+              type
+              text
             }
             """
         )
@@ -969,12 +1050,12 @@ class Client(AsyncBaseClient):
             fragment TestFragment on TestType {
               id
               inputUnderTest
-              typedContext
-              typedTags
+              context
+              tags
               crossVersionId
               goldenOutput
-              typedFileIds
-              typedChecks {
+              fileIds
+              checks {
                 operator
                 criteria
                 modifiers {

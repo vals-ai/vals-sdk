@@ -36,16 +36,14 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
     amount_reviewed: int = Field(alias="amountReviewed")
     latest_completed_review: Optional[datetime] = Field(alias="latestCompletedReview")
     llm_output: str = Field(alias="llmOutput")
-    typed_result_json: List[
-        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedResultJson"
-    ] = Field(alias="typedResultJson")
+    result_json: List[
+        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsResultJson"
+    ] = Field(alias="resultJson")
     qa_pair: Optional[
         "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsQaPair"
     ] = Field(alias="qaPair")
     test: "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTest"
-    typed_metadata: (
-        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedMetadata"
-    ) = Field(alias="typedMetadata")
+    metadata: "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsMetadata"
     aggregated_custom_metrics: Optional[
         List[
             "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsAggregatedCustomMetrics"
@@ -58,7 +56,7 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
     ] = Field(alias="singleTestReviews")
 
 
-class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedResultJson(
+class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsResultJson(
     BaseModel
 ):
     auto_eval: float = Field(alias="autoEval")
@@ -79,10 +77,10 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
 ):
     id: str
     input_under_test: str = Field(alias="inputUnderTest")
-    typed_context: Any = Field(alias="typedContext")
+    context: Any
 
 
-class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTypedMetadata(
+class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsMetadata(
     BaseModel
 ):
     in_tokens: int = Field(alias="inTokens")
@@ -138,9 +136,9 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
     started_at: datetime = Field(alias="startedAt")
     created_by: str = Field(alias="createdBy")
     status: TestResultReviewStatusEnum
-    per_check_test_review_typed: List[
-        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsPerCheckTestReviewTyped"
-    ] = Field(alias="perCheckTestReviewTyped")
+    per_check_test_review: List[
+        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsPerCheckTestReview"
+    ] = Field(alias="perCheckTestReview")
     test_result: (
         "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResult"
     ) = Field(alias="testResult")
@@ -149,7 +147,7 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
     ] = Field(alias="customReviewValues")
 
 
-class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsPerCheckTestReviewTyped(
+class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsPerCheckTestReview(
     BaseModel
 ):
     binary_human_eval: Optional[int] = Field(alias="binaryHumanEval")
@@ -160,12 +158,12 @@ class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResult
     BaseModel
 ):
     id: Any
-    typed_result_json: List[
-        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultTypedResultJson"
-    ] = Field(alias="typedResultJson")
+    result_json: List[
+        "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultResultJson"
+    ] = Field(alias="resultJson")
 
 
-class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultTypedResultJson(
+class SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultResultJson(
     BaseModel
 ):
     auto_eval: float = Field(alias="autoEval")

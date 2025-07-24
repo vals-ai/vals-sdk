@@ -229,7 +229,7 @@ def create_single_test_result_reviews(
                     auto_eval_review_value,
                     auto_eval_value,
                 ) in zip(
-                    single_test_review.per_check_test_review_typed,
+                    single_test_review.per_check_test_review,
                     test_result.auto_eval_values,
                 ):
                     auto_eval_review_values.append(
@@ -259,7 +259,7 @@ def create_single_test_result_reviews(
 def create_test_result(
     test_result_review: SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResults,
 ) -> TestResult:
-    metadata = test_result_review.typed_metadata
+    metadata = test_result_review.metadata
 
     metadata_value = Metadata(
         in_tokens=metadata.in_tokens,
@@ -284,7 +284,7 @@ def create_test_result(
         aggregated_metrics.append(AggregatedCustomMetric(**metric_dict))
 
     auto_eval_results: list[AutoEvalReview] = []
-    for auto_eval_result in test_result_review.typed_result_json:
+    for auto_eval_result in test_result_review.result_json:
         auto_eval_results.append(
             AutoEvalReview(
                 criteria=auto_eval_result.criteria,
@@ -307,7 +307,7 @@ def create_test_result(
         single_test_result_reviews=[],
         auto_eval_values=auto_eval_results,
         input_under_test=test_result_review.test.input_under_test,
-        context=test_result_review.test.typed_context,
+        context=test_result_review.test.context,
         output_context=test_result_review.qa_pair.output_context,
         metadata=metadata_value,
         llm_output=test_result_review.llm_output,

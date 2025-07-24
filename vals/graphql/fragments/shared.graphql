@@ -1,0 +1,50 @@
+fragment CheckOutputTypeFields on CheckOutputType {
+    operator
+    criteria
+    modifiers {
+        ...CheckModifierOutputTypeFields
+    }
+}
+
+fragment CheckModifierOutputTypeFields on CheckModifierOutputType {
+    optional
+    severity
+    displayMetrics
+    examples {
+        ...ExampleOutputTypeFields
+    }
+    extractor
+    conditional {
+        ...ConditionalCheckOutputTypeFields
+    }
+    category
+}
+
+fragment ExampleOutputTypeFields on ExampleOutputType {
+    type
+    text
+}
+
+fragment ConditionalCheckOutputTypeFields on ConditionalCheckOutputType {
+    operator
+    criteria
+}
+
+fragment MetadataOutputTypeFields on MetadataOutputType {
+    inTokens
+    outTokens
+    durationSeconds
+}
+
+fragment ResultJsonElementTypeFields on ResultJsonElementType {
+    operator
+    criteria
+    modifiers {
+        ...CheckModifierOutputTypeFields
+    }
+    autoEval
+    feedback
+    evalCont
+    isGlobal
+    severity
+}
