@@ -23,7 +23,6 @@ query PullRun($runId: String!) {
     parameters {
       evalModel
       maximumThreads
-      runGoldenEval
       runConfidenceEvaluation
       heavyweightFactor
       createTextSummary
@@ -31,7 +30,6 @@ query PullRun($runId: String!) {
       temperature
       maxOutputTokens
       systemPrompt
-      newLineStopOption
       customParameters
     }
     passRate {
@@ -120,7 +118,6 @@ query ListRuns(
       parameters {
         evalModel
         maximumThreads
-        runGoldenEval
         runConfidenceEvaluation
         heavyweightFactor
         createTextSummary
@@ -128,7 +125,6 @@ query ListRuns(
         temperature
         maxOutputTokens
         systemPrompt
-        newLineStopOption
       }
       testSuite {
         title

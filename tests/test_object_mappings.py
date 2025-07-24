@@ -176,7 +176,6 @@ class TestObjectMappings:
         mock_parameters = ListRunsRunsWithCountRunResultsParameters(
             evalModel="gpt-4",
             maximumThreads=8,
-            runGoldenEval=True,
             runConfidenceEvaluation=False,
             heavyweightFactor=2,
             createTextSummary=True,
@@ -184,7 +183,6 @@ class TestObjectMappings:
             temperature=0.7,
             maxOutputTokens=512,
             systemPrompt="You are a helpful assistant.",
-            newLineStopOption=True,
         )
 
         mock_test_suite = ListRunsRunsWithCountRunResultsTestSuite(
@@ -231,14 +229,12 @@ class TestObjectMappings:
         params = result.parameters
         assert params.eval_model == "gpt-4"
         # assert params.maximum_threads == 8
-        assert params.run_golden_eval is True
         assert params.run_confidence_evaluation is False
         assert params.heavyweight_factor == 2
         assert params.create_text_summary is True
         assert params.temperature == 0.7
         assert params.max_output_tokens == 512
         assert params.system_prompt == "You are a helpful assistant."
-        assert params.new_line_stop_option is True
 
         assert result.test_suite_title == "Test Suite 1"
 
@@ -253,17 +249,15 @@ class TestObjectMappings:
             category="formatting",
         )
 
-        mock_result_json = (
-            PullTestResultsWithCountTestResultsWithCountTestResultsResultJson(
-                operator="equals",
-                criteria="Output must contain keyword",
-                modifiers=mock_modifiers,
-                autoEval=0.95,
-                feedback="Passed automatically",
-                evalCont=0.85,
-                isGlobal=False,
-                severity=0.75,
-            )
+        mock_result_json = PullTestResultsWithCountTestResultsWithCountTestResultsResultJson(
+            operator="equals",
+            criteria="Output must contain keyword",
+            modifiers=mock_modifiers,
+            autoEval=0.95,
+            feedback="Passed automatically",
+            evalCont=0.85,
+            isGlobal=False,
+            severity=0.75,
         )
 
         mock_qa_pair = PullTestResultsWithCountTestResultsWithCountTestResultsQaPair(
@@ -283,9 +277,7 @@ class TestObjectMappings:
                 TestFragmentChecks(
                     operator="equals",
                     criteria="Output must contain",
-                    modifiers=TestFragmentChecksModifiers(
-                        **mock_modifiers.model_dump()
-                    ),
+                    modifiers=TestFragmentChecksModifiers(**mock_modifiers.model_dump()),
                 )
             ],
             fileIds=[],
@@ -335,9 +327,7 @@ class TestObjectMappings:
         assert check_result.is_global is False
         assert check_result.auto_eval == 0.95
         assert check_result.feedback == "Passed automatically"
-        assert (
-            check_result.confidence.value == 0.5
-        )  # because 0.85 is not in [0, 0.5, 1]
+        assert check_result.confidence.value == 0.5  # because 0.85 is not in [0, 0.5, 1]
 
         mod = check_result.modifiers
         assert mod.optional is True

@@ -62,9 +62,7 @@ class OutputObject(BaseModel):
     """
 
     llm_output: str  # Required: The actual model output
-    output_context: Optional[dict[str, Any]] = (
-        None  # Optional: Arbitrary metadata about the output
-    )
+    output_context: Optional[dict[str, Any]] = None  # Optional: Arbitrary metadata about the output
     duration: Optional[float] = None  # Optional: Generation time in seconds
     in_tokens: Optional[int] = None  # Optional: Input token count
     out_tokens: Optional[int] = None  # Optional: Output token count
@@ -197,9 +195,7 @@ class Check(BaseModel):
         return CheckInputType(
             operator=self.operator,
             criteria=self.criteria,
-            modifiers=CheckModifiersInputType(
-                **self.modifiers.model_dump(exclude_none=True)
-            ),
+            modifiers=CheckModifiersInputType(**self.modifiers.model_dump(exclude_none=True)),
         )
 
 
@@ -320,9 +316,6 @@ class RunParameters(BaseModel):
     parallelism: int = 10
     """How many tests to run in parallel"""
 
-    run_golden_eval: bool = False
-    """Compares the output to the golden ansewr, if provided"""
-
     custom_parameters: dict[str, str | int | float | bool] = {}
     """Additional model-specific parameters to pass """
 
@@ -343,9 +336,6 @@ class RunParameters(BaseModel):
 
     system_prompt: str = ""
     """System prompt for the model under test"""
-
-    new_line_stop_option: bool = False
-    """If true, will stop generation at a new line"""
 
     retry_failed_calls_indefinitely: bool = False
     """ If true, when receiving an error from the model, will retry indefinitely until it receives a success."""
@@ -372,22 +362,14 @@ class RunMetadata(BaseModel):
     parameters: RunParameters
 
     @classmethod
-    def from_graphql(
-        cls, graphql_run: ListRunsRunsWithCountRunResults
-    ) -> "RunMetadata":
+    def from_graphql(cls, graphql_run: ListRunsRunsWithCountRunResults) -> "RunMetadata":
         return cls(
             id=graphql_run.run_id,
             name=graphql_run.name,
-            pass_percentage=(
-                graphql_run.pass_percentage if graphql_run.pass_percentage else None
-            ),
+            pass_percentage=(graphql_run.pass_percentage if graphql_run.pass_percentage else None),
             pass_rate=graphql_run.pass_rate.value if graphql_run.pass_rate else None,
-            pass_rate_error=(
-                graphql_run.pass_rate.error if graphql_run.pass_rate else None
-            ),
-            success_rate=(
-                graphql_run.success_rate.value if graphql_run.success_rate else None
-            ),
+            pass_rate_error=(graphql_run.pass_rate.error if graphql_run.pass_rate else None),
+            success_rate=(graphql_run.success_rate.value if graphql_run.success_rate else None),
             success_rate_error=(
                 graphql_run.success_rate.error if graphql_run.success_rate else None
             ),
@@ -498,17 +480,13 @@ class TestResult(BaseModel):
             pass_percentage=graphql_test_result.pass_percentage,
             pass_percentage_with_weight=graphql_test_result.pass_percentage_with_weight,
             error_message=(
-                graphql_test_result.qa_pair.error_message
-                if graphql_test_result.qa_pair
-                else ""
+                graphql_test_result.qa_pair.error_message if graphql_test_result.qa_pair else ""
             ),
             check_results=[
                 CheckResult(
                     operator=check_result["operator"],
                     criteria=check_result.get("criteria", ""),
-                    modifiers=CheckModifiers.from_graphql(
-                        check_result.get("modifiers", {})
-                    ),
+                    modifiers=CheckModifiers.from_graphql(check_result.get("modifiers", {})),
                     is_global=check_result.get("is_global", False),
                     auto_eval=check_result.get("auto_eval", 0),
                     feedback=check_result.get("feedback", ""),
@@ -583,9 +561,7 @@ class QuestionAnswerPair(BaseModel):
             context=self.context,
             output_context=self.output_context,
             llm_output=self.llm_output,
-            metadata=(
-                MetadataType(**self.metadata.model_dump()) if self.metadata else None
-            ),
+            metadata=(MetadataType(**self.metadata.model_dump()) if self.metadata else None),
             test_id=self.test_id,
             status="success",
         )

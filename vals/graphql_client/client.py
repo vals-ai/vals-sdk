@@ -512,7 +512,6 @@ class Client(AsyncBaseClient):
                 parameters {
                   evalModel
                   maximumThreads
-                  runGoldenEval
                   runConfidenceEvaluation
                   heavyweightFactor
                   createTextSummary
@@ -520,7 +519,6 @@ class Client(AsyncBaseClient):
                   temperature
                   maxOutputTokens
                   systemPrompt
-                  newLineStopOption
                   customParameters
                 }
                 passRate {
@@ -713,7 +711,6 @@ class Client(AsyncBaseClient):
                   parameters {
                     evalModel
                     maximumThreads
-                    runGoldenEval
                     runConfidenceEvaluation
                     heavyweightFactor
                     createTextSummary
@@ -721,7 +718,6 @@ class Client(AsyncBaseClient):
                     temperature
                     maxOutputTokens
                     systemPrompt
-                    newLineStopOption
                   }
                   testSuite {
                     title
@@ -1195,9 +1191,7 @@ class Client(AsyncBaseClient):
               defaultParameters {
                 evalModel
                 maximumThreads
-                runGoldenEval
                 runConfidenceEvaluation
-                newLineStopOption
                 createTextSummary
                 detectRefusals
                 modelUnderTest
