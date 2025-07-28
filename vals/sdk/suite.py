@@ -14,6 +14,7 @@ from tqdm.asyncio import tqdm as asyncio_tqdm
 
 import vals.sdk.patch as patch
 from vals.graphql_client.client import UNSET, Client
+from vals.graphql_client.enums import RunStatus
 from vals.graphql_client.get_operators import GetOperatorsOperators
 from vals.graphql_client.input_types import (
     LocalEvalUploadInputType,
@@ -23,7 +24,6 @@ from vals.graphql_client.input_types import (
 )
 from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.run import Run
-from vals.graphql_client.enums import RunStatus
 from vals.sdk.types import (
     Check,
     File,
@@ -365,72 +365,6 @@ class Suite(BaseModel):
         # Remove any tests that are no longer used after the update.
         await self._client.remove_old_tests(self.id, [test._id for test in self.tests])
 
-    @overload
-    async def run(
-        self,
-        model: str,
-        model_name: str = "sdk",
-        run_name: str | None = None,
-        wait_for_completion: bool = False,
-        parameters: RunParameters | None = None,
-    ) -> Run:
-        """
-        Runs based on a model string (e.g. "gpt-4o").
-        """
-        pass
-
-    @overload
-    async def run(
-        self,
-        model: ModelFunctionType,
-        model_name: str = "sdk",
-        run_name: str | None = None,
-        wait_for_completion: bool = False,
-        parameters: RunParameters | None = None,
-        upload_concurrency: int | None = None,
-    ) -> Run:
-        """
-        Runs based on a model function. This can either be a simple model function, which just takes
-        an input as a string and produces an output string, or a model function that takes in the input string,
-        a dictionary of filename to file contents, and a context dictionary.
-
-        Args:
-            upload_concurrency: How frequently to upload QA pairs to the server. Defaults to parameters.parallelism.
-        """
-        pass
-
-    @overload
-    async def run(
-        self,
-        model: list[QuestionAnswerPair],
-        model_name: str = "sdk",
-        run_name: str | None = None,
-        wait_for_completion: bool = False,
-        parameters: RunParameters | None = None,
-    ) -> Run:
-        """
-        Runs based on on a list of question-answer pairs, which contain inputs and outputs.
-
-        IMPORTANT NOTE: The combined "inputs" of the question-answer pairs (the input under test, the context,
-        and the files) need to match exactly the inputs of the tests in the suite, otherwise, Vals will not
-        know how to match to the auto-eval correctly.
-        """
-        pass
-
-    @overload
-    async def run(
-        self,
-        model: InspectWrapper,
-        model_name: str = "sdk",
-        run_name: str | None = None,
-        wait_for_completion: bool = False,
-        parameters: RunParameters | None = None,
-    ) -> Run:
-        """
-        Runs based on on an InspectWrapper object.
-        """
-        pass
-
     async def _safe_local_execution(self, coro, run_id: str | None = None):
         """Wrapper to handle interruptions during local execution"""
         try:
@@ -451,6 +385,103 @@ class Suite(BaseModel):
                     run_id=run_id, status=RunStatus.ERROR
                 )
             raise
+
+    @overload
+    async def run(
+        self,
+        model: str,
+        model_name: str = "sdk",
+        run_name: str | None = None,
+        wait_for_completion: bool = False,
+        parameters: RunParameters | None = None,
+        upload_concurrency: int = 3,
+        custom_operators: list[ModelCustomOperatorFunctionType] | None = None,
+        eval_model_name: str | None = None,
+        run_id: str | None = None,
+        qa_set_id: str | None = None,
+        remaining_tests: list[Test] | None = None,
+        uploaded_qa_pairs: list[QuestionAnswerPairInputType] | None = None,
+        except_on_error: bool = False,
+    ) -> Run:
+        """
+        Runs based on a model string (e.g. "gpt-4o").
+        """
+        pass
+
+    @overload
+    async def run(
+        self,
+        model: ModelFunctionType,
+        model_name: str = "sdk",
+        run_name: str | None = None,
+        wait_for_completion: bool = False,
+        parameters: RunParameters | None = None,
+        upload_concurrency: int = 3,
+        custom_operators: list[ModelCustomOperatorFunctionType] | None = None,
+        eval_model_name: str | None = None,
+        run_id: str | None = None,
+        qa_set_id: str | None = None,
+        remaining_tests: list[Test] | None = None,
+        uploaded_qa_pairs: list[QuestionAnswerPairInputType] | None = None,
+        except_on_error: bool = False,
+    ) -> Run:
+        """
+        Runs based on a model function. This can either be a simple model function, which just takes
+        an input as a string and produces an output string, or a model function that takes in the input string,
+        a dictionary of filename to file contents, and a context dictionary.
+
+        Args:
+            upload_concurrency: How frequently to upload QA pairs to the server. Defaults to parameters.parallelism.
+        """
+        pass
+
+    @overload
+    async def run(
+        self,
+        model: list[QuestionAnswerPair],
+        model_name: str = "sdk",
+        run_name: str | None = None,
+        wait_for_completion: bool = False,
+        parameters: RunParameters | None = None,
+        upload_concurrency: int = 3,
+        custom_operators: list[ModelCustomOperatorFunctionType] | None = None,
+        eval_model_name: str | None = None,
+        run_id: str | None = None,
+        qa_set_id: str | None = None,
+        remaining_tests: list[Test] | None = None,
+        uploaded_qa_pairs: list[QuestionAnswerPairInputType] | None = None,
+        except_on_error: bool = False,
+    ) -> Run:
+        """
+        Runs based on on a list of question-answer pairs, which contain inputs and outputs.
+
+        IMPORTANT NOTE: The combined "inputs" of the question-answer pairs (the input under test, the context,
+        and the files) need to match exactly the inputs of the tests in the suite, otherwise, Vals will not
+        know how to match to the auto-eval correctly.
+        """
+        pass
+
+    @overload
+    async def run(
+        self,
+        model: InspectWrapper,
+        model_name: str = "sdk",
+        run_name: str | None = None,
+        wait_for_completion: bool = False,
+        parameters: RunParameters | None = None,
+        upload_concurrency: int = 3,
+        custom_operators: list[ModelCustomOperatorFunctionType] | None = None,
+        eval_model_name: str | None = None,
+        run_id: str | None = None,
+        qa_set_id: str | None = None,
+        remaining_tests: list[Test] | None = None,
+        uploaded_qa_pairs: list[QuestionAnswerPairInputType] | None = None,
+        except_on_error: bool = False,
+    ) -> Run:
+        """
+        Runs based on on an InspectWrapper object.
+        """
+        pass
 
     async def run(
         self,
