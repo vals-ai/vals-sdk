@@ -31,8 +31,12 @@ class InspectWrapper:
     ):
         self.task = task
         self.model_name = model_name or "anthropic/claude-3-5-sonnet-20241022"
-        self.config = config or GenerateConfig(temperature=0)
         self.eval_model_name = eval_model_name
+        if not config:
+            config = GenerateConfig(temperature=0)
+        elif isinstance(config, dict):
+            config = GenerateConfig(**config)
+        self.config = config
 
         self.generate = self.get_generate_function()
 
