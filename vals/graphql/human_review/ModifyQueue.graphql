@@ -1,0 +1,13 @@
+mutation AddOrRemoveUsersToRunReview(
+  $singleRunReviewId: String!
+  $assignedReviewers: [String!]!
+) {
+  updateAssignedReviewers(
+    singleRunReviewId: $singleRunReviewId
+    assignedReviewers: $assignedReviewers
+  ) {
+    singleTestReviews {
+      id
+    }
+  }
+}

@@ -22,27 +22,7 @@ class AddAllTestsToQueueSingleAddAllSingleTestReviewToQueue(BaseModel):
 
 class AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviews(BaseModel):
     id: Any
-    test_result: (
-        "AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviewsTestResult"
-    ) = Field(alias="testResult")
-
-
-class AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviewsTestResult(
-    BaseModel
-):
-    id: Any
-    run_fk: (
-        "AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviewsTestResultRunFk"
-    ) = Field(alias="runFk")
-
-
-class AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviewsTestResultRunFk(
-    BaseModel
-):
-    run_id: str = Field(alias="runId")
 
 
 AddAllTestsToQueueSingle.model_rebuild()
 AddAllTestsToQueueSingleAddAllSingleTestReviewToQueue.model_rebuild()
-AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviews.model_rebuild()
-AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviewsTestResult.model_rebuild()

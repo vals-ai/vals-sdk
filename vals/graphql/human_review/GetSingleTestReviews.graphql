@@ -1,0 +1,91 @@
+query SingleTestResultReviewsWithCount(
+  $runId: String!
+  $filterOptions: TestReviewFilterOptionsInput
+) {
+  testResultReviewsWithCount(runId: $runId, filterOptions: $filterOptions) {
+    count
+    singleTestResults {
+      id
+      reviewedBy
+      hasFeedback
+      agreementRateAutoEval
+      agreementRateHumanEval
+      passRateHumanEval
+      passPercentage
+      amountReviewed
+      latestCompletedReview
+      llmOutput
+      resultJson {
+        autoEval
+        criteria
+        operator
+      }
+      qaPair {
+        context
+        outputContext
+        errorMessage
+      }
+      test {
+        id
+        inputUnderTest
+        context
+      }
+      metadata {
+        inTokens
+        outTokens
+        durationSeconds
+      }
+      aggregatedCustomMetrics {
+        base {
+          displayed
+          value
+        }
+        comparative
+        name
+        type
+        resultA {
+          displayed
+          value
+        }
+        resultB {
+          displayed
+          value
+        }
+      }
+      singleTestReviews {
+        id
+        completedBy
+        feedback
+        completedAt
+        startedAt
+        createdBy
+        status
+        perCheckTestReview {
+          binaryHumanEval
+          isFlagged
+        }
+        testResult {
+          id
+          resultJson {
+            autoEval
+            criteria
+            operator
+          }
+        }
+        customReviewValues {
+          template {
+            id
+            name
+            instructions
+            optional
+            categories
+            type
+            minValue
+            maxValue
+          }
+          value
+        }
+      }
+    }
+  }
+}

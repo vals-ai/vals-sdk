@@ -54,14 +54,14 @@ class Client(AsyncBaseClient):
         self,
         run_id: str,
         number_of_reviews: int,
+        rereview_auto_eval: bool,
         template_ids: Union[Optional[List[str]], UnsetType] = UNSET,
-        assigned_reviewers: Union[Optional[List[Optional[str]]], UnsetType] = UNSET,
-        rereview_auto_eval: Union[Optional[bool], UnsetType] = UNSET,
+        assigned_reviewers: Union[Optional[List[str]], UnsetType] = UNSET,
         **kwargs: Any
     ) -> AddAllTestsToQueueSingle:
         query = gql(
             """
-            mutation AddAllTestsToQueueSingle($runId: String!, $templateIds: [String!] = [], $assignedReviewers: [String], $numberOfReviews: Int!, $rereviewAutoEval: Boolean) {
+            mutation AddAllTestsToQueueSingle($runId: String!, $templateIds: [String!], $assignedReviewers: [String!], $numberOfReviews: Int!, $rereviewAutoEval: Boolean!) {
               addAllSingleTestReviewToQueue(
                 runId: $runId
                 templateIds: $templateIds
@@ -71,12 +71,6 @@ class Client(AsyncBaseClient):
               ) {
                 singleTestReviews {
                   id
-                  testResult {
-                    id
-                    runFk {
-                      runId
-                    }
-                  }
                 }
               }
             }
@@ -283,20 +277,6 @@ class Client(AsyncBaseClient):
               ) {
                 singleTestReviews {
                   id
-                  status
-                  startedAt
-                  completedAt
-                  testResult {
-                    id
-                  }
-                  runHumanReview {
-                    id
-                    status
-                    createdBy
-                  }
-                  lockedBy
-                  completedBy
-                  feedback
                 }
               }
             }
@@ -596,6 +576,9 @@ class Client(AsyncBaseClient):
                   id
                 }
                 runId
+                singlePendingOrCompletedRunReview {
+                  id
+                }
                 passPercentage
                 status
                 textSummary

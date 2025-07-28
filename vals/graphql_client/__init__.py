@@ -4,8 +4,6 @@ from .add_all_tests_to_queue_single import (
     AddAllTestsToQueueSingle,
     AddAllTestsToQueueSingleAddAllSingleTestReviewToQueue,
     AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviews,
-    AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviewsTestResult,
-    AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviewsTestResultRunFk,
 )
 from .add_batch_tests import (
     AddBatchTests,
@@ -16,8 +14,6 @@ from .add_or_remove_users_to_run_review import (
     AddOrRemoveUsersToRunReview,
     AddOrRemoveUsersToRunReviewUpdateAssignedReviewers,
     AddOrRemoveUsersToRunReviewUpdateAssignedReviewersSingleTestReviews,
-    AddOrRemoveUsersToRunReviewUpdateAssignedReviewersSingleTestReviewsRunHumanReview,
-    AddOrRemoveUsersToRunReviewUpdateAssignedReviewersSingleTestReviewsTestResult,
 )
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel, Upload
@@ -185,6 +181,7 @@ from .pull_run import (
     PullRunRunPassRate,
     PullRunRunProject,
     PullRunRunQaSet,
+    PullRunRunSinglePendingOrCompletedRunReview,
     PullRunRunSuccessRate,
     PullRunRunTestSuite,
 )
@@ -238,16 +235,12 @@ __all__ = [
     "AddAllTestsToQueueSingle",
     "AddAllTestsToQueueSingleAddAllSingleTestReviewToQueue",
     "AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviews",
-    "AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviewsTestResult",
-    "AddAllTestsToQueueSingleAddAllSingleTestReviewToQueueSingleTestReviewsTestResultRunFk",
     "AddBatchTests",
     "AddBatchTestsBatchUpdateTest",
     "AddBatchTestsBatchUpdateTestTests",
     "AddOrRemoveUsersToRunReview",
     "AddOrRemoveUsersToRunReviewUpdateAssignedReviewers",
     "AddOrRemoveUsersToRunReviewUpdateAssignedReviewersSingleTestReviews",
-    "AddOrRemoveUsersToRunReviewUpdateAssignedReviewersSingleTestReviewsRunHumanReview",
-    "AddOrRemoveUsersToRunReviewUpdateAssignedReviewersSingleTestReviewsTestResult",
     "AppPairwiseTestResultReviewWinningRunChoices",
     "AppQuestionAnswerSetCreationMethodChoices",
     "AsyncBaseClient",
@@ -353,6 +346,7 @@ __all__ = [
     "PullRunRunPassRate",
     "PullRunRunProject",
     "PullRunRunQaSet",
+    "PullRunRunSinglePendingOrCompletedRunReview",
     "PullRunRunSuccessRate",
     "PullRunRunTestSuite",
     "PullTestResultsWithCount",

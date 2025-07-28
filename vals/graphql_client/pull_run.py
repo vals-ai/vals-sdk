@@ -17,6 +17,9 @@ class PullRun(BaseModel):
 class PullRunRun(BaseModel):
     qa_set: Optional["PullRunRunQaSet"] = Field(alias="qaSet")
     run_id: str = Field(alias="runId")
+    single_pending_or_completed_run_review: Optional[
+        "PullRunRunSinglePendingOrCompletedRunReview"
+    ] = Field(alias="singlePendingOrCompletedRunReview")
     pass_percentage: Optional[float] = Field(alias="passPercentage")
     status: RunStatus
     text_summary: str = Field(alias="textSummary")
@@ -32,6 +35,10 @@ class PullRunRun(BaseModel):
 
 
 class PullRunRunQaSet(BaseModel):
+    id: Any
+
+
+class PullRunRunSinglePendingOrCompletedRunReview(BaseModel):
     id: Any
 
 

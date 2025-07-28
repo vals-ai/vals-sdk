@@ -115,6 +115,19 @@ class SingleRunReview(BaseModel):
             ),
         )
 
+    async def modify_queue(
+        self,
+        assigned_reviewers: list[str],
+    ) -> None:
+        client = get_ariadne_client()
+
+        await client.add_or_remove_users_to_run_review(
+            single_run_review_id=self.id,
+            assigned_reviewers=assigned_reviewers,
+        )
+
+        self.assigned_reviewers = assigned_reviewers
+
 
 class CustomReviewTemplate(BaseModel):
     id: str

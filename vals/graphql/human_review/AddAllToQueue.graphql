@@ -1,0 +1,19 @@
+mutation AddAllTestsToQueueSingle(
+  $runId: String!
+  $templateIds: [String!]
+  $assignedReviewers: [String!]
+  $numberOfReviews: Int!
+  $rereviewAutoEval: Boolean!
+) {
+  addAllSingleTestReviewToQueue(
+    runId: $runId
+    templateIds: $templateIds
+    assignedReviewers: $assignedReviewers
+    numberOfReviews: $numberOfReviews
+    rereviewAutoEval: $rereviewAutoEval
+  ) {
+    singleTestReviews {
+      id
+    }
+  }
+}
