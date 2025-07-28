@@ -8,14 +8,14 @@ from pydantic import Field
 from .base_model import BaseModel
 
 
-class ConditionalCheckOutputTypeFields(BaseModel):
-    operator: str
-    criteria: str
-
-
 class ExampleOutputTypeFields(BaseModel):
     type: str
     text: str
+
+
+class ConditionalCheckOutputTypeFields(BaseModel):
+    operator: str
+    criteria: str
 
 
 class CheckModifierOutputTypeFields(BaseModel):
@@ -109,8 +109,8 @@ class TestFragmentTestSuite(BaseModel):
     id: str
 
 
-ConditionalCheckOutputTypeFields.model_rebuild()
 ExampleOutputTypeFields.model_rebuild()
+ConditionalCheckOutputTypeFields.model_rebuild()
 CheckModifierOutputTypeFields.model_rebuild()
 CheckOutputTypeFields.model_rebuild()
 MetadataOutputTypeFields.model_rebuild()
