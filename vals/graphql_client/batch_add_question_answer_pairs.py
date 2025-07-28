@@ -26,7 +26,7 @@ class BatchAddQuestionAnswerPairsBatchAddQuestionAnswerPairsQuestionAnswerPairs(
     id: Any
     input_under_test: str = Field(alias="inputUnderTest")
     llm_output: str = Field(alias="llmOutput")
-    file_ids: Any = Field(alias="fileIds")
+    file_ids: List[str] = Field(alias="fileIds")
     context: Any
     output_context: Any = Field(alias="outputContext")
     test: (
