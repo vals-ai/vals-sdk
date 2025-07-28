@@ -37,9 +37,6 @@ class InspectWrapper:
         self.generate = self.get_generate_function()
 
     def get_generate_function(self) -> Callable[[TaskState], ModelOutput]:
-        if isinstance(self.config, dict):
-            config = GenerateConfig(**self.config)
-
         generate = get_model(self.model_name, config=self.config).generate
 
         async def wrapped_generate(state: str, *args, **kwargs) -> ModelOutput:

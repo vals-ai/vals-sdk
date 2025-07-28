@@ -91,7 +91,9 @@ async def list_command_async(limit: int, offset: int, search: str, project_id: s
 
 @click.command(name="list")
 @click.option("-l", "--limit", type=int, default=25, help="Number of rows to return")
-@click.option("-o", "--offset", type=int, default=1, help="Start table at this row (1-indexed)")
+@click.option(
+    "-o", "--offset", type=int, default=1, help="Start table at this row (1-indexed)"
+)
 @click.option("--search", type=str, default="", help="Search for a suite by title")
 @click.option(
     "--project-id",
@@ -156,10 +158,18 @@ async def pull_command_async(
 
 @click.command(name="pull")
 @click.option("-s", "--suite-id", type=str, required=True)
-@click.option("-f", "--file", type=str, required=True, help="Name of the file to save the suite to")
+@click.option(
+    "-f",
+    "--file",
+    type=str,
+    required=True,
+    help="Name of the file to save the suite to",
+)
 @click.option("--csv", is_flag=True, help="Output in CSV format")
 @click.option("--json", is_flag=True, help="Output in JSON format")
-@click.option("--no-download-files", is_flag=True, help="Do not download files from the suite")
+@click.option(
+    "--no-download-files", is_flag=True, help="Do not download files from the suite"
+)
 @click.option(
     "--download-path",
     type=str,
@@ -246,7 +256,9 @@ async def run_command_async(
     default=False,
     help="Wait for the run to complete before returning",
 )
-@click.option("--eval-model", type=str, default=None, help="Model to use for evaluation")
+@click.option(
+    "--eval-model", type=str, default=None, help="Model to use for evaluation"
+)
 @click.option(
     "--parallelism",
     type=int,
@@ -271,15 +283,23 @@ async def run_command_async(
     default=None,
     help="Create text summary of results",
 )
-@click.option("--temperature", type=float, default=None, help="Temperature parameter for model")
-@click.option("--max-output-tokens", type=int, default=None, help="Maximum tokens in model output")
+@click.option(
+    "--temperature", type=float, default=None, help="Temperature parameter for model"
+)
+@click.option(
+    "--max-output-tokens", type=int, default=None, help="Maximum tokens in model output"
+)
 @click.option("--system-prompt", type=str, default=None, help="System prompt for model")
 @click.option("--as-batch", is_flag=True, default=False, help="Run suite as a batch")
-def run_command(suite_id: str, model: str, run_name: str, wait_for_completion: bool, **params):
+def run_command(
+    suite_id: str, model: str, run_name: str, wait_for_completion: bool, **params
+):
     """
     Run a test suite
     """
-    asyncio.run(run_command_async(suite_id, model, run_name, wait_for_completion, params))
+    asyncio.run(
+        run_command_async(suite_id, model, run_name, wait_for_completion, params)
+    )
 
 
 suite_group.add_command(create_command)
