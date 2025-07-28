@@ -6,7 +6,6 @@ These are meant to be user-facing.
 """
 
 import datetime
-from collections.abc import Awaitable
 from enum import Enum
 from io import BytesIO
 from typing import Any, Callable, Literal, Optional
@@ -63,9 +62,7 @@ class OutputObject(BaseModel):
     """
 
     llm_output: str  # Required: The actual model output
-    output_context: Optional[dict[str, Any]] = (
-        None  # Optional: Arbitrary metadata about the output
-    )
+    output_context: Optional[dict[str, Any]] = None  # Optional: Arbitrary metadata about the output
     duration: Optional[float] = None  # Optional: Generation time in seconds
     in_tokens: Optional[int] = None  # Optional: Input token count
     out_tokens: Optional[int] = None  # Optional: Output token count
@@ -198,9 +195,7 @@ class Check(BaseModel):
         return CheckInputType(
             operator=self.operator,
             criteria=self.criteria,
-            modifiers=CheckModifiersInputType(
-                **self.modifiers.model_dump(exclude_none=True)
-            ),
+            modifiers=CheckModifiersInputType(**self.modifiers.model_dump(exclude_none=True)),
         )
 
 
@@ -367,22 +362,14 @@ class RunMetadata(BaseModel):
     parameters: RunParameters
 
     @classmethod
-    def from_graphql(
-        cls, graphql_run: ListRunsRunsWithCountRunResults
-    ) -> "RunMetadata":
+    def from_graphql(cls, graphql_run: ListRunsRunsWithCountRunResults) -> "RunMetadata":
         return cls(
             id=graphql_run.run_id,
             name=graphql_run.name,
-            pass_percentage=(
-                graphql_run.pass_percentage if graphql_run.pass_percentage else None
-            ),
+            pass_percentage=(graphql_run.pass_percentage if graphql_run.pass_percentage else None),
             pass_rate=graphql_run.pass_rate.value if graphql_run.pass_rate else None,
-            pass_rate_error=(
-                graphql_run.pass_rate.error if graphql_run.pass_rate else None
-            ),
-            success_rate=(
-                graphql_run.success_rate.value if graphql_run.success_rate else None
-            ),
+            pass_rate_error=(graphql_run.pass_rate.error if graphql_run.pass_rate else None),
+            success_rate=(graphql_run.success_rate.value if graphql_run.success_rate else None),
             success_rate_error=(
                 graphql_run.success_rate.error if graphql_run.success_rate else None
             ),
@@ -493,17 +480,13 @@ class TestResult(BaseModel):
             pass_percentage=graphql_test_result.pass_percentage,
             pass_percentage_with_weight=graphql_test_result.pass_percentage_with_weight,
             error_message=(
-                graphql_test_result.qa_pair.error_message
-                if graphql_test_result.qa_pair
-                else ""
+                graphql_test_result.qa_pair.error_message if graphql_test_result.qa_pair else ""
             ),
             check_results=[
                 CheckResult(
                     operator=check_result["operator"],
                     criteria=check_result.get("criteria", ""),
-                    modifiers=CheckModifiers.from_graphql(
-                        check_result.get("modifiers", {})
-                    ),
+                    modifiers=CheckModifiers.from_graphql(check_result.get("modifiers", {})),
                     is_global=check_result.get("is_global", False),
                     auto_eval=check_result.get("auto_eval", 0),
                     feedback=check_result.get("feedback", ""),
@@ -578,9 +561,7 @@ class QuestionAnswerPair(BaseModel):
             context=self.context,
             output_context=self.output_context,
             llm_output=self.llm_output,
-            metadata=(
-                MetadataType(**self.metadata.model_dump()) if self.metadata else None
-            ),
+            metadata=(MetadataType(**self.metadata.model_dump()) if self.metadata else None),
             test_id=self.test_id,
             status="success",
         )
@@ -605,10 +586,7 @@ class OperatorOutput(BaseModel):
     explanation: str
 
 
-ModelCustomOperatorFunctionType = (
-    Callable[[OperatorInput], OperatorOutput]  # sync
-    | Callable[[OperatorInput], Awaitable[OperatorOutput]]  # async
-)
+ModelCustomOperatorFunctionType = Callable[[OperatorInput], OperatorOutput]
 
 
 class CustomModelInput(BaseModel):
@@ -628,21 +606,11 @@ class CustomModelOutput(BaseModel):
     }
 
 
-SimpleModelFunctionType = (
-    Callable[[str], str | OutputObject]  # sync
-    | Callable[[str], Awaitable[str | OutputObject]]  # async
-)
+SimpleModelFunctionType = Callable[[str], str | OutputObject]
 
-
-ModelFunctionWithFilesAndContextType = (
-    Callable[
-        [str, dict[str, BytesIO], dict[str, Any]], str | dict[str, Any] | OutputObject
-    ]  # sync
-    | Callable[
-        [str, dict[str, BytesIO], dict[str, Any]],
-        Awaitable[str | dict[str, Any] | OutputObject],
-    ]  # async
-)
+ModelFunctionWithFilesAndContextType = Callable[
+    [str, dict[str, BytesIO], dict[str, Any]], str | dict[str, Any] | OutputObject
+]
 
 ModelFunctionType = SimpleModelFunctionType | ModelFunctionWithFilesAndContextType
 
