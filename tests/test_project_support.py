@@ -63,7 +63,7 @@ class TestSuiteProjectSupport:
         """Test creating a Suite instance without project_id."""
         suite = Suite(title="Test Suite", description="A test suite")
 
-        assert suite.project_id == 'default-project'
+        assert suite.project_id == "default-project"
         assert suite.title == "Test Suite"
 
     @pytest.mark.asyncio

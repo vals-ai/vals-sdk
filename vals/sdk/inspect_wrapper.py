@@ -7,6 +7,7 @@ from inspect_ai import Task
 from inspect_ai.model import ChatMessageUser, GenerateConfig, ModelOutput, get_model
 from inspect_ai.scorer import Score, Scorer, Target
 from inspect_ai.solver import Generate, Solver, TaskState
+
 from vals.sdk.types import (
     CustomModelInput,
     CustomModelOutput,
@@ -29,24 +30,18 @@ class InspectWrapper:
         eval_model_name: str | None = None,
     ):
         self.task = task
-        self.model_name = model_name
-        self.config = config
+        self.model_name = model_name or "anthropic/claude-3-5-sonnet-20241022"
         self.eval_model_name = eval_model_name
-
-        if model_name is None:
-            self.generate = self.get_generate_function(
-                "anthropic/claude-3-5-sonnet-20241022", GenerateConfig(temperature=0)
-            )
-        else:
-            self.generate = self.get_generate_function(model_name, config)
-
-    def get_generate_function(
-        self, model_name: str, config: dict[str, Any] | GenerateConfig
-    ) -> Callable[[TaskState], ModelOutput]:
-        if isinstance(config, dict):
+        if not config:
+            config = GenerateConfig(temperature=0)
+        elif isinstance(config, dict):
             config = GenerateConfig(**config)
+        self.config = config
 
-        generate = get_model(model_name, config).generate
+        self.generate = self.get_generate_function()
+
+    def get_generate_function(self) -> Callable[[TaskState], ModelOutput]:
+        generate = get_model(self.model_name, config=self.config).generate
 
         async def wrapped_generate(state: str, *args, **kwargs) -> ModelOutput:
             state.output = await generate(state.input)
