@@ -44,7 +44,7 @@ async def list_async(
     suite_id: str | None,
     show_archived: bool,
     search: str,
-    project_id: str | None,
+    project_id: str,
 ):
     if project_id:
         click.echo(f"Listing runs for project: {project_id}")
@@ -115,6 +115,8 @@ async def list_async(
 @click.option(
     "--project-id",
     type=str,
+    default="default-project",
+    show_default=True,
     help="Project ID to filter runs by (e.g., test-y10n61). If unset, uses the default project.",
 )
 def list(
@@ -123,7 +125,7 @@ def list(
     suite_id: str | None,
     show_archived: bool,
     search: str,
-    project_id: str | None,
+    project_id: str,
 ):
     """
     List runs associated with this organization
@@ -139,7 +141,7 @@ async def rerun_checks_async(run_id: str):
 
 
 @click.command()
-@click.argument("run-id", type=str, required=True)
+@click.option("-r", "--run-id", type=click.STRING, required=True)
 def rerun_checks(run_id: str):
     """
     Rerun all checks for a run, using existing QA pairs.

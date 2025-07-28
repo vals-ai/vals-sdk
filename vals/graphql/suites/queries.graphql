@@ -1,4 +1,5 @@
 #import TestFragment from "../fragments/test.graphql"
+#import CheckOutputTypeFields from "../fragments/shared.graphql"
 
 query getTestSuiteData($suiteId: String!) {
   testSuite(testSuiteId: $suiteId) {
@@ -10,7 +11,9 @@ query getTestSuiteData($suiteId: String!) {
     org
     title
     created
-    globalChecks
+    globalChecks {
+        ...CheckOutputTypeFields
+    }
   }
 }
 
@@ -84,9 +87,7 @@ query GetDefaultParameters {
   defaultParameters {
     evalModel
     maximumThreads
-    runGoldenEval
     runConfidenceEvaluation
-    newLineStopOption
     createTextSummary
     detectRefusals
     modelUnderTest

@@ -1,4 +1,5 @@
 #import TestFragment from "../fragments/test.graphql"
+#import { ResultJsonElementTypeFields, MetadataOutputTypeFields } from "../fragments/shared.graphql"
 
 query GetRunStatus($runId: String!) {
   run(runId: $runId) {
@@ -19,10 +20,9 @@ query PullRun($runId: String!) {
     completedAt
     archived
     name
-    typedParameters {
+    parameters {
       evalModel
       maximumThreads
-      runGoldenEval
       runConfidenceEvaluation
       heavyweightFactor
       createTextSummary
@@ -30,7 +30,6 @@ query PullRun($runId: String!) {
       temperature
       maxOutputTokens
       systemPrompt
-      newLineStopOption
       customParameters
     }
     passRate {
@@ -61,7 +60,9 @@ query PullTestResultsWithCount($runId: String!, $offset: Int, $limit: Int) {
       llmOutput
       passPercentage
       passPercentageWithWeight
-      resultJson
+      resultJson {
+          ...ResultJsonElementTypeFields
+      }
       qaPair {
         context
         outputContext
@@ -70,7 +71,9 @@ query PullTestResultsWithCount($runId: String!, $offset: Int, $limit: Int) {
       test {
         ...TestFragment
       }
-      metadata
+      metadata {
+          ...MetadataOutputTypeFields
+      }
     }
     count
   }
@@ -112,10 +115,9 @@ query ListRuns(
       timestamp
       completedAt
       archived
-      typedParameters {
+      parameters {
         evalModel
         maximumThreads
-        runGoldenEval
         runConfidenceEvaluation
         heavyweightFactor
         createTextSummary
@@ -123,7 +125,6 @@ query ListRuns(
         temperature
         maxOutputTokens
         systemPrompt
-        newLineStopOption
       }
       testSuite {
         title

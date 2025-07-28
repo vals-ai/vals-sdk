@@ -33,9 +33,7 @@ class ListRunsRunsWithCountRunResults(BaseModel):
     timestamp: datetime
     completed_at: Optional[datetime] = Field(alias="completedAt")
     archived: bool
-    typed_parameters: "ListRunsRunsWithCountRunResultsTypedParameters" = Field(
-        alias="typedParameters"
-    )
+    parameters: "ListRunsRunsWithCountRunResultsParameters"
     test_suite: "ListRunsRunsWithCountRunResultsTestSuite" = Field(alias="testSuite")
 
 
@@ -49,10 +47,9 @@ class ListRunsRunsWithCountRunResultsSuccessRate(BaseModel):
     error: float
 
 
-class ListRunsRunsWithCountRunResultsTypedParameters(BaseModel):
+class ListRunsRunsWithCountRunResultsParameters(BaseModel):
     eval_model: str = Field(alias="evalModel")
     maximum_threads: int = Field(alias="maximumThreads")
-    run_golden_eval: bool = Field(alias="runGoldenEval")
     run_confidence_evaluation: bool = Field(alias="runConfidenceEvaluation")
     heavyweight_factor: int = Field(alias="heavyweightFactor")
     create_text_summary: bool = Field(alias="createTextSummary")
@@ -60,7 +57,6 @@ class ListRunsRunsWithCountRunResultsTypedParameters(BaseModel):
     temperature: float
     max_output_tokens: int = Field(alias="maxOutputTokens")
     system_prompt: str = Field(alias="systemPrompt")
-    new_line_stop_option: bool = Field(alias="newLineStopOption")
 
 
 class ListRunsRunsWithCountRunResultsTestSuite(BaseModel):

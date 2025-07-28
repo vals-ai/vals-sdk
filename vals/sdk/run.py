@@ -106,7 +106,7 @@ class Run(BaseModel):
             )
 
         # Map maximum_threads to parallelism for backwards compatibility
-        parameters_dict = result.run.typed_parameters.model_dump()
+        parameters_dict = result.run.parameters.model_dump()
         model = parameters_dict.pop("model_under_test", "")
 
         if "maximum_threads" in parameters_dict:
@@ -153,7 +153,7 @@ class Run(BaseModel):
         suite_id: str | None = None,
         show_archived: bool = False,
         search: str = "",
-        project_id: str | None = None,
+        project_id: str = "default-project",
     ) -> list["RunMetadata"]:
         """List runs associated with this organization
 
@@ -202,7 +202,7 @@ class Run(BaseModel):
 
         updated = await self._create_from_pull_result(self.id, self._client)
         # TODO: There's probably a better way to update the object.
-        for field in updated.__fields__:
+        for field in Run.model_fields:
             setattr(self, field, getattr(updated, field))
 
     async def get_qa_pairs(

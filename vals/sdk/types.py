@@ -6,7 +6,6 @@ These are meant to be user-facing.
 """
 
 import datetime
-import json
 from collections.abc import Awaitable
 from enum import Enum
 from io import BytesIO
@@ -78,6 +77,8 @@ class TestSuiteMetadata(BaseModel):
     list_test_suites() function - does not include tests, global
     checks, etc.
     """
+
+    __test__: bool = False
 
     id: str
     title: str
@@ -169,7 +170,7 @@ class CheckModifiers(BaseModel):
             extractor=modifiers_dict.get("extractor"),
             conditional=conditional,
             category=modifiers_dict.get("category"),
-            display_metrics=modifiers_dict.get("displayMetrics", False),
+            display_metrics=modifiers_dict.get("display_metrics", False),
         )
 
 
@@ -214,6 +215,8 @@ class File(BaseModel):
 
 
 class Test(BaseModel):
+    __test__ = False
+
     id: str | None = None
     """Displayed id for the test. DO NOT REPLACE _id with this since it will break creation of tests. This will be refactored in the future."""
 
@@ -318,9 +321,6 @@ class RunParameters(BaseModel):
     parallelism: int = 10
     """How many tests to run in parallel"""
 
-    run_golden_eval: bool = False
-    """Compares the output to the golden ansewr, if provided"""
-
     custom_parameters: dict[str, str | int | float | bool] = {}
     """Additional model-specific parameters to pass """
 
@@ -341,9 +341,6 @@ class RunParameters(BaseModel):
 
     system_prompt: str = ""
     """System prompt for the model under test"""
-
-    new_line_stop_option: bool = False
-    """If true, will stop generation at a new line"""
 
     retry_failed_calls_indefinitely: bool = False
     """ If true, when receiving an error from the model, will retry indefinitely until it receives a success."""
@@ -395,8 +392,8 @@ class RunMetadata(BaseModel):
             completed_at=graphql_run.completed_at,
             archived=graphql_run.archived,
             test_suite_title=graphql_run.test_suite.title,
-            model=graphql_run.typed_parameters.model_under_test,
-            parameters=RunParameters(**graphql_run.typed_parameters.model_dump()),
+            model=graphql_run.parameters.model_under_test,
+            parameters=RunParameters(**graphql_run.parameters.model_dump()),
         )
 
 
@@ -440,6 +437,8 @@ class CheckResult(BaseModel):
 class TestResult(BaseModel):
     """Result of evaluation for a single test."""
 
+    __test__: bool = False
+
     _id: str
     test: Test
     input_under_test: str
@@ -476,8 +475,13 @@ class TestResult(BaseModel):
         if graphql_test_result.qa_pair:
             output_context = graphql_test_result.qa_pair.output_context
             context = graphql_test_result.qa_pair.context
-            if len(context) == 0 and graphql_test_result.test.typed_context is not None:
-                context = graphql_test_result.test.typed_context
+            if len(context) == 0 and graphql_test_result.test.context is not None:
+                context = graphql_test_result.test.context
+
+        check_result_dicts = [
+            check_result.model_dump()
+            for check_result in graphql_test_result.result_json
+        ]
 
         return cls(
             _id=graphql_test_result.id,
@@ -509,10 +513,10 @@ class TestResult(BaseModel):
                         else 0.5
                     ),
                 )
-                for check_result in json.loads(graphql_test_result.result_json)
+                for check_result in check_result_dicts
             ],
             metadata=(
-                Metadata(**json.loads(graphql_test_result.metadata))
+                Metadata(**graphql_test_result.metadata.model_dump())
                 if graphql_test_result.metadata
                 else None
             ),
@@ -536,18 +540,18 @@ class QuestionAnswerPair(BaseModel):
         graphql_qa_pair: ListQuestionAnswerPairsQuestionAnswerPairsWithCountQuestionAnswerPairs,
     ) -> "QuestionAnswerPair":
         metadata = None
-        if graphql_qa_pair.typed_metadata:
+        if graphql_qa_pair.metadata:
             metadata = Metadata(
-                in_tokens=graphql_qa_pair.typed_metadata.in_tokens,
-                out_tokens=graphql_qa_pair.typed_metadata.out_tokens,
-                duration_seconds=graphql_qa_pair.typed_metadata.duration_seconds,
+                in_tokens=graphql_qa_pair.metadata.in_tokens,
+                out_tokens=graphql_qa_pair.metadata.out_tokens,
+                duration_seconds=graphql_qa_pair.metadata.duration_seconds,
             )
 
         return cls(
             id=graphql_qa_pair.id,
             input_under_test=graphql_qa_pair.input_under_test,
             llm_output=graphql_qa_pair.llm_output,
-            file_ids=graphql_qa_pair.typed_file_ids,
+            file_ids=graphql_qa_pair.file_ids,
             context=graphql_qa_pair.context or {},
             output_context=graphql_qa_pair.output_context or {},
             metadata=metadata,
