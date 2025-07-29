@@ -1,11 +1,12 @@
 import asyncio
-import time
 from datetime import datetime
 from typing import Any
 
 import aiohttp
 from pydantic import BaseModel, PrivateAttr
+
 from vals.graphql_client import Client
+from vals.graphql_client.enums import RunStatus
 from vals.sdk.exceptions import ValsException
 from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.types import (
@@ -16,7 +17,6 @@ from vals.sdk.types import (
     RunParameters,
     TestResult,
 )
-from vals.graphql_client.enums import RunStatus
 from vals.sdk.util import _get_auth_token, be_host, fe_host, get_ariadne_client
 
 
@@ -259,20 +259,9 @@ class Run(BaseModel):
         """
         await asyncio.sleep(1)
         status = RunStatus.IN_PROGRESS
-        start_time = time.time()
         while status in [RunStatus.IN_PROGRESS, RunStatus.PENDING]:
             status = await self.run_status()
-
-            # Sleep longer between polls, the longer the run goes.
-            if time.time() - start_time < 60:
-                sleep_time = 1
-            elif time.time() - start_time < 60 * 10:
-                sleep_time = 5
-            else:
-                sleep_time = 10
-
-            await asyncio.sleep(sleep_time)
-
+            await asyncio.sleep(1)  # Poll every second
         return status
 
     async def to_csv_string(self) -> str:
