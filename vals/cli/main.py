@@ -13,10 +13,12 @@ class ExceptionHandlingWrapper(click.Group):
         try:
             return super().__call__(*args, **kwargs)
         except Exception as e:
+            # TODO: Occasionally this swallows too much, e.g. if it's a value error.
+            # Or alternatively, would be nice to get the full error message as a flag.
             display_error_and_exit(e)
 
 
-@click.group()
+@click.group(cls=ExceptionHandlingWrapper)
 @click.version_option(package_name="valsai")
 def cli():
     pass
