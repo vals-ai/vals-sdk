@@ -48,7 +48,7 @@ version_scheme = "guess-next-dev"
 local_scheme = "node-and-date"
 
 [tool.ruff]
-exclude = ["examples", "vals/graphql_client"]
+exclude = ["vals/graphql_client"]
 
 [tool.basedpyright]
 typeCheckingMode = "basic"
