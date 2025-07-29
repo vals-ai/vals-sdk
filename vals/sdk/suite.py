@@ -21,6 +21,7 @@ from vals.graphql_client.input_types import (
     ParameterInputType,
     QuestionAnswerPairInputType,
 )
+from vals.sdk.custom_metric import CustomMetric
 from vals.sdk.inspect_wrapper import InspectWrapper
 from vals.sdk.run import Run
 from vals.sdk.types import (
@@ -1318,3 +1319,22 @@ class Suite(BaseModel):
             test_id=test._id,
             status="success",
         )
+
+    async def set_custom_metrics(self, custom_metrics: list[CustomMetric]) -> None:
+        """
+        Sets the custom metrics for the test suite.
+
+        Args:
+            ids: List of custom metric IDs to set.
+        """
+        if self.id is None:
+            raise Exception("Test Suite does not exist")
+        ids = []
+        for custom_metric in custom_metrics:
+            if not custom_metric._id:
+                raise Exception("Custom metric {custom_metric.name} does not exist.")
+            if custom_metric._archived:
+                raise Exception("Custom metric {custom_metric.name} is archived.")
+            ids.append(custom_metric._id)
+
+        await self._client.set_custom_metrics(test_suite_id=self.id, ids=ids)

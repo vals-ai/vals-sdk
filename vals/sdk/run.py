@@ -1,11 +1,13 @@
 import asyncio
+import json
 from datetime import datetime
 from typing import Any
 
 import aiohttp
+import pandas as pd
 from pydantic import BaseModel, PrivateAttr
 
-from vals.graphql_client import Client
+from vals.graphql_client import Client, PullRunRunCustomMetrics
 from vals.graphql_client.enums import RunStatus
 from vals.sdk.exceptions import ValsException
 from vals.sdk.inspect_wrapper import InspectWrapper
@@ -56,6 +58,8 @@ class Run(BaseModel):
 
     success_rate_error: float | None
     """Error margin for success rate"""
+
+    custom_metrics: list[PullRunRunCustomMetrics]
 
     status: RunStatus
     """Status of the run"""
@@ -134,6 +138,7 @@ class Run(BaseModel):
             success_rate_error=(
                 result.run.success_rate.error if result.run.success_rate else None
             ),
+            custom_metrics=result.run.custom_metrics,
             status=result.run.status,
             archived=result.run.archived,
             text_summary=result.run.text_summary,
@@ -396,3 +401,39 @@ class Run(BaseModel):
         client = get_ariadne_client()
         result = await client.get_run_status(run_id=run_id)
         return result.run.status
+
+    @classmethod
+    async def get_run_dataframe(cls, run_id: str) -> pd.DataFrame:
+        """Get a dataframe of the run results."""
+        client = get_ariadne_client()
+        result = await client.get_run_dataframe(run_id=run_id)
+        rows = result.get_run_dataframe
+        if not rows:
+            raise Exception(
+                "Failed to get run dataframe, ensure the run exists and was successfull."
+            )
+
+        # Convert each GraphQL object to a dict
+        parsed_rows = []
+        for row in rows:
+            row_dict = row.__dict__.copy()
+
+            # Convert stringified JSON to actual dict
+            modifiers = json.loads(row_dict.get("modifiers", "{}"))
+            row_dict.pop("modifiers", None)  # Remove the JSON string
+            row_dict.update(
+                {f"modifiers.{k}": v for k, v in modifiers.items()}
+            )  # Flatten
+
+            # Convert input/output_context from string to dict
+            for context_field in ["input_context", "output_context"]:
+                if context_field in row_dict:
+                    try:
+                        row_dict[context_field] = json.loads(row_dict[context_field])
+                    except json.JSONDecodeError:
+                        row_dict[context_field] = {}
+
+            parsed_rows.append(row_dict)
+
+        df = pd.DataFrame(parsed_rows)
+        return df
