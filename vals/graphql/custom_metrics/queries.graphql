@@ -1,0 +1,44 @@
+query getCustomMetric($id: String!) {
+  customMetric(id: $id) {
+    id
+    project{
+      slug
+    }
+    archived
+    name
+    description
+    fileId
+  }
+}
+
+query pollCustomMetricTask($messageId: String!) {
+  pollCustomMetricTask(messageId: $messageId) {
+    status
+    result
+    error
+    traceback
+  }
+}
+
+query GetRunDataframe($runId: String!) {
+  getRunDataframe(runId: $runId) {
+    id
+    tags
+    input
+    inputContext
+    output
+    outputContext
+    rightAnswer
+    refusedToAnswer
+    isRephrasal
+    beenRephrased
+    fileIds
+    operator
+    criteria
+    eval
+    cont
+    feedback
+    isGlobal
+    modifiers
+  }
+}

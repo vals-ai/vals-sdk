@@ -1,0 +1,19 @@
+mutation upsertCustomMetric($id: String, $project_id: String!, $name: String!, $description: String, $file_id: String!, $update_past: Boolean!) {
+  upsertCustomMetric(id: $id, projectId: $project_id, name: $name, description: $description, fileId: $file_id, updatePast: $update_past) {
+    metric {
+      id
+    }
+  }
+}
+
+mutation setArchivedStatusCustomMetrics($ids: [String!]!, $archived: Boolean!) {
+  setArchivedStatusCustomMetrics(ids: $ids, archived: $archived) {
+    affectedIds
+  }
+}
+
+mutation startCustomMetricTask($run_id: String!, $file_id: String!) {
+  startCustomMetricTask(runId: $run_id, fileId: $file_id, temporary: false) {
+    messageId
+  }
+}

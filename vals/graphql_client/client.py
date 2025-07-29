@@ -12,8 +12,10 @@ from .create_question_answer_set import CreateQuestionAnswerSet
 from .delete_test_suite import DeleteTestSuite
 from .enums import RunStatus
 from .get_active_custom_operators import GetActiveCustomOperators
+from .get_custom_metric import GetCustomMetric
 from .get_default_parameters import GetDefaultParameters
 from .get_operators import GetOperators
+from .get_run_dataframe import GetRunDataframe
 from .get_run_status import GetRunStatus
 from .get_single_run_review import GetSingleRunReview
 from .get_test_data import GetTestData
@@ -32,15 +34,20 @@ from .list_projects import ListProjects
 from .list_question_answer_pairs import ListQuestionAnswerPairs
 from .list_runs import ListRuns
 from .mark_question_answer_set_as_complete import MarkQuestionAnswerSetAsComplete
+from .poll_custom_metric_task import PollCustomMetricTask
 from .pull_run import PullRun
 from .pull_test_results_with_count import PullTestResultsWithCount
 from .remove_old_tests import RemoveOldTests
 from .rerun_tests import RerunTests
+from .set_archived_status_custom_metrics import SetArchivedStatusCustomMetrics
+from .set_custom_metrics import SetCustomMetrics
 from .single_test_result_reviews_with_count import SingleTestResultReviewsWithCount
+from .start_custom_metric_task import StartCustomMetricTask
 from .start_run import StartRun
 from .update_global_checks import UpdateGlobalChecks
 from .update_run_status import UpdateRunStatus
 from .upload_local_evaluation import UploadLocalEvaluation
+from .upsert_custom_metric import UpsertCustomMetric
 
 
 def gql(q: str) -> str:
@@ -48,6 +55,178 @@ def gql(q: str) -> str:
 
 
 class Client(AsyncBaseClient):
+    async def upsert_custom_metric(
+        self,
+        project_id: str,
+        name: str,
+        file_id: str,
+        update_past: bool,
+        id: Union[Optional[str], UnsetType] = UNSET,
+        description: Union[Optional[str], UnsetType] = UNSET,
+        **kwargs: Any
+    ) -> UpsertCustomMetric:
+        query = gql(
+            """
+            mutation upsertCustomMetric($id: String, $project_id: String!, $name: String!, $description: String, $file_id: String!, $update_past: Boolean!) {
+              upsertCustomMetric(
+                id: $id
+                projectId: $project_id
+                name: $name
+                description: $description
+                fileId: $file_id
+                updatePast: $update_past
+              ) {
+                metric {
+                  id
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {
+            "id": id,
+            "project_id": project_id,
+            "name": name,
+            "description": description,
+            "file_id": file_id,
+            "update_past": update_past,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="upsertCustomMetric",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return UpsertCustomMetric.model_validate(data)
+
+    async def set_archived_status_custom_metrics(
+        self, ids: List[str], archived: bool, **kwargs: Any
+    ) -> SetArchivedStatusCustomMetrics:
+        query = gql(
+            """
+            mutation setArchivedStatusCustomMetrics($ids: [String!]!, $archived: Boolean!) {
+              setArchivedStatusCustomMetrics(ids: $ids, archived: $archived) {
+                affectedIds
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"ids": ids, "archived": archived}
+        response = await self.execute(
+            query=query,
+            operation_name="setArchivedStatusCustomMetrics",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return SetArchivedStatusCustomMetrics.model_validate(data)
+
+    async def start_custom_metric_task(
+        self, run_id: str, file_id: str, **kwargs: Any
+    ) -> StartCustomMetricTask:
+        query = gql(
+            """
+            mutation startCustomMetricTask($run_id: String!, $file_id: String!) {
+              startCustomMetricTask(runId: $run_id, fileId: $file_id, temporary: false) {
+                messageId
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"run_id": run_id, "file_id": file_id}
+        response = await self.execute(
+            query=query,
+            operation_name="startCustomMetricTask",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return StartCustomMetricTask.model_validate(data)
+
+    async def get_custom_metric(self, id: str, **kwargs: Any) -> GetCustomMetric:
+        query = gql(
+            """
+            query getCustomMetric($id: String!) {
+              customMetric(id: $id) {
+                id
+                project {
+                  slug
+                }
+                archived
+                name
+                description
+                fileId
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"id": id}
+        response = await self.execute(
+            query=query, operation_name="getCustomMetric", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return GetCustomMetric.model_validate(data)
+
+    async def poll_custom_metric_task(
+        self, message_id: str, **kwargs: Any
+    ) -> PollCustomMetricTask:
+        query = gql(
+            """
+            query pollCustomMetricTask($messageId: String!) {
+              pollCustomMetricTask(messageId: $messageId) {
+                status
+                result
+                error
+                traceback
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"messageId": message_id}
+        response = await self.execute(
+            query=query,
+            operation_name="pollCustomMetricTask",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return PollCustomMetricTask.model_validate(data)
+
+    async def get_run_dataframe(self, run_id: str, **kwargs: Any) -> GetRunDataframe:
+        query = gql(
+            """
+            query GetRunDataframe($runId: String!) {
+              getRunDataframe(runId: $runId) {
+                id
+                tags
+                input
+                inputContext
+                output
+                outputContext
+                rightAnswer
+                refusedToAnswer
+                isRephrasal
+                beenRephrased
+                fileIds
+                operator
+                criteria
+                eval
+                cont
+                feedback
+                isGlobal
+                modifiers
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"runId": run_id}
+        response = await self.execute(
+            query=query, operation_name="GetRunDataframe", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return GetRunDataframe.model_validate(data)
+
     async def list_projects(
         self, offset: int, limit: int, search: str, **kwargs: Any
     ) -> ListProjects:
@@ -529,6 +708,12 @@ class Client(AsyncBaseClient):
                   value
                   error
                 }
+                customMetrics {
+                  metricId
+                  name
+                  passRate
+                  error
+                }
                 testSuite {
                   id
                   title
@@ -957,6 +1142,28 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return UploadLocalEvaluation.model_validate(data)
+
+    async def set_custom_metrics(
+        self, test_suite_id: str, ids: List[str], **kwargs: Any
+    ) -> SetCustomMetrics:
+        query = gql(
+            """
+            mutation setCustomMetrics($testSuiteId: String!, $ids: [String!]!) {
+              setCustomMetrics(testSuiteId: $testSuiteId, ids: $ids) {
+                success
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"testSuiteId": test_suite_id, "ids": ids}
+        response = await self.execute(
+            query=query,
+            operation_name="setCustomMetrics",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return SetCustomMetrics.model_validate(data)
 
     async def get_test_suite_data(
         self, suite_id: str, **kwargs: Any

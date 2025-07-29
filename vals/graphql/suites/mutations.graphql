@@ -78,3 +78,12 @@ mutation uploadLocalEvaluation(
     }
   }
 }
+
+mutation setCustomMetrics(
+  $testSuiteId: String!
+  $ids: [String!]!
+) {
+  setCustomMetrics(testSuiteId: $testSuiteId, ids: $ids) {
+    success
+  }
+}

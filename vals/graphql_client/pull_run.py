@@ -2,7 +2,7 @@
 # Source: vals/graphql/
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from pydantic import Field
 
@@ -27,6 +27,7 @@ class PullRunRun(BaseModel):
     parameters: "PullRunRunParameters"
     pass_rate: Optional["PullRunRunPassRate"] = Field(alias="passRate")
     success_rate: Optional["PullRunRunSuccessRate"] = Field(alias="successRate")
+    custom_metrics: List["PullRunRunCustomMetrics"] = Field(alias="customMetrics")
     test_suite: "PullRunRunTestSuite" = Field(alias="testSuite")
     project: "PullRunRunProject"
 
@@ -56,6 +57,13 @@ class PullRunRunPassRate(BaseModel):
 class PullRunRunSuccessRate(BaseModel):
     value: float
     error: float
+
+
+class PullRunRunCustomMetrics(BaseModel):
+    metric_id: str = Field(alias="metricId")
+    name: str
+    pass_rate: float = Field(alias="passRate")
+    error: Optional[str]
 
 
 class PullRunRunTestSuite(BaseModel):

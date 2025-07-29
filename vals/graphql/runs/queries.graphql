@@ -40,6 +40,12 @@ query PullRun($runId: String!) {
       value
       error
     }
+    customMetrics {
+      metricId
+      name
+      passRate
+      error
+    }
     testSuite {
       id
       title

@@ -78,11 +78,17 @@ from .get_active_custom_operators import (
     GetActiveCustomOperatorsCustomOperators,
     GetActiveCustomOperatorsCustomOperatorsOperators,
 )
+from .get_custom_metric import (
+    GetCustomMetric,
+    GetCustomMetricCustomMetric,
+    GetCustomMetricCustomMetricProject,
+)
 from .get_default_parameters import (
     GetDefaultParameters,
     GetDefaultParametersDefaultParameters,
 )
 from .get_operators import GetOperators, GetOperatorsOperators
+from .get_run_dataframe import GetRunDataframe, GetRunDataframeGetRunDataframe
 from .get_run_status import GetRunStatus, GetRunStatusRun
 from .get_single_run_review import (
     GetSingleRunReview,
@@ -164,9 +170,14 @@ from .mark_question_answer_set_as_complete import (
     MarkQuestionAnswerSetAsCompleteMarkQuestionAnswerSetAsComplete,
     MarkQuestionAnswerSetAsCompleteMarkQuestionAnswerSetAsCompleteQuestionAnswerSet,
 )
+from .poll_custom_metric_task import (
+    PollCustomMetricTask,
+    PollCustomMetricTaskPollCustomMetricTask,
+)
 from .pull_run import (
     PullRun,
     PullRunRun,
+    PullRunRunCustomMetrics,
     PullRunRunParameters,
     PullRunRunPassRate,
     PullRunRunProject,
@@ -185,6 +196,11 @@ from .pull_test_results_with_count import (
 )
 from .remove_old_tests import RemoveOldTests, RemoveOldTestsRemoveUnusedTests
 from .rerun_tests import RerunTests, RerunTestsRerunFailingTests
+from .set_archived_status_custom_metrics import (
+    SetArchivedStatusCustomMetrics,
+    SetArchivedStatusCustomMetricsSetArchivedStatusCustomMetrics,
+)
+from .set_custom_metrics import SetCustomMetrics, SetCustomMetricsSetCustomMetrics
 from .single_test_result_reviews_with_count import (
     SingleTestResultReviewsWithCount,
     SingleTestResultReviewsWithCountTestResultReviewsWithCount,
@@ -204,6 +220,10 @@ from .single_test_result_reviews_with_count import (
     SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultResultJson,
     SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTest,
 )
+from .start_custom_metric_task import (
+    StartCustomMetricTask,
+    StartCustomMetricTaskStartCustomMetricTask,
+)
 from .start_run import StartRun, StartRunStartRun
 from .update_global_checks import (
     UpdateGlobalChecks,
@@ -218,6 +238,11 @@ from .upload_local_evaluation import (
     UploadLocalEvaluation,
     UploadLocalEvaluationUploadLocalEvaluation,
     UploadLocalEvaluationUploadLocalEvaluationUploads,
+)
+from .upsert_custom_metric import (
+    UpsertCustomMetric,
+    UpsertCustomMetricUpsertCustomMetric,
+    UpsertCustomMetricUpsertCustomMetricMetric,
 )
 
 __all__ = [
@@ -269,10 +294,15 @@ __all__ = [
     "GetActiveCustomOperators",
     "GetActiveCustomOperatorsCustomOperators",
     "GetActiveCustomOperatorsCustomOperatorsOperators",
+    "GetCustomMetric",
+    "GetCustomMetricCustomMetric",
+    "GetCustomMetricCustomMetricProject",
     "GetDefaultParameters",
     "GetDefaultParametersDefaultParameters",
     "GetOperators",
     "GetOperatorsOperators",
+    "GetRunDataframe",
+    "GetRunDataframeGetRunDataframe",
     "GetRunStatus",
     "GetRunStatusRun",
     "GetSingleRunReview",
@@ -322,9 +352,12 @@ __all__ = [
     "MetadataType",
     "ParameterInputType",
     "PerCheckTestReviewInputType",
+    "PollCustomMetricTask",
+    "PollCustomMetricTaskPollCustomMetricTask",
     "ProjectsWithCountFilterType",
     "PullRun",
     "PullRunRun",
+    "PullRunRunCustomMetrics",
     "PullRunRunParameters",
     "PullRunRunPassRate",
     "PullRunRunProject",
@@ -353,6 +386,10 @@ __all__ = [
     "RunReviewTableFilterOptionsInput",
     "RunReviewTableSortField",
     "RunStatus",
+    "SetArchivedStatusCustomMetrics",
+    "SetArchivedStatusCustomMetricsSetArchivedStatusCustomMetrics",
+    "SetCustomMetrics",
+    "SetCustomMetricsSetCustomMetrics",
     "SingleTestResultReviewsWithCount",
     "SingleTestResultReviewsWithCountTestResultReviewsWithCount",
     "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResults",
@@ -371,6 +408,8 @@ __all__ = [
     "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsSingleTestReviewsTestResultResultJson",
     "SingleTestResultReviewsWithCountTestResultReviewsWithCountSingleTestResultsTest",
     "SortOrder",
+    "StartCustomMetricTask",
+    "StartCustomMetricTaskStartCustomMetricTask",
     "StartRun",
     "StartRunStartRun",
     "TemplateType",
@@ -398,5 +437,8 @@ __all__ = [
     "UploadLocalEvaluation",
     "UploadLocalEvaluationUploadLocalEvaluation",
     "UploadLocalEvaluationUploadLocalEvaluationUploads",
+    "UpsertCustomMetric",
+    "UpsertCustomMetricUpsertCustomMetric",
+    "UpsertCustomMetricUpsertCustomMetricMetric",
     "WinningRunEnum",
 ]
