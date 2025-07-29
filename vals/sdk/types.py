@@ -257,11 +257,11 @@ class Test(BaseModel):
         field_mappings = {
             "cross_version_id": "id",
             "input_under_test": "input_under_test",
-            "typed_checks": "checks",
+            "checks": "checks",
             "golden_output": "right_answer",
-            "typed_tags": "tags",
-            "typed_context": "context",
-            "typed_file_ids": "_file_ids",
+            "tags": "tags",
+            "context": "context",
+            "file_ids": "_file_ids",
         }
 
         for graphql_name, python_name in field_mappings.items():
