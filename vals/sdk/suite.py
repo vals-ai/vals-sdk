@@ -1039,7 +1039,7 @@ class Suite(BaseModel):
         is_simple_model_function: bool,
     ) -> QuestionAnswerPairInputType:
         """Inner implementation of process_single_test"""
-        files = read_files(test._file_ids) if test._file_ids else {}
+        files = read_files([file.file_id for file in test.files_under_test])
 
         time_start = time()
         in_tokens_start = patch.in_tokens
