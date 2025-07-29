@@ -2,9 +2,12 @@ import asyncio
 import base64
 import hashlib
 import os
+import sys
 from collections import defaultdict
 from io import BytesIO
 
+import aiofiles
+import aiohttp
 import httpx
 import requests
 from tqdm import tqdm
@@ -232,3 +235,39 @@ async def download_files_bulk(
     progress_bar.close()
 
     return file_id_to_file_path
+
+
+async def upload_file(file_path: str, temporary: bool = False) -> str:
+    """Upload a file to the server asynchronously."""
+
+    async with aiofiles.open(file_path, "rb") as f:
+        file_data = await f.read()
+
+    async with aiohttp.ClientSession() as session:
+        form = aiohttp.FormData()
+        form.add_field("file", file_data, filename=os.path.basename(file_path))
+        form.add_field("temporary", str(temporary).lower())
+
+        async with session.post(
+            f"{be_host()}/upload_file/",
+            data=form,
+            headers={"Authorization": _get_auth_token()},
+        ) as response:
+            if response.status != 200:
+                error_text = await response.text()
+                raise Exception(f"Failed to upload file {file_path}: {error_text}")
+
+            response_json = await response.json()
+            return response_json["file_id"]
+
+
+async def dot_animation(stop_event: asyncio.Event):
+    dots = [".    ", ". .  ", ". . ."]
+    i = 0
+    while not stop_event.is_set():
+        sys.stdout.write("\r" + dots[i % len(dots)])
+        sys.stdout.flush()
+        i += 1
+        await asyncio.sleep(0.2)
+    sys.stdout.write("\r" + " " * 10 + "\r")
+    sys.stdout.flush()

@@ -6,7 +6,6 @@ import os
 from time import time
 from typing import Any, Callable, cast, overload
 
-import aiofiles
 import aiohttp
 from pydantic import BaseModel, PrivateAttr
 from tqdm import tqdm
@@ -41,11 +40,13 @@ from vals.sdk.types import (
 from vals.sdk.util import (
     _get_auth_token,
     be_host,
+    dot_animation,
     download_files_bulk,
     fe_host,
     get_ariadne_client,
     md5_hash,
     read_files,
+    upload_file,
 )
 
 
@@ -642,7 +643,13 @@ class Suite(BaseModel):
         run = await Run.from_id(run_id)
 
         if wait_for_completion:
-            await run.wait_for_run_completion()
+            stop_event = asyncio.Event()
+            animation_task = asyncio.create_task(dot_animation(stop_event))
+            try:
+                await run.wait_for_run_completion()
+            finally:
+                stop_event.set()
+                await animation_task
 
         await run.pull()
 
@@ -830,7 +837,7 @@ class Suite(BaseModel):
             # First, upload all files and track the File objects to their IDs
             async def upload_file_task(file, file_path):
                 async with semaphore:
-                    file.file_id = await self._upload_file(self.id, file_path)
+                    file.file_id = await upload_file(file_path)
                     hash_map_upload[file.hash] = file.file_id
                     pbar.update(1)
                     return file
@@ -1230,28 +1237,6 @@ class Suite(BaseModel):
         await self._client.mark_question_answer_set_as_complete(qa_set_id)
 
         return uploaded_qa_pairs
-
-    async def _upload_file(self, suite_id: str, file_path: str) -> str:
-        """Upload a file to the server asynchronously."""
-
-        async with aiofiles.open(file_path, "rb") as f:
-            file_data = await f.read()
-
-        async with aiohttp.ClientSession() as session:
-            form = aiohttp.FormData()
-            form.add_field("file", file_data, filename=os.path.basename(file_path))
-
-            async with session.post(
-                f"{be_host()}/upload_file/?test_suite_id={suite_id}",
-                data=form,
-                headers={"Authorization": _get_auth_token()},
-            ) as response:
-                if response.status != 200:
-                    error_text = await response.text()
-                    raise Exception(f"Failed to upload file {file_path}: {error_text}")
-
-                response_json = await response.json()
-                return response_json["file_id"]
 
     async def _process_model_output(
         self,
