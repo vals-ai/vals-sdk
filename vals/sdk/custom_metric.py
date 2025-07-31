@@ -185,7 +185,7 @@ class CustomMetric(BaseModel):
                 response = result.poll_custom_metric_task
                 match response.status:
                     case "pending":
-                        await asyncio.sleep(1)
+                        await asyncio.sleep(3)
                         continue
                     case "success":
                         try:

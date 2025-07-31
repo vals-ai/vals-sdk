@@ -268,6 +268,6 @@ async def dot_animation(stop_event: asyncio.Event):
         sys.stdout.write("\r" + dots[i % len(dots)])
         sys.stdout.flush()
         i += 1
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.4)
     sys.stdout.write("\r" + " " * 10 + "\r")
     sys.stdout.flush()

@@ -266,7 +266,7 @@ class Run(BaseModel):
         status = RunStatus.IN_PROGRESS
         while status in [RunStatus.IN_PROGRESS, RunStatus.PENDING]:
             status = await self.run_status()
-            await asyncio.sleep(1)  # Poll every second
+            await asyncio.sleep(3)  # Poll every 3 seconds
         return status
 
     async def to_csv_string(self) -> str:
