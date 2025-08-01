@@ -1,0 +1,28 @@
+query GetSingleRunReview($runReviewId: String!) {
+  singleRunReview(runReviewId: $runReviewId) {
+    id
+    createdBy
+    createdAt
+    status
+    passRateHumanEval
+    flaggedRate
+    agreementRateAutoEval
+    completedTime
+    numberOfReviews
+    assignedReviewers
+    rereviewAutoEval
+    run {
+      id
+    }
+    customReviewTemplates {
+      id
+      name
+      instructions
+      categories
+      type
+      optional
+      minValue
+      maxValue
+    }
+  }
+}

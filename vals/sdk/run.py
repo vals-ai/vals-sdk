@@ -75,6 +75,9 @@ class Run(BaseModel):
     parameters: RunParameters
     """Parameters used to create the run."""
 
+    run_review_id: str | None
+    """ID of the run review for the run."""
+
     test_results: list[TestResult]
     """List of test results for the run."""
 
@@ -113,8 +116,13 @@ class Run(BaseModel):
             parameters_dict["parallelism"] = parameters_dict.pop("maximum_threads")
         parameters = RunParameters(**parameters_dict)
 
+        run_review_id = None
+        if result.run.single_pending_or_completed_run_review:
+            run_review_id = result.run.single_pending_or_completed_run_review.id
+
         return Run(
             id=run_id,
+            run_review_id=run_review_id,
             project_id=result.run.project.slug,
             name=result.run.name,
             qa_set_id=result.run.qa_set.id if result.run.qa_set else None,
@@ -407,3 +415,20 @@ class Run(BaseModel):
         client = get_ariadne_client()
         result = await client.get_run_status(run_id=run_id)
         return result.run.status
+
+    async def add_to_queue(
+        self,
+        template_ids: list[str] = [],
+        assigned_reviewers: list[str] = [],
+        number_of_reviews: int = 1,
+        rereview_auto_eval: bool = True,
+    ) -> None:
+        client = get_ariadne_client()
+
+        await client.add_all_tests_to_queue_single(
+            run_id=self.id,
+            template_ids=template_ids,
+            assigned_reviewers=assigned_reviewers,
+            number_of_reviews=number_of_reviews,
+            rereview_auto_eval=rereview_auto_eval,
+        )

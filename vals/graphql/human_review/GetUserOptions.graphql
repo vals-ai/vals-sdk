@@ -1,0 +1,3 @@
+query GetUserOptions {
+  userEmails
+}

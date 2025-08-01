@@ -3,7 +3,9 @@
 
 from typing import Any, Dict, List, Optional, Union
 
+from .add_all_tests_to_queue_single import AddAllTestsToQueueSingle
 from .add_batch_tests import AddBatchTests
+from .add_or_remove_users_to_run_review import AddOrRemoveUsersToRunReview
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType
 from .batch_add_question_answer_pairs import BatchAddQuestionAnswerPairs
@@ -48,6 +50,251 @@ def gql(q: str) -> str:
 
 
 class Client(AsyncBaseClient):
+    async def add_all_tests_to_queue_single(
+        self,
+        run_id: str,
+        number_of_reviews: int,
+        rereview_auto_eval: bool,
+        template_ids: Union[Optional[List[str]], UnsetType] = UNSET,
+        assigned_reviewers: Union[Optional[List[str]], UnsetType] = UNSET,
+        **kwargs: Any
+    ) -> AddAllTestsToQueueSingle:
+        query = gql(
+            """
+            mutation AddAllTestsToQueueSingle($runId: String!, $templateIds: [String!], $assignedReviewers: [String!], $numberOfReviews: Int!, $rereviewAutoEval: Boolean!) {
+              addAllSingleTestReviewToQueue(
+                runId: $runId
+                templateIds: $templateIds
+                assignedReviewers: $assignedReviewers
+                numberOfReviews: $numberOfReviews
+                rereviewAutoEval: $rereviewAutoEval
+              ) {
+                singleTestReviews {
+                  id
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {
+            "runId": run_id,
+            "templateIds": template_ids,
+            "assignedReviewers": assigned_reviewers,
+            "numberOfReviews": number_of_reviews,
+            "rereviewAutoEval": rereview_auto_eval,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="AddAllTestsToQueueSingle",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return AddAllTestsToQueueSingle.model_validate(data)
+
+    async def get_single_run_review(
+        self, run_review_id: str, **kwargs: Any
+    ) -> GetSingleRunReview:
+        query = gql(
+            """
+            query GetSingleRunReview($runReviewId: String!) {
+              singleRunReview(runReviewId: $runReviewId) {
+                id
+                createdBy
+                createdAt
+                status
+                passRateHumanEval
+                flaggedRate
+                agreementRateAutoEval
+                completedTime
+                numberOfReviews
+                assignedReviewers
+                rereviewAutoEval
+                run {
+                  id
+                }
+                customReviewTemplates {
+                  id
+                  name
+                  instructions
+                  categories
+                  type
+                  optional
+                  minValue
+                  maxValue
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {"runReviewId": run_review_id}
+        response = await self.execute(
+            query=query,
+            operation_name="GetSingleRunReview",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return GetSingleRunReview.model_validate(data)
+
+    async def single_test_result_reviews_with_count(
+        self,
+        run_id: str,
+        filter_options: Union[
+            Optional[TestReviewFilterOptionsInput], UnsetType
+        ] = UNSET,
+        **kwargs: Any
+    ) -> SingleTestResultReviewsWithCount:
+        query = gql(
+            """
+            query SingleTestResultReviewsWithCount($runId: String!, $filterOptions: TestReviewFilterOptionsInput) {
+              testResultReviewsWithCount(runId: $runId, filterOptions: $filterOptions) {
+                count
+                singleTestResults {
+                  id
+                  reviewedBy
+                  hasFeedback
+                  agreementRateAutoEval
+                  agreementRateHumanEval
+                  passRateHumanEval
+                  passPercentage
+                  amountReviewed
+                  latestCompletedReview
+                  llmOutput
+                  resultJson {
+                    autoEval
+                    criteria
+                    operator
+                  }
+                  qaPair {
+                    context
+                    outputContext
+                    errorMessage
+                  }
+                  test {
+                    id
+                    inputUnderTest
+                    context
+                  }
+                  metadata {
+                    inTokens
+                    outTokens
+                    durationSeconds
+                  }
+                  aggregatedCustomMetrics {
+                    base {
+                      displayed
+                      value
+                    }
+                    comparative
+                    name
+                    type
+                    resultA {
+                      displayed
+                      value
+                    }
+                    resultB {
+                      displayed
+                      value
+                    }
+                  }
+                  singleTestReviews {
+                    id
+                    completedBy
+                    feedback
+                    completedAt
+                    startedAt
+                    createdBy
+                    status
+                    perCheckTestReview {
+                      binaryHumanEval
+                      isFlagged
+                    }
+                    testResult {
+                      id
+                      resultJson {
+                        autoEval
+                        criteria
+                        operator
+                      }
+                    }
+                    customReviewValues {
+                      template {
+                        id
+                        name
+                        instructions
+                        optional
+                        categories
+                        type
+                        minValue
+                        maxValue
+                      }
+                      value
+                    }
+                  }
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {
+            "runId": run_id,
+            "filterOptions": filter_options,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="SingleTestResultReviewsWithCount",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return SingleTestResultReviewsWithCount.model_validate(data)
+
+    async def get_user_options(self, **kwargs: Any) -> GetUserOptions:
+        query = gql(
+            """
+            query GetUserOptions {
+              userEmails
+            }
+            """
+        )
+        variables: Dict[str, object] = {}
+        response = await self.execute(
+            query=query, operation_name="GetUserOptions", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return GetUserOptions.model_validate(data)
+
+    async def add_or_remove_users_to_run_review(
+        self, single_run_review_id: str, assigned_reviewers: List[str], **kwargs: Any
+    ) -> AddOrRemoveUsersToRunReview:
+        query = gql(
+            """
+            mutation AddOrRemoveUsersToRunReview($singleRunReviewId: String!, $assignedReviewers: [String!]!) {
+              updateAssignedReviewers(
+                singleRunReviewId: $singleRunReviewId
+                assignedReviewers: $assignedReviewers
+              ) {
+                singleTestReviews {
+                  id
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {
+            "singleRunReviewId": single_run_review_id,
+            "assignedReviewers": assigned_reviewers,
+        }
+        response = await self.execute(
+            query=query,
+            operation_name="AddOrRemoveUsersToRunReview",
+            variables=variables,
+            **kwargs
+        )
+        data = self.get_data(response)
+        return AddOrRemoveUsersToRunReview.model_validate(data)
+
     async def list_projects(
         self, offset: int, limit: int, search: str, **kwargs: Any
     ) -> ListProjects:
@@ -244,179 +491,6 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return ListQuestionAnswerPairs.model_validate(data)
 
-    async def get_single_run_review(
-        self, run_review_id: str, **kwargs: Any
-    ) -> GetSingleRunReview:
-        query = gql(
-            """
-            query GetSingleRunReview($runReviewId: String!) {
-              singleRunReview(runReviewId: $runReviewId) {
-                id
-                createdBy
-                createdAt
-                status
-                passRateHumanEval
-                flaggedRate
-                agreementRateAutoEval
-                completedTime
-                numberOfReviews
-                assignedReviewers
-                rereviewAutoEval
-                run {
-                  id
-                }
-                customReviewTemplates {
-                  id
-                  name
-                  instructions
-                  categories
-                  type
-                  optional
-                  minValue
-                  maxValue
-                }
-              }
-            }
-            """
-        )
-        variables: Dict[str, object] = {"runReviewId": run_review_id}
-        response = await self.execute(
-            query=query,
-            operation_name="GetSingleRunReview",
-            variables=variables,
-            **kwargs
-        )
-        data = self.get_data(response)
-        return GetSingleRunReview.model_validate(data)
-
-    async def single_test_result_reviews_with_count(
-        self,
-        run_id: str,
-        filter_options: Union[
-            Optional[TestReviewFilterOptionsInput], UnsetType
-        ] = UNSET,
-        **kwargs: Any
-    ) -> SingleTestResultReviewsWithCount:
-        query = gql(
-            """
-            query SingleTestResultReviewsWithCount($runId: String!, $filterOptions: TestReviewFilterOptionsInput) {
-              testResultReviewsWithCount(runId: $runId, filterOptions: $filterOptions) {
-                count
-                singleTestResults {
-                  id
-                  reviewedBy
-                  hasFeedback
-                  agreementRateAutoEval
-                  agreementRateHumanEval
-                  passRateHumanEval
-                  passPercentage
-                  amountReviewed
-                  latestCompletedReview
-                  llmOutput
-                  resultJson {
-                    autoEval
-                    criteria
-                    operator
-                  }
-                  qaPair {
-                    context
-                    outputContext
-                    errorMessage
-                  }
-                  test {
-                    id
-                    inputUnderTest
-                    context
-                  }
-                  metadata {
-                    inTokens
-                    outTokens
-                    durationSeconds
-                  }
-                  aggregatedCustomMetrics {
-                    base {
-                      displayed
-                      value
-                    }
-                    comparative
-                    name
-                    type
-                    resultA {
-                      displayed
-                      value
-                    }
-                    resultB {
-                      displayed
-                      value
-                    }
-                  }
-                  singleTestReviews {
-                    id
-                    completedBy
-                    feedback
-                    completedAt
-                    startedAt
-                    createdBy
-                    status
-                    perCheckTestReview {
-                      binaryHumanEval
-                      isFlagged
-                    }
-                    testResult {
-                      id
-                      resultJson {
-                        autoEval
-                        criteria
-                        operator
-                      }
-                    }
-                    customReviewValues {
-                      template {
-                        id
-                        name
-                        instructions
-                        optional
-                        categories
-                        type
-                        minValue
-                        maxValue
-                      }
-                      value
-                    }
-                  }
-                }
-              }
-            }
-            """
-        )
-        variables: Dict[str, object] = {
-            "runId": run_id,
-            "filterOptions": filter_options,
-        }
-        response = await self.execute(
-            query=query,
-            operation_name="SingleTestResultReviewsWithCount",
-            variables=variables,
-            **kwargs
-        )
-        data = self.get_data(response)
-        return SingleTestResultReviewsWithCount.model_validate(data)
-
-    async def get_user_options(self, **kwargs: Any) -> GetUserOptions:
-        query = gql(
-            """
-            query GetUserOptions {
-              userEmails
-            }
-            """
-        )
-        variables: Dict[str, object] = {}
-        response = await self.execute(
-            query=query, operation_name="GetUserOptions", variables=variables, **kwargs
-        )
-        data = self.get_data(response)
-        return GetUserOptions.model_validate(data)
-
     async def start_run(
         self,
         test_suite_id: str,
@@ -502,6 +576,9 @@ class Client(AsyncBaseClient):
                   id
                 }
                 runId
+                singlePendingOrCompletedRunReview {
+                  id
+                }
                 passPercentage
                 status
                 textSummary
